@@ -29,14 +29,13 @@ define "fs-c" do
   project.group = GROUP
 
   manifest["Implementation-Vendor"] = COPYRIGHT
-  compile.options.target = '1.5'
   
   define "protobuf" do
     task("generate") do
        	system("protoc --java_out src/main/gen/ src/main/other/fs-c.proto")
     end
     compile.from('src/main/gen').
-    	into('target/classes').
+    	into('target/gen-classes').
     	with("lib/*",
     		task("generate")
     	)
@@ -45,9 +44,22 @@ define "fs-c" do
   compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
   compile.dependencies.include "lib/*.jar"
   compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
-  
-  compile.from('src/main/java').using(:javac)
-    
+      
+  define "java-parts" do
+      compile.options.target = '1.5'
+      compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
+      compile.dependencies.include "lib/*.jar"
+      compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
+      compile.from('src/main/java15').using(:javac).into('target/j-classes')
+  end
+  define "scala-parts" do
+    compile.options.target = '1.5'
+    compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
+    compile.dependencies.include "lib/*.jar"
+    compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
+    compile.with("protobuf").with("java-parts")
+  end
+
   package_with_sources
   package(:jar).with :manifest=>{ 'Copyright'=>'Paderborn Center for Parallel Computing (C) 2009' }
   
