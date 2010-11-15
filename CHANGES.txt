@@ -1,0 +1,15 @@
+Version 0.2.0
+
+ - Digest type (default: SHA-1) can be exchanged by every digest method supported by the Java Security
+   framework
+ - Digest length (default: 20 Byte for SHA-1) can be reduced to decrease the size of trace files
+ - Switch from Actor-based Concurrency during Tracing to Executor-based Concurrency due to the better
+   conjection control
+ - Update to Google Protocol Buffer 2.1.0
+ - Import to Hadoop DFS
+ - Contrib: PIG Scripts to analyze large datasets using Hadoop MapReduce
+ - Different trace format support: Currently legacy (old binary format), protobuf
+
+Version 0.1.0
+
+ - Initial Version

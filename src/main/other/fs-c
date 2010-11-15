@@ -1,0 +1,58 @@
+#!/usr/bin/python
+import sys
+import os
+
+def help():
+    return "fs-c.sh trace [Options]\nfs-c.sh parse [Options]\nnfs-c.sh import [Options]"
+
+def get_hadoop_cp():
+    cp = []
+    dirs = [os.environ["HADOOP_ROOT"],os.path.join(os.environ["HADOOP_ROOT"], "lib")]
+    for dir in dirs:
+        for file in os.listdir(dir):
+            if file.endswith(".jar"):
+                cp.append(os.path.join(dir,file))
+    cp.append(os.path.join(os.environ["HADOOP_ROOT"], "conf"))
+    return cp
+
+def get_cp():
+    cp = ["fs-c-0.2.0.jar"]
+    lib_dir = "lib"
+    for file in os.listdir(lib_dir):
+        if file.endswith(".jar"):
+            cp.append(os.path.join(lib_dir,file))
+    cp.append("conf")
+    if "HADOOP_ROOT" in os.environ:
+    	cp.extend(get_hadoop_cp())
+    return cp
+
+if __name__ == "__main__":
+    java_class = None
+    if len(sys.argv) < 2:
+        print help()
+        sys.exit()
+    if sys.argv[1] == "trace":
+        java_class = "de.pc2.dedup.fschunk.trace.Main"
+    elif sys.argv[1] == "parse":
+        java_class = "de.pc2.dedup.fschunk.parse.Main"
+    elif sys.argv[1] == "import":
+    	if not "HADOOP_ROOT" in os.environ:
+    		print "HADOOP_ROOT not set"
+    		print
+    		print help()
+    	java_class = "de.pc2.dedup.fschunk.handler.hadoop.Import"
+    else:
+        print help()
+        sys.exit()
+    args = ["java"]
+    if "FSC_JXM" in os.environ:
+        args.append("-Dcom.sun.management.jmxremote")
+    if "FSC_XMX" in os.environ:
+        args.append("-Xmx%s" % os.environ["FSC_XMX"])
+    args.extend(["-cp",":".join(get_cp()),java_class])
+    args.extend(sys.argv[2:])
+
+    cmd = " ".join(args)
+    os.system(cmd)
+
+

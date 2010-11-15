@@ -1,0 +1,20 @@
+[
+{
+  "type": "record", 
+  "name": "file",
+  "fields" : [
+    {"name": "filename", "type": "string"},
+    {"name": "size", "type": "long"},
+    {"name": "type", "type": "string"}
+    {"name": "chunks", "type":"array", "items": "chunk"}
+  ]
+}
+{
+  "type": "record",
+  "name": "chunk",
+  "fields": [
+  {"name": "fp", "type": "bytes"},
+  {"name": "size", "type": "int"}
+  ]
+}
+]

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="MacRoman"?>
+<jardesc>
+<jar path="FS-C/target/fs-c-0.1.0.jar"/>
+<options buildIfNeeded="true" compress="true" descriptionLocation="/FS-C/src/main/other/fs-c.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+<storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+<selectedProjects/>
+<manifest generateManifest="true" manifestLocation="/FS-C/src/main/other/manifest" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+<sealing sealJar="true">
+<packagesToSeal/>
+<packagesToUnSeal/>
+</sealing>
+</manifest>
+<selectedElements exportClassFiles="false" exportJavaFiles="false" exportOutputFolder="true">
+<folder path="/FS-C/target/classes"/>
+</selectedElements>
+<fatjar builder="org.eclipse.jdt.ui.plain_jar_builder" launchConfig=""/>
+</jardesc>
