@@ -25,8 +25,8 @@ object Main {
       val silent = new Flag(None, "silent", "Reduced output") with AllowAll
       val listing = new Flag('l', "file-listing", "File contains a listing of files") with AllowAll
       val privacy = new Flag('p',"privacy", "Privacy Mode") with AllowAll
-      val digestLength = new IntOption(None, "digest-length", "Length of Digest (Fingerprint") with AllowAll
-      val digestType = new StringOption(None, "digest-type", "Type of Digest (Fingerprint") with AllowAll
+      val digestLength = new IntOption(None, "digest-length", "Length of Digest (Fingerprint)") with AllowAll
+      val digestType = new StringOption(None, "digest-type", "Type of Digest (Fingerprint)") with AllowAll
       val report = new IntOption(None, "report", "Interval between progess reports in seconds (Default: 1 Minute, 0 = no report)") with AllowAll
       val format = new StringOption(None, "format", "Input/Output Format (protobuf, legacy, default: protobuf)") with AllowAll
       val noDefaultIgnores = new Flag(None, "--no-default-ignores", "Avoid using the default ignore list") with AllowAll
@@ -34,6 +34,9 @@ object Main {
     Options.parseOrHelp(args) { cmd =>
       val chunking = try {
       val filename = cmd.all(Options.filename)
+      if (filename.size == 0) {
+    	  throw new Exception("Provide at least one file via -f")
+      }
       val minSize = cmd(Options.minSize) match {
         case None => 2 * 1024 
         case Some(i) => i
@@ -79,6 +82,7 @@ object Main {
         case Some("fixed") => new FixedChunker(avgSize, new DigestFactory(digestType, digestLength))
         case Some("static") => new FixedChunker(avgSize, new DigestFactory(digestType, digestLength))
       }
+      
       val fileListing : FileListingProvider = if(cmd(Options.listing)) {
         FileListingProvider.fromListingFile(filename)        
       } else {
