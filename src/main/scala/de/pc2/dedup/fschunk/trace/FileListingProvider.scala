@@ -4,10 +4,20 @@ import java.io._
 import scala.collection.mutable.ListBuffer
  
 object FileListingProvider {
+	// we always try to follow initial symlinks
+	def g(filename: String, f: (String) => Unit) : Unit = {
+		try {
+			f(new File(filename).getCanonicalPath())
+		} catch {
+                    case _ => 
+			f(filename)
+		}
+	}
+	
   def fromDirectFile(filenames: List[String]) : FileListingProvider = {
     class DirectFileProvider extends  FileListingProvider {
       def foreach (f : (String) => Unit) : Unit = {
-        filenames.foreach(filename => f(filename)) 
+        filenames.foreach(filename => g(filename, f)) 
       }
     } 
     new DirectFileProvider() 
@@ -40,7 +50,7 @@ object FileListingProvider {
       }
       def foreach (f : (String) => Unit) : Unit = {
         for(line <- queue) {
-          f(line)
+          g(line, f)
         }
       }
     }

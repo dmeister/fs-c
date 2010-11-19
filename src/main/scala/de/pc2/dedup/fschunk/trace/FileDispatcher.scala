@@ -16,7 +16,7 @@ trait FileDispatcher extends Actor {
 /**
 * Dispatches files to a number of file processors that chunk the file contents
 */ 
-class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: List[Actor], useDefaultIgnores: Boolean) extends FileDispatcher with Log {
+class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: List[Actor], useDefaultIgnores: Boolean, followSymlinks: Boolean) extends FileDispatcher with Log {
 	trapExit = true 
  	case object ExecutorFinished
   
@@ -53,7 +53,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: Lis
  
 	def dispatch(f: File) {
 	  if(f.isDirectory()) {
-	    direxecutor.execute(new DirectoryProcessor(f, useDefaultIgnores, this))
+	    direxecutor.execute(new DirectoryProcessor(f, useDefaultIgnores, this, followSymlinks))
 	  } else {
 	    fileexecutor.execute(new FileProcessor(f, chunker,handlers, 256 * 1024))
 	  }

@@ -19,13 +19,9 @@ object DirectoryProcessor {
 * If finds a file (not a directory) is forwards the file
 * to the dispatcher for chunking
 */
-class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher: FileDispatcher) extends Runnable with Log {
+class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher: FileDispatcher, followSymlinks: Boolean) extends Runnable with Log {
 	def mightBeSymlink(f: File) : Boolean = {
-			val r = f.getCanonicalPath() != f.getAbsolutePath()
-			if(r) {
-			  logger.debug("Skip Symlink %s".format(f))
-			}
-			r
+			return f.getCanonicalPath() != f.getAbsolutePath()
 	}
 	val ignoreSet = Set("/dev", "/proc/")
 	def isDefaultIgnoreDirectory(f: File) : Boolean = {
@@ -35,7 +31,9 @@ class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher
 	def processList(list: List[File]) {
 	  def processFile(file: File) {
 	    if(!file.isDirectory) {
-			if(!mightBeSymlink(file)) {
+			if(mightBeSymlink(file) && !followSymlinks) {
+				logger.debug("Skip symlink file %s".format(file))	
+			} else {
 				dispatcher.dispatch(file)
 			}
 		}
@@ -43,7 +41,9 @@ class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher
 	  def processDirectory(file: File) {
 		if(file.isDirectory) {  
 	    if(!useDefaultIgnores || !isDefaultIgnoreDirectory(file)) {
-	   		if(!mightBeSymlink(file)) {
+	   		if(mightBeSymlink(file) && !followSymlinks) {
+				logger.debug("Skip symlink directory %s".format(file))	
+			} else {
 				dispatcher.dispatch(file)
 			} 	
 		  }

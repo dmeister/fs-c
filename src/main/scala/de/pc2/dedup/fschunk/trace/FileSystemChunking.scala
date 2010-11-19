@@ -17,9 +17,9 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.actors.Exit
 
-class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handlers: List[Actor], maxThreads: Int, useDefaultIgnores: Boolean) extends Actor with Log {
+class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handlers: List[Actor], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean) extends Actor with Log {
 	trapExit = true
-	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, handlers, useDefaultIgnores).start()
+	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, handlers, useDefaultIgnores, followSymlinks).start()
 
 	def report() {
 		logger.debug("Queue: %d".format(

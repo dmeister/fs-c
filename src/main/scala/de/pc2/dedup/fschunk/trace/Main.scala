@@ -29,7 +29,8 @@ object Main {
       val digestType = new StringOption(None, "digest-type", "Type of Digest (Fingerprint)") with AllowAll
       val report = new IntOption(None, "report", "Interval between progess reports in seconds (Default: 1 Minute, 0 = no report)") with AllowAll
       val format = new StringOption(None, "format", "Input/Output Format (protobuf, legacy, default: protobuf)") with AllowAll
-      val noDefaultIgnores = new Flag(None, "--no-default-ignores", "Avoid using the default ignore list") with AllowAll
+      val noDefaultIgnores = new Flag(None, "no-default-ignores", "Avoid using the default ignore list") with AllowAll
+	  val followSymlinks = new Flag(None, "follow-symlinks", "Follow symlinks") with AllowAll
     } 
     Options.parseOrHelp(args) { cmd =>
       val chunking = try {
@@ -65,6 +66,7 @@ object Main {
     	  case None => 60 * 1000
     	  case Some(i) => i * 1000
       }
+	  val followSymlinks = cmd(Options.followSymlinks)
       val privacyMode = cmd(Options.privacy)
       val format = cmd(Options.format) match {
         case None => "protobuf"
@@ -104,7 +106,7 @@ object Main {
 				fileListing,   
 				chunker,     
 				handler,   
-                threads, useIgnoreList)
+                threads, useIgnoreList, followSymlinks)
       val reporter = new Reporter(chunking, reportInterval).start()
       chunking
       } catch {

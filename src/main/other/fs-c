@@ -9,6 +9,13 @@ def help():
 def run(cmd):
     return subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).stdout.read()
 
+def get_fsc_root():
+    mod = sys.modules[__name__]
+    return os.path.normpath(os.path.join(os.path.dirname(mod.__file__), ".."))
+
+def from_fsc_root(*args):
+    return os.path.normpath(os.path.join(get_fsc_root(), *args))
+
 def get_hadoop_cp():
     cp = []
     dirs = [os.environ["HADOOP_ROOT"],os.path.join(os.environ["HADOOP_ROOT"], "lib")]
@@ -20,8 +27,8 @@ def get_hadoop_cp():
     return cp
 
 def get_cp():
-    cp = ["fs-c-0.2.1.jar"]
-    lib_dir = "lib"
+    cp = [from_fsc_root("fs-c-0.2.2.jar")]
+    lib_dir = from_fsc_root("lib")
     for file in os.listdir(lib_dir):
         if file.endswith(".jar"):
             cp.append(os.path.join(lib_dir,file))
@@ -29,6 +36,11 @@ def get_cp():
     if "HADOOP_ROOT" in os.environ:
     	cp.extend(get_hadoop_cp())
     return cp
+
+def check_python_version():
+    v = sys.version_info
+    if v[0] != 2 or v[1] < 4:
+        raise Exception("No supported python version")
 
 def check_java_version():
     try:
@@ -43,6 +55,7 @@ def check_java_version():
 
 if __name__ == "__main__":
     try:
+        check_python_version()
         check_java_version()
         
         java_class = None
@@ -74,8 +87,8 @@ if __name__ == "__main__":
         os.system(cmd)
     except KeyboardInterrupt:
         sys.exit(1)
-    except Exception as e:
-        print str(e)
+    except:
+        print str(sys.exec_info())
         sys.exit(1)
     sys.exit(0)
 

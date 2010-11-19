@@ -1,6 +1,6 @@
 
 # Version number for this release
-VERSION_NUMBER = "0.2.1"
+VERSION_NUMBER = "0.2.2"
 # Group identifier for your projects
 GROUP = "fs-c"
 COPYRIGHT = "(c) Paderborn Center for Parallel Computing, 2009. Open Source under New BSD license"
