@@ -27,7 +27,7 @@ def get_hadoop_cp():
     return cp
 
 def get_cp():
-    cp = [from_fsc_root("fs-c-0.2.2.jar")]
+    cp = [from_fsc_root("fs-c-0.2.3.jar")]
     lib_dir = from_fsc_root("lib")
     for file in os.listdir(lib_dir):
         if file.endswith(".jar"):

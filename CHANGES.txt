@@ -1,3 +1,7 @@
+Version 0.2.3
+
+ - Add Visual Basic Script (VBS) for make the usage on windows easier
+
 Version 0.2.0
 
  - Digest type (default: SHA-1) can be exchanged by every digest method supported by the Java Security
