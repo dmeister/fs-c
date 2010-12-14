@@ -10,7 +10,7 @@ import scala.actors.Actor._
 import de.pc2.dedup.util.StorageUnit
 import de.pc2.dedup.util.Log
 
-class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends Actor with Log {
+class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends Actor with Log {
   trapExit = true
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
@@ -31,7 +31,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends A
     sizeCategoryMap += ("ALL" -> (0L,0L))
     loop {
       react {
-        case File(fileId, fileSize, fileType, chunks) =>
+        case File(fileId, fileSize, fileType, chunks, _) =>
           var sizeCategory = getSizeCategory(fileSize)
           var currentRealSize = 0
           var currentFileSize = 0
@@ -58,10 +58,10 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends A
         case Quit =>
           output match {
             case Some(runName) =>
-              writeMapToFile(typeMap, runName + "-tr-type.csv")
-              writeMapToFile(sizeCategoryMap, runName + "-tr-size.csv")
+              writeMapToFile(typeMap, runName + "-" + chunkerName + "-tr-type.csv")
+              writeMapToFile(sizeCategoryMap, runName + "-" + chunkerName + "-tr-size.csv")
             case None =>
-              outputMapToConsole(sizeCategoryMap, "File Size Categories")
+              outputMapToConsole(sizeCategoryMap, "File Size Categories: %s".format(chunkerName))
           }
           exit()
       }

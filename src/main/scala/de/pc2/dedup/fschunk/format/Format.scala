@@ -16,6 +16,6 @@ object Format {
 }
 
 trait Format {
-	def createReader(filename: String, receiver: Actor) : Actor
+    def createReader(filename: String, receiver: Actor) : Actor
     def createWriter(filename: String, privacyMode: Boolean) : Actor
 }

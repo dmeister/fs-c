@@ -10,15 +10,14 @@ import de.pc2.dedup.fschunk.handler.direct.InMemoryChunkHandler
 import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
 import de.pc2.dedup.fschunk.format.Format
 import de.pc2.dedup.fschunk.handler.hadoop._
+import de.pc2.dedup.util.Log
+import scala.actors.Actor 
 
-object Main {
+object Main extends Log {
   def main(args: Array[String]) : Unit = {
     try {
       object Options extends CommandLineParser {
       val filename = new StringOption('f',"filename", "Filename to parse") with AllowAll   
-      val minSize = new IntOption(None, "min-size", "Minimal chunk size") with AllowAll
-      val maxSize = new IntOption(None, "max-size", "Maximal chunk size") with AllowAll
-      val avgSize = new IntOption('s', "avg-size", "Average chunk size") with AllowAll
       var chunker = new StringOption('c', "chunker", "Special File Format") with AllowAll 
       val output = new StringOption('o', "output", "Output file (optional)") with AllowAll
       val threads = new IntOption('t', "threads", "Number of concurrent threads") with AllowAll
@@ -31,24 +30,13 @@ object Main {
       val format = new StringOption(None, "format", "Input/Output Format (protobuf, legacy, default: protobuf)") with AllowAll
       val noDefaultIgnores = new Flag(None, "no-default-ignores", "Avoid using the default ignore list") with AllowAll
 	  val followSymlinks = new Flag(None, "follow-symlinks", "Follow symlinks") with AllowAll
+          val label = new StringOption(None, "label", "File label") with AllowAll
     } 
     Options.parseOrHelp(args) { cmd =>
       val chunking = try {
       val filename = cmd.all(Options.filename)
       if (filename.size == 0) {
-    	  throw new Exception("Provide at least one file via -f")
-      }
-      val minSize = cmd(Options.minSize) match {
-        case None => 2 * 1024 
-        case Some(i) => i
-      }
-      val maxSize = cmd(Options.maxSize) match {
-        case None => 32 * 1024
-        case Some(i) => i
-      }
-      val avgSize = cmd(Options.avgSize) match {
-        case None => 8 * 1024
-        case Some(i) => i
+    	  throw new MatchError("Provide at least one file via -f")
       }
       val threads = cmd(Options.threads) match {
         case None => 1 
@@ -73,44 +61,60 @@ object Main {
         case Some(s) => if(Format.isFormat(s)) {
           s
         } else {
-          throw new MatchError("Unsupported format")
+          throw new Exception("Unsupported format")
         }
       }
       val useIgnoreList = !cmd(Options.noDefaultIgnores)
-      val chunker = cmd(Options.chunker) match {
-        case None => new RabinChunker(minSize, avgSize, maxSize, new DigestFactory(digestType, digestLength))
-        case Some("rabin") => new RabinChunker(minSize, avgSize, maxSize, new DigestFactory(digestType, digestLength))
-        case Some("cdc") => new RabinChunker(minSize, avgSize, maxSize, new DigestFactory(digestType, digestLength))
-        case Some("fixed") => new FixedChunker(avgSize, new DigestFactory(digestType, digestLength))
-        case Some("static") => new FixedChunker(avgSize, new DigestFactory(digestType, digestLength))
-      }
-      
-      val fileListing : FileListingProvider = if(cmd(Options.listing)) {
-        FileListingProvider.fromListingFile(filename)        
-      } else {
-        FileListingProvider.fromDirectFile(filename)  
-      }  
-      val handler = cmd(Options.output) match { 
-        case None => 
-          val d = new ChunkIndex()
-          new InMemoryChunkHandler(cmd(Options.silent), d).start :: Nil
-        case Some(o) => 
-          if(o.startsWith("hdfs://")) {
-            new ImportHandler(o,o).start() :: Nil
-          } else {
-        	  Format(format).createWriter(o, privacyMode) :: Nil
+      val chunkerNames = cmd.all(Options.chunker)
+
+
+    def getChunker(chunkerName: String) : (Chunker, List[Actor]) = {
+        val handler = cmd(Options.output) match { 
+            case None => 
+                new InMemoryChunkHandler(cmd(Options.silent), new ChunkIndex, chunkerName).start() :: Nil
+            case Some(o) => 
+                if(o.startsWith("hdfs://")) {
+                    new ImportHandler(o, o + "-" + chunkerName).start() :: Nil
+                } else {
+                    Format(format).createWriter(o + "-" + chunkerName, privacyMode) :: Nil
+                }
+            }
+          val c: Chunker = chunkerName match {
+            case "cdc8" => new RabinChunker(2 * 1024, 8 * 1024, 32 * 1024, new DigestFactory(digestType, digestLength), "c8")
+            case "cdc4" => new RabinChunker(1 * 1024, 4 * 1024, 16 * 1024, new DigestFactory(digestType, digestLength), "c4")
+            case "cdc16" => new RabinChunker(4 * 1024, 16 * 1024, 64 * 1024, new DigestFactory(digestType, digestLength), "c16")
+            case "cdc32" => new RabinChunker(128 * 1024, 32 * 1024, 128 * 1024, new DigestFactory(digestType, digestLength), "c32")
+            case "cdc2" => new RabinChunker(512, 2 * 1024, 8 * 1024, new DigestFactory(digestType, digestLength), "c2")
+
+            case "fixed8" => new FixedChunker(8 * 1024, new DigestFactory(digestType, digestLength), "f8")
+            case "fixed16" => new FixedChunker(16 * 1024, new DigestFactory(digestType, digestLength), "f16")
+            case "fixed32" => new FixedChunker(32 * 1024, new DigestFactory(digestType, digestLength), "f32")
+            case "fixed4" => new FixedChunker(4 * 1024, new DigestFactory(digestType, digestLength), "f4")
+            case "fixed2" => new FixedChunker(2 * 1024, new DigestFactory(digestType, digestLength), "f2")
           }
+          logger.debug("Found chunker " + chunkerName)
+          (c, handler)
       }
-      
+
+      val chunker = if (chunkerNames.size >= 0) {  
+          for {chunkerName <- chunkerNames} yield getChunker(chunkerName)
+      } else {
+        for {chunkerName <- List("cdc8")} yield getChunker(chunkerName)
+      }
+      val fileListing : FileListingProvider = if(cmd(Options.listing)) {
+        FileListingProvider.fromListingFile(filename, cmd(Options.label))        
+      } else {
+        FileListingProvider.fromDirectFile(filename, cmd(Options.label))  
+      }  
       val chunking = new FileSystemChunking(   
 				fileListing,   
 				chunker,     
-				handler,   
                 threads, useIgnoreList, followSymlinks)
       val reporter = new Reporter(chunking, reportInterval).start()
       chunking
       } catch {
         case e: MatchError =>  
+          logger.error(e)
           Options.showHelp(System.out)
           throw new SystemExitException()
       }

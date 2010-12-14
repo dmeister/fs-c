@@ -19,7 +19,7 @@ object DirectoryProcessor {
 * If finds a file (not a directory) is forwards the file
 * to the dispatcher for chunking
 */
-class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher: FileDispatcher, followSymlinks: Boolean) extends Runnable with Log {
+class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnores: Boolean, dispatcher: FileDispatcher, followSymlinks: Boolean) extends Runnable with Log {
 	def mightBeSymlink(f: File) : Boolean = {
 			return f.getCanonicalPath() != f.getAbsolutePath()
 	}
@@ -34,7 +34,7 @@ class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher
 			if(mightBeSymlink(file) && !followSymlinks) {
 				logger.debug("Skip symlink file %s".format(file))	
 			} else {
-				dispatcher.dispatch(file)
+				dispatcher.dispatch(file, label)
 			}
 		}
 	  }
@@ -44,7 +44,7 @@ class DirectoryProcessor(directory: File, useDefaultIgnores: Boolean, dispatcher
 	   		if(mightBeSymlink(file) && !followSymlinks) {
 				logger.debug("Skip symlink directory %s".format(file))	
 			} else {
-				dispatcher.dispatch(file)
+				dispatcher.dispatch(file, label)
 			} 	
 		  }
 		}

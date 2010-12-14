@@ -9,7 +9,7 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import de.pc2.dedup.util.Log
 
-class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex) extends Actor with Log {
+class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) extends Actor with Log {
 	var totalFileSize = 0L 
 	var totalChunkSize = 0L
 	var totalChunkCount = 0L
@@ -23,6 +23,7 @@ class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex) extends Actor with Log 
 		val totalRedundancy = totalFileSize - totalChunkSize
 		val msg = new StringBuffer()
 		msg.append("\n")
+                msg.append("Chunker " + chunkerName)
 		msg.append("Total Size: " + StorageUnit(totalFileSize) + "\n")
 		msg.append("Chunk Size: " + StorageUnit(totalChunkSize) + "\n")
 		msg.append("Redundancy: " + StorageUnit(totalRedundancy))
@@ -44,46 +45,46 @@ class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex) extends Actor with Log 
 	}
 
 	def act() { 
-	  logger.debug("Start")
-		loop {  
-			react {          
-			case Quit =>
+            logger.debug("Start")
+	    loop {  
+		react {          
+		    case Quit =>
+		        report()
+		        logger.debug("Exit")
+		        exit()
+		    case Report =>
 			report()
-			logger.debug("Exit")
-			exit()
-			case Report =>
-			report()
-			case File(filename, size, fileType, chunks) =>
+		    case File(filename, size, fileType, chunks, label) =>
 			var chunkFileSize = 0L
 			var chunkSize = 0L 
 			var chunkCount = 0L
 			for(chunk <- chunks) {
-				chunkCount += 1
-				chunkFileSize += chunk.size
-				if(!d.check(chunk.fp)) {
-					// New Chunk
-					d.update(chunk.fp)
-					chunkSize += chunk.size
-				}  
+			    chunkCount += 1
+			    chunkFileSize += chunk.size
+			    if(!d.check(chunk.fp)) {
+			        // New Chunk
+				d.update(chunk.fp)
+				chunkSize += chunk.size
+			    }  
 			} 
 			totalChunkCount += chunkCount
 			totalFileSize += chunkFileSize
 			totalChunkSize += chunkSize
 
-			val msg = new StringBuffer(filename)
+			val msg = new StringBuffer("%s - %s".format(filename, chunkerName))
 			if(!silent) {
-				val redundancy = size - chunkSize    
-				msg.append("\nSize: %s (%d Byte)%n".format(
-						StorageUnit(chunkFileSize),chunkFileSize))
-						msg.append("Redundancy: %s".format(StorageUnit(redundancy)))
-						if(chunkFileSize > 0) {
-							msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
-						}
-				msg.append("%nPatch Size: %s (%d Byte)".format(
-						StorageUnit(chunkFileSize - redundancy),chunkFileSize - redundancy))
+			    val redundancy = size - chunkSize    
+			    msg.append("\nSize: %s (%d Byte)%n".format(
+			        StorageUnit(chunkFileSize),chunkFileSize))
+			    msg.append("Redundancy: %s".format(StorageUnit(redundancy)))
+			    if(chunkFileSize > 0) {
+			        msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
+			    }
+			    msg.append("%nPatch Size: %s (%d Byte)".format(
+				StorageUnit(chunkFileSize - redundancy),chunkFileSize - redundancy))
 			}
-			logger.info(msg)
-			} 
-		}
+		    logger.info(msg)
+		} 
+            }
 	} 
 }

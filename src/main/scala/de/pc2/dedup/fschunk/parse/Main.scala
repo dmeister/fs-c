@@ -23,6 +23,7 @@ object Main {
       val filename =  new StringOption('f',"filename", "Trace filename") with AllowAll
       val report = new IntOption(None, "report", "Interval between progess reports in seconds (Default: 1 Minute, 0 = no report)") with AllowAll
       val format = new StringOption(None, "format", "Input/Output Format (protobuf, legacy, default: protobuf)") with AllowAll
+      val chunker = new StringOption('c', "chunker", "Chunker type") with AllowAll
     } 
     try {
       Options.parseOrHelp(args) { cmd =>
@@ -45,23 +46,26 @@ object Main {
           	case None => 60 * 1000
           	case Some(i) => i * 1000
           }
+          val chunkerNames = cmd.all(Options.chunker)
           handlerType match { 
             case "simple" => 
-              val d = new ChunkIndex() 
-              val p = new Parser(filenames(0), format, new InMemoryChunkHandler(false,d).start() :: Nil).start()
+              val handlerList = for {c <- chunkerNames} yield new InMemoryChunkHandler(false, new ChunkIndex(), c).start()
+              val p = new Parser(filenames(0), format, handlerList).start()
               val reporter = new Reporter(p, reportInterval).start()  
               p
             case "ir" => 
-              val d = new ChunkIndex() 
-              val p = new Parser(filenames(0), format, new InternalRedundancyHandler(output,d).start() :: Nil).start()
+              val handlerList = for {c <- chunkerNames} yield new InternalRedundancyHandler(output, new ChunkIndex(), c).start()
+              val p = new Parser(filenames(0), format, handlerList).start()
               val reporter = new Reporter(p, reportInterval).start()
               p
             case "tr" =>
-              val d = new ChunkIndex()
-              val p1 = new Parser(filenames(0), format, new DeduplicationHandler(d).start() :: Nil).start()
+              val handlerList1 = for {c <- chunkerNames} yield new DeduplicationHandler(new ChunkIndex(), c)
+              val handlerList2 = for {h <- handlerList1} yield h.start()
+              val p1 = new Parser(filenames(0), format, handlerList2).start()
               val reporter1 = new Reporter(p1, reportInterval).start()
               
-              val p2 = new Parser(filenames(1),  format, new TemporalRedundancyHandler(output,d).start() :: Nil).start()
+              val handlerList3 = for {h <- handlerList1} yield new TemporalRedundancyHandler(output, h.d, h.chunkerName).start
+              val p2 = new Parser(filenames(1),  format, handlerList2).start()
               val reporter2 = new Reporter(p1, reportInterval).start()
               p2
           }         

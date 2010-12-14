@@ -31,7 +31,13 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 		val chunkList = for(i <- 0 until fileData.getChunkCount())
 			yield(parseChunkEntry(stream))
 
-			val file = File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList)
+                        val l : Option[String] = if (fileData.hasLabel()) {
+                            Some(fileData.getLabel())
+                        } else {
+                            None
+                        }
+
+			val file = File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l)
 
 		stepDownCheck(receiver)
 		receiver ! file 
@@ -70,7 +76,7 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
  * is non-sense) in a file (named filename) using the protocol buffers format specified in the
 		* file fs-c.proto
 		*/
-		class ProtobufFormatWriter(filename: String, privacy: Boolean) extends Actor with Log {
+    class ProtobufFormatWriter(filename: String, privacy: Boolean) extends Actor with Log {
 	trapExit = true
 	val filestream : OutputStream = new BufferedOutputStream(new FileOutputStream(filename), 512 * 1024)
 	var fileCount = 0L
@@ -85,7 +91,8 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 		if(secs > 0) {
 			val mbs = totalFileSize / secs
 			val fps = fileCount / secs
-			logger.info("File Count: %d (%d f/s), File Size: %s (%s/s), Chunk Count: %d, ErrorCount: %d, Queue: %d".format(
+			logger.info("%s: file count: %d (%d f/s), file size: %s (%s/s), chunk count: %d, error count: %d, queue: %d".format(
+                                        filename,
 					fileCount, 
 					fps,
 					StorageUnit(totalFileSize), 
@@ -97,22 +104,24 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 	}
 
 	def act() { 
-		logger.debug("Start")
-		while(true) {
-			receive {
-			case Quit =>
+	    logger.debug("Start")
+	    while(true) {
+	        receive {
+		    case Quit =>
 			// Sentinal value
 			filestream.close()
 			report()
 			logger.debug("Exit")
 			exit()
-			case File(filename, fileSize, fileType,chunks) =>
-			val currentFilename = if(privacy) {  
+		    case File(filename, fileSize, fileType,chunks, label) =>
+                        val currentFilename = if(privacy) {  
 				"" + filename.hashCode
 			} else {
 				filename
 			} 
-			val fileData = createFileData(currentFilename, fileSize, fileType, chunks)
+			val fileData = createFileData(currentFilename, fileSize, fileType, chunks, label)
+                            logger.debug(fileData)
+
 			fileData.writeDelimitedTo(filestream)
 			for(c <- chunks) {
 			  val chunkData = createChunkData(c)
@@ -134,9 +143,13 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 	/**
 	* Creates a protocol buffer "File" instance from the file data including the chunks as repeated field
 	*/
-	def createFileData(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk]) : de.pc2.dedup.fschunk.Protocol.File = {
+	def createFileData(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk], label: Option[String]) : de.pc2.dedup.fschunk.Protocol.File = {
 			val fileBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder() 
 			fileBuilder.setFilename(filename).setSize(fileSize).setType(fileType).setChunkCount(chunks.size)
+                        label match {
+                            case Some(s) => fileBuilder.setLabel(s)
+                            case None =>
+                        }
 			fileBuilder.build()
 	}
 	def createChunkData(c: Chunk) : de.pc2.dedup.fschunk.Protocol.Chunk = {

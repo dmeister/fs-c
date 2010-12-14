@@ -1,6 +1,6 @@
 
 # Version number for this release
-VERSION_NUMBER = "0.2.3"
+VERSION_NUMBER = "0.3.0"
 # Group identifier for your projects
 GROUP = "fs-c"
 COPYRIGHT = "(c) Paderborn Center for Parallel Computing, 2009. Open Source under New BSD license"
@@ -44,24 +44,29 @@ define "fs-c" do
   compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
   compile.dependencies.include "lib/*.jar"
   compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
+  compile.dependencies.include "target/gen-classes"
       
   define "java-parts" do
       compile.options.target = '1.5'
       compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
       compile.dependencies.include "lib/*.jar"
       compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
+      compile.with("target/gen-classes")
       compile.from('src/main/java15').using(:javac).into('target/j-classes')
   end
   define "scala-parts" do
     compile.options.target = '1.5'
     compile.dependencies.include "#{HADOOP_ROOT}/hadoop-*.jar"
     compile.dependencies.include "lib/*.jar"
+    compile.dependencies.include "target/gen-classes"
     compile.dependencies.include "#{PIG_ROOT}/pig-*.jar"
     compile.with("protobuf").with("java-parts")
   end
 
   package_with_sources
-  package(:jar).with :manifest=>{ 'Copyright'=>'Paderborn Center for Parallel Computing (C) 2009' }
+  package(:jar).with :manifest=>{ 'Copyright'=>'Paderborn Center for Parallel Computing (C) 2009-2010' }
+  package(:jar).include "target/gen-classes/*"
+  package(:jar).include "target/j-classes/*"
   
   package(:zip).include file("target/fs-c-#{VERSION_NUMBER}.jar")
   package(:zip).include file("src/main/other/fs-c"), :path => "bin"

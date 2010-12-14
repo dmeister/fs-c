@@ -109,7 +109,7 @@ class LegacyFormatReader(filename: String, receiver: Actor) extends Actor with L
 			logger.debug("Fetched file %s from trace".format(filename))
 		}
 
-		val file = File(filename, fileSize, fileType, chunks.toList)
+		val file = File(filename, fileSize, fileType, chunks.toList, None)
 		stepDownCheck(receiver)
 		receiver ! file
 		reader.read()
@@ -192,7 +192,7 @@ class LegacyFormatWriter(filename: String, privacy: Boolean) extends Actor with 
 			report()
 			logger.debug("Exit")
 			exit()
-			case File(filename, fileSize, fileType,chunks) =>
+			case File(filename, fileSize, fileType,chunks, label) =>
 			if(logger.isDebugEnabled()) {
 				logger.info("Write %s".format(filename))
 			}

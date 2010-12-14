@@ -17,9 +17,9 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.actors.Exit
 
-class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handlers: List[Actor], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean) extends Actor with Log {
+class FileSystemChunking(listing: FileListingProvider, chunker: List[(Chunker, List[Actor])], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean) extends Actor with Log {
 	trapExit = true
-	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, handlers, useDefaultIgnores, followSymlinks).start()
+	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks).start()
 
 	def report() {
 		logger.debug("Queue: %d".format(
@@ -30,11 +30,13 @@ class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handler
 		logger.debug("Start")
 
 		link(dispatcher)
-		handlers.foreach(h => link(h))
+                for ((_, handlers) <- chunker) {
+		    handlers.foreach(h => link(h))
+                }
 
 		// Append all files from listing to directory processor
-		for(filename <- listing) {
-			dispatcher ! getFile(filename) 
+		for(fl <- listing) {
+			dispatcher ! (getFile(fl.filename), fl.label) 
 		}
 
 		while(true) {
@@ -43,7 +45,9 @@ class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handler
 			if(actor == dispatcher) {
 
 				// If dispatcher is finished, stop all handlers and exit
-				handlers.foreach(h => h ! Quit)
+                                for ((_, handlers) <- chunker) {    
+                                    handlers.foreach(h => h ! Quit)
+                                }
 				logger.debug("Exit")
 				exit()
 			}
@@ -57,7 +61,9 @@ class FileSystemChunking(listing: FileListingProvider, chunker: Chunker, handler
 			case Report =>
 			  report()
 			dispatcher ! Report
-			handlers.foreach(h => h ! Report)
+                        for ((_, handlers) <- chunker) {
+			    handlers.foreach(h => h ! Report)
+                        }
 			case msg: Any =>
 				logger.warn("Unknown Message: " + msg)
 			}

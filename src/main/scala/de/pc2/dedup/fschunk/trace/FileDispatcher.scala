@@ -10,19 +10,20 @@ import de.pc2.dedup.util._
 import java.util.concurrent.atomic.AtomicLong
 
 trait FileDispatcher extends Actor {
-	def dispatch(f: File)
+	def dispatch(f: File, label: Option[String])
 }
 
 /**
 * Dispatches files to a number of file processors that chunk the file contents
 */ 
-class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: List[Actor], useDefaultIgnores: Boolean, followSymlinks: Boolean) extends FileDispatcher with Log {
+class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Actor])], useDefaultIgnores: Boolean, followSymlinks: Boolean) extends FileDispatcher with Log {
 	trapExit = true 
  	case object ExecutorFinished
   
  	def shouldShutdown : Boolean = {
  	  val dircount = direxecutor.getActiveCount() + direxecutor.getQueue().size()
  	  val filecount = fileexecutor.getActiveCount() + direxecutor.getQueue().size()
+          logger.debug("Directory count %s\tfile count %s".format(dircount, filecount))
  	  return dircount + filecount == 1
  	}
   
@@ -51,11 +52,11 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: Lis
 	val fileexecutor = new FileDispatcherThreadPoolExecutor(this)
 	val direxecutor = new DirectoryDispatcherThreadPoolExecutor(this)
  
-	def dispatch(f: File) {
+	def dispatch(f: File, label: Option[String]) {
 	  if(f.isDirectory()) {
-	    direxecutor.execute(new DirectoryProcessor(f, useDefaultIgnores, this, followSymlinks))
+	    direxecutor.execute(new DirectoryProcessor(f, label, useDefaultIgnores, this, followSymlinks))
 	  } else {
-	    fileexecutor.execute(new FileProcessor(f, chunker,handlers, 256 * 1024))
+	    fileexecutor.execute(new FileProcessor(f, label, chunker, 256 * 1024))
 	  }
 	}
 
@@ -76,25 +77,25 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: Chunker, handlers: Lis
 
 		while(true) {
 			receive {
-			case f: File =>  
-			dispatch(f)
+                            case (f: File, label: Option[String]) =>  
+			        dispatch(f, label)
 			case ExecutorFinished =>
 			
-			direxecutor.shutdown()
-			while(direxecutor.isTerminating()) {
+			    direxecutor.shutdown()
+			    while(direxecutor.isTerminating()) {
 				direxecutor.awaitTermination(60, TimeUnit.SECONDS)
-			}
-			fileexecutor.shutdown()
-			while(fileexecutor.isTerminating()) {
+			    }
+		    	    fileexecutor.shutdown()
+			    while(fileexecutor.isTerminating()) {
 				fileexecutor.awaitTermination(60, TimeUnit.SECONDS)
-			}
-			report()
-			logger.debug("Exit")
-			exit()
+			    }
+			    report()
+			    logger.debug("Exit")
+			    exit()
 			case Report =>
-			report()
+			    report()
 			case msg: Any =>
-			logger.error("Unknown Message " + msg)
+			    logger.error("Unknown Message " + msg)
 			} 
 		}
 	}

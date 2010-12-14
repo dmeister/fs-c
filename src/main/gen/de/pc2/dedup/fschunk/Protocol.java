@@ -351,6 +351,13 @@ public final class Protocol {
     public boolean hasChunkCount() { return hasChunkCount; }
     public int getChunkCount() { return chunkCount_; }
     
+    // optional string label = 5;
+    public static final int LABEL_FIELD_NUMBER = 5;
+    private boolean hasLabel;
+    private java.lang.String label_ = "";
+    public boolean hasLabel() { return hasLabel; }
+    public java.lang.String getLabel() { return label_; }
+    
     private void initFields() {
     }
     public final boolean isInitialized() {
@@ -374,6 +381,9 @@ public final class Protocol {
       }
       if (hasChunkCount()) {
         output.writeUInt32(4, getChunkCount());
+      }
+      if (hasLabel()) {
+        output.writeString(5, getLabel());
       }
       getUnknownFields().writeTo(output);
     }
@@ -399,6 +409,10 @@ public final class Protocol {
       if (hasChunkCount()) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(4, getChunkCount());
+      }
+      if (hasLabel()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(5, getLabel());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -570,6 +584,9 @@ public final class Protocol {
         if (other.hasChunkCount()) {
           setChunkCount(other.getChunkCount());
         }
+        if (other.hasLabel()) {
+          setLabel(other.getLabel());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -609,6 +626,10 @@ public final class Protocol {
             }
             case 32: {
               setChunkCount(input.readUInt32());
+              break;
+            }
+            case 42: {
+              setLabel(input.readString());
               break;
             }
           }
@@ -691,6 +712,27 @@ public final class Protocol {
       public Builder clearChunkCount() {
         result.hasChunkCount = false;
         result.chunkCount_ = 0;
+        return this;
+      }
+      
+      // optional string label = 5;
+      public boolean hasLabel() {
+        return result.hasLabel();
+      }
+      public java.lang.String getLabel() {
+        return result.getLabel();
+      }
+      public Builder setLabel(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasLabel = true;
+        result.label_ = value;
+        return this;
+      }
+      public Builder clearLabel() {
+        result.hasLabel = false;
+        result.label_ = getDefaultInstance().getLabel();
         return this;
       }
       
@@ -1060,10 +1102,10 @@ public final class Protocol {
     java.lang.String[] descriptorData = {
       "\n\031src/main/other/fs-c.proto\022\024de.pc2.dedu" +
       "p.fschunk\"\036\n\010ChunkRun\022\022\n\nstart_date\030\001 \002(" +
-      "\t\"H\n\004File\022\020\n\010filename\030\001 \002(\t\022\014\n\004size\030\002 \002(" +
-      "\004\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \002(\r\"!\n\005C" +
-      "hunk\022\n\n\002fp\030\002 \002(\014\022\014\n\004size\030\003 \002(\rB\nB\010Protoc" +
-      "ol"
+      "\t\"W\n\004File\022\020\n\010filename\030\001 \002(\t\022\014\n\004size\030\002 \002(" +
+      "\004\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \002(\r\022\r\n\005l" +
+      "abel\030\005 \001(\t\"!\n\005Chunk\022\n\n\002fp\030\002 \002(\014\022\014\n\004size\030" +
+      "\003 \002(\rB\nB\010Protocol"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1083,7 +1125,7 @@ public final class Protocol {
           internal_static_de_pc2_dedup_fschunk_File_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_de_pc2_dedup_fschunk_File_descriptor,
-              new java.lang.String[] { "Filename", "Size", "Type", "ChunkCount", },
+              new java.lang.String[] { "Filename", "Size", "Type", "ChunkCount", "Label", },
               de.pc2.dedup.fschunk.Protocol.File.class,
               de.pc2.dedup.fschunk.Protocol.File.Builder.class);
           internal_static_de_pc2_dedup_fschunk_Chunk_descriptor =

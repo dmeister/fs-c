@@ -5,13 +5,13 @@ import java.math.BigInteger
 import de.pc2.dedup.chunker.Chunker
 import scala.collection.mutable._ 
  
-class RabinChunker(minimalSize: Int, averageSize: Int, maximalSize: Int, digestFactory: DigestFactory) extends Chunker {
+class RabinChunker(minimalSize: Int, averageSize: Int, maximalSize: Int, digestFactory: DigestFactory, val chunkerName: String) extends Chunker {
 	private val rabinWindow = new RabinWindow(Rabin.createDefaultRabin(), 48);
 	private val breakmark : Long = (Math.pow(2.0, BigInteger.valueOf(averageSize).bitLength()-1)-1).toLong
 	 
-	def createSession() : ChunkerSession = new RabinChunkerSession()
+	def createSession() : ChunkerSession = new RabinChunkerSession(chunkerName)
   
-	private class RabinChunkerSession extends ChunkerSession {
+	private class RabinChunkerSession(val chunkerName: String) extends ChunkerSession {
 		val rabinSession = rabinWindow.createSession()
 		val currentChunk = new Array[Byte](maximalSize)
 		var currentChunkPos: Int = 0

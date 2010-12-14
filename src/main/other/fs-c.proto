@@ -10,6 +10,7 @@ message File {
    required uint64 size = 2;
    optional string type = 3;
    required uint32 chunkCount = 4;
+   optional string label = 5;
 }
 
 message Chunk {

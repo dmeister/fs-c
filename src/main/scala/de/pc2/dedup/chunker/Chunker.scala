@@ -16,6 +16,8 @@ trait ChunkerSession {
    * it should be ready to process new chunk calls.
    */
   def close()(h: (Chunk => Unit))
+
+  def chunkerName() : String
 }
 
 /**
@@ -27,4 +29,6 @@ trait Chunker {
    * Creates a new chunker session
    */
     def createSession() : ChunkerSession
+
+    def chunkerName() : String
 }       

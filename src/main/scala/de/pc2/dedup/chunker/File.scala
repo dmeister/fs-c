@@ -7,7 +7,7 @@ package de.pc2.dedup.chunker
  * @fileType type of the file or "" if the file has no type
  * @chunks list of chunks that form the file contents
  */
-case class File(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk]) {
+case class File(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk], label: Option[String]) {
   if(fileSize < 0) {
     throw new IllegalArgumentException("Illegal file size " + fileSize)
   }

@@ -9,7 +9,7 @@ import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
  
-class InternalRedundancyHandler(output: Option[String], d: ChunkIndex) extends Actor {
+class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends Actor {
   trapExit = true
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
@@ -26,36 +26,36 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex) extends A
       
     while(true) {
       receive { 
-        case File(filename, fileSize, fileType, chunks) =>
-          println(filename)
-          val sizeCategory = getSizeCategory(fileSize)
-          var currentRealSize = 0 
-          var currentFileSize = 0
-          for(chunk <- chunks) {
-            if(!d.check(chunk.fp)) { 
-              d.update(chunk.fp)
-              currentRealSize += chunk.size
+        case File(filename, fileSize, fileType, chunks, label) =>
+            println(filename)
+            val sizeCategory = getSizeCategory(fileSize)
+            var currentRealSize = 0 
+            var currentFileSize = 0
+            for(chunk <- chunks) {
+                if(!d.check(chunk.fp)) { 
+                    d.update(chunk.fp)
+                    currentRealSize += chunk.size
+                }
+                currentFileSize += chunk.size
             }
-            currentFileSize += chunk.size
-          }
-          if(!typeMap.contains(fileType)) {
-            typeMap += (fileType -> (0L,0L))
-          } 
-          if(!sizeCategoryMap.contains(sizeCategory)) {
-            sizeCategoryMap += (sizeCategory -> (0L, 0L))
-          }
-          typeMap += (fileType -> (typeMap(fileType)._1 + currentRealSize, typeMap(fileType)._2 + currentFileSize))
-          typeMap += ("ALL" -> (typeMap("ALL")._1 + currentRealSize, typeMap("ALL")._2 + currentFileSize))
+            if(!typeMap.contains(fileType)) {
+                typeMap += (fileType -> (0L,0L))
+            } 
+            if(!sizeCategoryMap.contains(sizeCategory)) {
+                sizeCategoryMap += (sizeCategory -> (0L, 0L))
+            }
+            typeMap += (fileType -> (typeMap(fileType)._1 + currentRealSize, typeMap(fileType)._2 + currentFileSize))
+            typeMap += ("ALL" -> (typeMap("ALL")._1 + currentRealSize, typeMap("ALL")._2 + currentFileSize))
       
-          sizeCategoryMap += (sizeCategory -> (sizeCategoryMap(sizeCategory)._1 + currentRealSize, sizeCategoryMap(sizeCategory)._2 + currentFileSize))
-          sizeCategoryMap += ("ALL" -> (sizeCategoryMap("ALL")._1 + currentRealSize, sizeCategoryMap("ALL")._2 + currentFileSize))
+            sizeCategoryMap += (sizeCategory -> (sizeCategoryMap(sizeCategory)._1 + currentRealSize, sizeCategoryMap(sizeCategory)._2 + currentFileSize))
+            sizeCategoryMap += ("ALL" -> (sizeCategoryMap("ALL")._1 + currentRealSize, sizeCategoryMap("ALL")._2 + currentFileSize))
         case Quit =>
           output match {
             case Some(runName) =>
-              writeMapToFile(typeMap, runName + "-ir-type.csv")
-              writeMapToFile(sizeCategoryMap, runName + "-ir-size.csv")
+              writeMapToFile(typeMap, "%s-%s-ir-type.csv".format(runName, chunkerName))
+              writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName))
             case None =>
-              outputMapToConsole(sizeCategoryMap, "File size categories")
+              outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName))
           }
           exit() 
       }
