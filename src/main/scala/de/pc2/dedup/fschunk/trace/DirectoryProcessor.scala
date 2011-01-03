@@ -60,7 +60,12 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
     	DirectoryProcessor.activeCount.incrementAndGet()
 		DirectoryProcessor.totalCount.incrementAndGet()
 	  	try {
-	  		processList(directory.listFiles().toList)
+                    var fileList = directory.listFiles();
+                    if (fileList != null) {
+	  		processList(fileList.toList)
+                    } else {
+                        logger.warn("Failed to list directory " + directory)
+                    }
 	  	} finally {
 	  		DirectoryProcessor.activeCount.decrementAndGet()
 	  	}
