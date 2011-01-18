@@ -1,6 +1,6 @@
 
 # Version number for this release
-VERSION_NUMBER = "0.3.0"
+VERSION_NUMBER = "0.3.1"
 # Group identifier for your projects
 GROUP = "fs-c"
 COPYRIGHT = "(c) Paderborn Center for Parallel Computing, 2009. Open Source under New BSD license"
@@ -34,6 +34,7 @@ define "fs-c" do
     task("generate") do
        	system("protoc --java_out src/main/gen/ src/main/other/fs-c.proto")
     end
+    compile.options.target = '1.5'
     compile.from('src/main/gen').
     	into('target/gen-classes').
     	with("lib/*",
@@ -74,7 +75,7 @@ define "fs-c" do
   package(:zip).include "contrib/*", :path => "contrib"
   package(:zip).include file("README.txt")
   package(:zip).include file("CHANGES.txt")
-  package(:zip).include "lib/*", :path => "lib"
+  package(:zip).include "lib/*.jar", :path => "lib"
   
   package(:tgz).include file("target/fs-c-#{VERSION_NUMBER}.jar")
   package(:tgz).include file("src/main/other/fs-c"), :path => "bin"
