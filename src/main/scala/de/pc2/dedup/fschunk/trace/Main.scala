@@ -30,7 +30,8 @@ object Main extends Log {
       val format = new StringOption(None, "format", "Input/Output Format (protobuf, legacy, default: protobuf)") with AllowAll
       val noDefaultIgnores = new Flag(None, "no-default-ignores", "Avoid using the default ignore list") with AllowAll
 	  val followSymlinks = new Flag(None, "follow-symlinks", "Follow symlinks") with AllowAll
-          val label = new StringOption(None, "label", "File label") with AllowAll
+      val label = new StringOption(None, "label", "File label") with AllowAll
+      val progressFile = new StringOption(None, "progress-file", "File containing all processed filenames") with AllowAll
     } 
     Options.parseOrHelp(args) { cmd =>
       val chunking = try {
@@ -99,17 +100,29 @@ object Main extends Log {
       val chunker = if (chunkerNames.size >= 0) {  
           for {chunkerName <- chunkerNames} yield getChunker(chunkerName)
       } else {
-        for {chunkerName <- List("cdc8")} yield getChunker(chunkerName)
+          for {chunkerName <- List("cdc8")} yield getChunker(chunkerName)
       }
       val fileListing : FileListingProvider = if(cmd(Options.listing)) {
         FileListingProvider.fromListingFile(filename, cmd(Options.label))        
       } else {
         FileListingProvider.fromDirectFile(filename, cmd(Options.label))  
       }  
+      
+      val progressHandler = cmd(Options.progressFile) match {
+          case Some(filename) => 
+            val ph = new FileProgressHandler(filename)
+            ph.progress _
+          case None =>
+                def dummyProgressHandler(f: de.pc2.dedup.chunker.File) : Unit = {
+                    // empty
+                }
+                dummyProgressHandler _
+      }
+      
       val chunking = new FileSystemChunking(   
 				fileListing,   
 				chunker,     
-                threads, useIgnoreList, followSymlinks)
+                threads, useIgnoreList, followSymlinks, progressHandler)
       val reporter = new Reporter(chunking, reportInterval).start()
       chunking
       } catch {

@@ -16,15 +16,15 @@ trait FileDispatcher extends Actor {
 /**
 * Dispatches files to a number of file processors that chunk the file contents
 */ 
-class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Actor])], useDefaultIgnores: Boolean, followSymlinks: Boolean) extends FileDispatcher with Log {
+class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Actor])], useDefaultIgnores: Boolean, followSymlinks: Boolean, progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends FileDispatcher with Log {
 	trapExit = true 
  	case object ExecutorFinished
   
  	def shouldShutdown : Boolean = {
- 	  val dircount = direxecutor.getActiveCount() + direxecutor.getQueue().size()
- 	  val filecount = fileexecutor.getActiveCount() + direxecutor.getQueue().size()
-          logger.debug("Directory count %s\tfile count %s".format(dircount, filecount))
- 	  return dircount + filecount == 1
+ 	    val dircount = direxecutor.getActiveCount() + direxecutor.getQueue().size()
+ 	    val filecount = fileexecutor.getActiveCount() + direxecutor.getQueue().size()
+ 	    logger.debug("Directory count %s\tfile count %s".format(dircount, filecount))
+ 	    return dircount + filecount == 1
  	}
   
 	class DirectoryDispatcherThreadPoolExecutor(dispatcher: FileDispatcher) extends ThreadPoolExecutor(1, 4, 30, TimeUnit.SECONDS,
@@ -56,20 +56,20 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Ac
 	  if(f.isDirectory()) {
 	    direxecutor.execute(new DirectoryProcessor(f, label, useDefaultIgnores, this, followSymlinks))
 	  } else {
-	    fileexecutor.execute(new FileProcessor(f, label, chunker, 256 * 1024))
+	    fileexecutor.execute(new FileProcessor(f, label, chunker, 256 * 1024, progressHandler))
 	  }
 	}
 
 	def report() {
 		logger.debug("File (Total: %d, Data %s, Active: %d, Scheduled: %d), Directory (Total: %d, Active: %d), Queue: %d".format(
-				FileProcessor.totalCount.get(),
-				StorageUnit(FileProcessor.totalRead.get()),
-				FileProcessor.activeCount.get(),
-				fileexecutor.getQueue().size,
-				DirectoryProcessor.totalCount.get(),
-				DirectoryProcessor.activeCount.get(), 
-				direxecutor.getQueue().size,
-				mailboxSize))
+			FileProcessor.totalCount.get(),
+			StorageUnit(FileProcessor.totalRead.get()),
+			FileProcessor.activeCount.get(),
+			fileexecutor.getQueue().size,
+			DirectoryProcessor.totalCount.get(),
+			DirectoryProcessor.activeCount.get(), 
+			direxecutor.getQueue().size,
+			mailboxSize))
 	}
 
 	def act() {
@@ -77,17 +77,16 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Ac
 
 		while(true) {
 			receive {
-                            case (f: File, label: Option[String]) =>  
-			        dispatch(f, label)
+            case (f: File, label: Option[String]) =>  
+			    dispatch(f, label)
 			case ExecutorFinished =>
-			
 			    direxecutor.shutdown()
 			    while(direxecutor.isTerminating()) {
-				direxecutor.awaitTermination(60, TimeUnit.SECONDS)
+				    direxecutor.awaitTermination(60, TimeUnit.SECONDS)
 			    }
 		    	    fileexecutor.shutdown()
 			    while(fileexecutor.isTerminating()) {
-				fileexecutor.awaitTermination(60, TimeUnit.SECONDS)
+				    fileexecutor.awaitTermination(60, TimeUnit.SECONDS)
 			    }
 			    report()
 			    logger.debug("Exit")

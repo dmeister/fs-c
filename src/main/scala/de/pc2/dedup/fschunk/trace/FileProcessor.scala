@@ -25,7 +25,7 @@ object FileProcessor {
 	val totalRead = new AtomicLong(0L)
 }
 
-class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Chunker, List[Actor])], defaultBufferSize: Int) extends Runnable with Log {
+class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Chunker, List[Actor])], defaultBufferSize: Int, progressHandler: (File) => Unit) extends Runnable with Log {
 
 	def run() {
 		if(logger.isDebugEnabled) {
@@ -41,31 +41,33 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
 			} else {
 				file.length.toInt
 			}
-				val buffer = new Array[Byte](bufferSize)
-				val sessionList = for {chunker <- chunkerList} yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
+			val buffer = new Array[Byte](bufferSize)
+			val sessionList = for {chunker <- chunkerList} yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
 
-				s = new FileInputStream(file)
-				val t = FileType.getNormalizedFiletype(file)
+			s = new FileInputStream(file)
+			val t = FileType.getNormalizedFiletype(file)
 
-				var r = s.read(buffer)
-				while(r > 0) {
-				    FileProcessor.totalRead.addAndGet(r)
-                                        for ((session, handlers, chunkList) <- sessionList) {
-					    session.chunk(buffer, r) { chunk => 
-					    chunkList.append(chunk)
-					    }
-                                        }
-					r = s.read(buffer)
-				}
-                                for ((session, handlers, chunkList) <- sessionList) {
-				    session.close() { chunk => 
-				    chunkList.append(chunk)
+			var r = s.read(buffer)
+			while(r > 0) {
+				FileProcessor.totalRead.addAndGet(r)
+                for ((session, handlers, chunkList) <- sessionList) {
+					session.chunk(buffer, r) { 
+					    chunk => chunkList.append(chunk)
 				    }
-				    val f = new File(file.getCanonicalPath, file.length, t, chunkList.toList, label)
-				    for(handler <- handlers) {
+                }
+			    r = s.read(buffer)
+			}
+            for ((session, handlers, chunkList) <- sessionList) {
+				session.close() { 
+				    chunk => chunkList.append(chunk)
+				}
+				val f = new File(file.getCanonicalPath, file.length, t, chunkList.toList, label)
+				for(handler <- handlers) {
 					handler ! f
-				    }  
-                                }
+				}  
+            }
+            val fileWithoutChunks = new File(file.getCanonicalPath, file.length, t, List(), label)
+            progressHandler(fileWithoutChunks) 
 		} catch {
 		case e: FileNotFoundException =>
                     for (val (chunker, handlers) <- chunkerList) {

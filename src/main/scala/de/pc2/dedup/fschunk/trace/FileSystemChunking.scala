@@ -17,9 +17,9 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.actors.Exit
 
-class FileSystemChunking(listing: FileListingProvider, chunker: List[(Chunker, List[Actor])], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean) extends Actor with Log {
+class FileSystemChunking(listing: FileListingProvider, chunker: List[(Chunker, List[Actor])], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean, progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Actor with Log {
 	trapExit = true
-	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks).start()
+	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler).start()
 
 	def report() {
 		logger.debug("Queue: %d".format(
@@ -30,9 +30,9 @@ class FileSystemChunking(listing: FileListingProvider, chunker: List[(Chunker, L
 		logger.debug("Start")
 
 		link(dispatcher)
-                for ((_, handlers) <- chunker) {
+        for ((_, handlers) <- chunker) {
 		    handlers.foreach(h => link(h))
-                }
+        }
 
 		// Append all files from listing to directory processor
 		for(fl <- listing) {
