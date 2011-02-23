@@ -23,6 +23,8 @@ object FileProcessor {
 	val activeCount = new AtomicLong(0L)
 	val totalCount = new AtomicLong(0L)  
 	val totalRead = new AtomicLong(0L)
+	
+	val MAX_CHUNKLIST_SIZE = 1000000L
 }
 
 class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Chunker, List[Actor])], defaultBufferSize: Int, progressHandler: (File) => Unit) extends Runnable with Log {
@@ -46,13 +48,19 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
 
 			s = new FileInputStream(file)
 			val t = FileType.getNormalizedFiletype(file)
-
 			var r = s.read(buffer)
 			while(r > 0) {
 				FileProcessor.totalRead.addAndGet(r)
                 for ((session, handlers, chunkList) <- sessionList) {
 					session.chunk(buffer, r) { 
 					    chunk => chunkList.append(chunk)
+				    }
+				    if (chunkList.size > FileProcessor.MAX_CHUNKLIST_SIZE) {
+				        val fp = new FilePart(file.getCanonicalPath, chunkList.toList)
+                    	for (handler <- handlers) {
+                    		handler ! fp
+                    	}
+                        chunkList.clear()
 				    }
                 }
 			    r = s.read(buffer)
@@ -62,6 +70,7 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
 				    chunk => chunkList.append(chunk)
 				}
 				val f = new File(file.getCanonicalPath, file.length, t, chunkList.toList, label)
+				logger.debug(f)
 				for(handler <- handlers) {
 					handler ! f
 				}  
@@ -69,22 +78,23 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
             val fileWithoutChunks = new File(file.getCanonicalPath, file.length, t, List(), label)
             progressHandler(fileWithoutChunks) 
 		} catch {
-		case e: FileNotFoundException =>
-                    for (val (chunker, handlers) <- chunkerList) {
-		        val fe = new FileError(file.getCanonicalPath, file.length)
-		        for(handler <- handlers) {
-			    handler ! fe
-		        }  
-                    }
-		logger.warn("File %s".format(e.getMessage))
+		    case e: FileNotFoundException =>
+                for (val (chunker, handlers) <- chunkerList) {
+		            val fe = new FileError(file.getCanonicalPath, file.length)
+		            for(handler <- handlers) {
+			            handler ! fe
+		            }  
+                }
+		        logger.warn("File %s".format(e.getMessage))
 		case  e: Exception => 
+		logger.error("Processing Error %s (%s)".format(file,StorageUnit(file.length)),e)
                     for (val (chunker, handlers) <- chunkerList) {
 		        val fe = new FileError(file.getCanonicalPath, file.length)
 		        for(handler <- handlers) {
 			    handler ! fe
 		        }  
                     }
-		logger.error("Processing Error %s (%s)".format(file,StorageUnit(file.length)),e)
+
 		} finally {
 			close(s) 
 		}

@@ -8,13 +8,17 @@ import de.pc2.dedup.util.StorageUnit
 import scala.actors.Actor
 import scala.actors.Actor._
 import de.pc2.dedup.util.Log
+import scala.collection.mutable.Map
 
 class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) extends Actor with Log {
 	var totalFileSize = 0L 
 	var totalChunkSize = 0L
 	var totalChunkCount = 0L
 
+    val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
+
 	val startTime = System.currentTimeMillis()
+
 
 	def report() {
 		val stop = System.currentTimeMillis() 
@@ -54,11 +58,25 @@ class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) ex
 		        exit()
 		    case Report =>
 			report()
+			case FilePart(filename, chunks) =>
+                if (!filePartialMap.contains(filename)) {
+                    filePartialMap += (filename -> new ListBuffer[Chunk]())
+                }
+                for(chunk <- chunks) {
+                   filePartialMap(filename).append(chunk)
+                  }
 		    case File(filename, size, fileType, chunks, label) =>
 			var chunkFileSize = 0L
 			var chunkSize = 0L 
 			var chunkCount = 0L
-			for(chunk <- chunks) {
+            val allFileChunks : List[Chunk] = if (filePartialMap.contains(filename)) {
+                  val partialChunks = filePartialMap(filename)
+                  filePartialMap -= filename
+                  List.concat(partialChunks.toList, chunks)
+              } else {
+                  chunks
+              }
+            for(chunk <- allFileChunks) {
 			    chunkCount += 1
 			    chunkFileSize += chunk.size
 			    if(!d.check(chunk.fp)) {

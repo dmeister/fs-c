@@ -13,6 +13,8 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
   trapExit = true
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
+  
+  val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
    
   def getSizeCategory(fileSize: Long) : String = {
     return FileSizeCategory.getCategory(fileSize).toString()
@@ -26,12 +28,26 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
       
     while(true) {
       receive { 
+        case FilePart(filename, chunks) =>
+            if (!filePartialMap.contains(filename)) {
+                filePartialMap += (filename -> new ListBuffer[Chunk]())
+            }
+            for(chunk <- chunks) {
+               filePartialMap(filename).append(chunk)
+              }
         case File(filename, fileSize, fileType, chunks, label) =>
             println(filename)
             val sizeCategory = getSizeCategory(fileSize)
             var currentRealSize = 0 
             var currentFileSize = 0
-            for(chunk <- chunks) {
+            val allFileChunks = if (filePartialMap.contains(filename)) {
+                  val partialChunks = filePartialMap(filename)
+                  filePartialMap -= filename
+                  List.concat(partialChunks.toList, chunks)
+              } else {
+                  chunks
+              }
+            for(chunk <- allFileChunks) {
                 if(!d.check(chunk.fp)) { 
                     d.update(chunk.fp)
                     currentRealSize += chunk.size
@@ -49,6 +65,8 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
       
             sizeCategoryMap += (sizeCategory -> (sizeCategoryMap(sizeCategory)._1 + currentRealSize, sizeCategoryMap(sizeCategory)._2 + currentFileSize))
             sizeCategoryMap += ("ALL" -> (sizeCategoryMap("ALL")._1 + currentRealSize, sizeCategoryMap("ALL")._2 + currentFileSize))
+            
+            
         case Quit =>
           output match {
             case Some(runName) =>

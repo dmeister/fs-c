@@ -7,10 +7,11 @@ message ChunkRun {
 
 message File {
    required string filename = 1;
-   required uint64 size = 2;
+   optional uint64 size = 2;
    optional string type = 3;
    required uint32 chunkCount = 4;
    optional string label = 5;
+   optional bool partial = 6 [default=false];
 }
 
 message Chunk {

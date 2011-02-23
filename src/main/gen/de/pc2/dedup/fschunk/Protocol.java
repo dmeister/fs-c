@@ -330,7 +330,7 @@ public final class Protocol {
     public boolean hasFilename() { return hasFilename; }
     public java.lang.String getFilename() { return filename_; }
     
-    // required uint64 size = 2;
+    // optional uint64 size = 2;
     public static final int SIZE_FIELD_NUMBER = 2;
     private boolean hasSize;
     private long size_ = 0L;
@@ -358,11 +358,17 @@ public final class Protocol {
     public boolean hasLabel() { return hasLabel; }
     public java.lang.String getLabel() { return label_; }
     
+    // optional bool partial = 6 [default = false];
+    public static final int PARTIAL_FIELD_NUMBER = 6;
+    private boolean hasPartial;
+    private boolean partial_ = false;
+    public boolean hasPartial() { return hasPartial; }
+    public boolean getPartial() { return partial_; }
+    
     private void initFields() {
     }
     public final boolean isInitialized() {
       if (!hasFilename) return false;
-      if (!hasSize) return false;
       if (!hasChunkCount) return false;
       return true;
     }
@@ -384,6 +390,9 @@ public final class Protocol {
       }
       if (hasLabel()) {
         output.writeString(5, getLabel());
+      }
+      if (hasPartial()) {
+        output.writeBool(6, getPartial());
       }
       getUnknownFields().writeTo(output);
     }
@@ -413,6 +422,10 @@ public final class Protocol {
       if (hasLabel()) {
         size += com.google.protobuf.CodedOutputStream
           .computeStringSize(5, getLabel());
+      }
+      if (hasPartial()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, getPartial());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -587,6 +600,9 @@ public final class Protocol {
         if (other.hasLabel()) {
           setLabel(other.getLabel());
         }
+        if (other.hasPartial()) {
+          setPartial(other.getPartial());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -632,6 +648,10 @@ public final class Protocol {
               setLabel(input.readString());
               break;
             }
+            case 48: {
+              setPartial(input.readBool());
+              break;
+            }
           }
         }
       }
@@ -658,7 +678,7 @@ public final class Protocol {
         return this;
       }
       
-      // required uint64 size = 2;
+      // optional uint64 size = 2;
       public boolean hasSize() {
         return result.hasSize();
       }
@@ -733,6 +753,24 @@ public final class Protocol {
       public Builder clearLabel() {
         result.hasLabel = false;
         result.label_ = getDefaultInstance().getLabel();
+        return this;
+      }
+      
+      // optional bool partial = 6 [default = false];
+      public boolean hasPartial() {
+        return result.hasPartial();
+      }
+      public boolean getPartial() {
+        return result.getPartial();
+      }
+      public Builder setPartial(boolean value) {
+        result.hasPartial = true;
+        result.partial_ = value;
+        return this;
+      }
+      public Builder clearPartial() {
+        result.hasPartial = false;
+        result.partial_ = false;
         return this;
       }
       
@@ -1102,10 +1140,11 @@ public final class Protocol {
     java.lang.String[] descriptorData = {
       "\n\031src/main/other/fs-c.proto\022\024de.pc2.dedu" +
       "p.fschunk\"\036\n\010ChunkRun\022\022\n\nstart_date\030\001 \002(" +
-      "\t\"W\n\004File\022\020\n\010filename\030\001 \002(\t\022\014\n\004size\030\002 \002(" +
+      "\t\"o\n\004File\022\020\n\010filename\030\001 \002(\t\022\014\n\004size\030\002 \001(" +
       "\004\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \002(\r\022\r\n\005l" +
-      "abel\030\005 \001(\t\"!\n\005Chunk\022\n\n\002fp\030\002 \002(\014\022\014\n\004size\030" +
-      "\003 \002(\rB\nB\010Protocol"
+      "abel\030\005 \001(\t\022\026\n\007partial\030\006 \001(\010:\005false\"!\n\005Ch" +
+      "unk\022\n\n\002fp\030\002 \002(\014\022\014\n\004size\030\003 \002(\rB\nB\010Protoco" +
+      "l"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1125,7 +1164,7 @@ public final class Protocol {
           internal_static_de_pc2_dedup_fschunk_File_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_de_pc2_dedup_fschunk_File_descriptor,
-              new java.lang.String[] { "Filename", "Size", "Type", "ChunkCount", "Label", },
+              new java.lang.String[] { "Filename", "Size", "Type", "ChunkCount", "Label", "Partial", },
               de.pc2.dedup.fschunk.Protocol.File.class,
               de.pc2.dedup.fschunk.Protocol.File.Builder.class);
           internal_static_de_pc2_dedup_fschunk_Chunk_descriptor =

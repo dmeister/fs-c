@@ -30,7 +30,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Ac
 	class DirectoryDispatcherThreadPoolExecutor(dispatcher: FileDispatcher) extends ThreadPoolExecutor(1, 4, 30, TimeUnit.SECONDS,
 			new SynchronousQueue[Runnable](),
 			new ThreadPoolExecutor.CallerRunsPolicy()) {
-			logger.debug("Created Directory Threadpool with at most %d threads".format(4))
+			logger.debug("Created directory threadpool with at most %d threads".format(4))
 		override def afterExecute(r: Runnable, t: Throwable) {
 			if(shouldShutdown) {
 				dispatcher ! ExecutorFinished
@@ -41,7 +41,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Ac
 	class FileDispatcherThreadPoolExecutor(dispatcher: FileDispatcher) extends ThreadPoolExecutor(1, processorNum, 30, TimeUnit.SECONDS, 
 			new ArrayBlockingQueue[Runnable](4096), 
 			new ThreadPoolExecutor.CallerRunsPolicy()) {
-		logger.debug("Created File Threadpool with at most %d threads".format(processorNum))
+		logger.debug("Created file threadpool with at most %d threads".format(processorNum))
 		override def afterExecute(r: Runnable, t: Throwable) {
 			if(shouldShutdown) {
 				dispatcher ! ExecutorFinished
@@ -61,7 +61,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,chunker: List[(Chunker, List[Ac
 	}
 
 	def report() {
-		logger.debug("File (Total: %d, Data %s, Active: %d, Scheduled: %d), Directory (Total: %d, Active: %d), Queue: %d".format(
+		logger.debug("File (total: %d, data %s, active: %d, scheduled: %d), directory (total: %d, active: %d), queue: %d".format(
 			FileProcessor.totalCount.get(),
 			StorageUnit(FileProcessor.totalRead.get()),
 			FileProcessor.activeCount.get(),

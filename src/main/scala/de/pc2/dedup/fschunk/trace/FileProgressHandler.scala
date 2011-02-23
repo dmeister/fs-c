@@ -3,22 +3,58 @@ package de.pc2.dedup.fschunk.trace
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.util.concurrent.locks.ReentrantLock
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
 
 class FileProgressHandler(progressFilename : String) {
-    val stream = new FileOutputStream(progressFilename, true)
-    val writer = new OutputStreamWriter(stream)
-    val channel = stream.getChannel()
+    
+    var index: Int = 0
+    var fileCount: Int = 0
+    var stream : FileOutputStream = null
+    var writer : OutputStreamWriter = null
+    var channel : FileChannel = null
+    var fileLock : FileLock = null
     val processLock = new ReentrantLock()
+    
+    openNextFile()
+    
+    def close() : Unit = {
+        if (fileLock != null) {
+            fileLock.release()
+            fileLock = null
+        }     
+    }
+    
+    def openNextFile() : Unit = {
+        if (fileLock != null) {
+            fileLock.release()
+            fileLock = null
+        }
+        if (stream != null) {
+            writer.flush()
+            stream.close()
+            writer = null
+            channel = null
+        }
+        
+        stream = new FileOutputStream(progressFilename + "." + index, false)
+        writer = new OutputStreamWriter(stream)
+        channel = stream.getChannel()   
+        fileLock = channel.lock()
+        index += 1
+    }
     
     def progress(f: de.pc2.dedup.chunker.File) : Unit = {
         processLock.lock()
-        try {
-            val fileLock = channel.lock()
-        
+        try {        
             writer.write(f.filename)
             writer.write("\n")
-            writer.flush()
-            fileLock.release()
+            
+            fileCount += 1
+            if (fileCount >= 10000) {
+                openNextFile()
+                fileCount = 0
+            }
         } finally {
             processLock.unlock()
         }

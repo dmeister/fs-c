@@ -19,6 +19,8 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
   var currentFileType : String = ""
   var currentRealSize : Long = 0
   var currentFileSize : Long = 0
+ 
+   val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
    
   def getSizeCategory(fileSize: Long) : String = {
     return FileSizeCategory.getCategory(fileSize).toString()
@@ -31,12 +33,25 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     sizeCategoryMap += ("ALL" -> (0L,0L))
     loop {
       react {
+          case FilePart(filename, chunks) =>
+              if (!filePartialMap.contains(filename)) {
+                  filePartialMap += (filename -> new ListBuffer[Chunk]())
+              }
+              for(chunk <- chunks) {
+                 filePartialMap(filename).append(chunk)
+                }
         case File(fileId, fileSize, fileType, chunks, _) =>
           var sizeCategory = getSizeCategory(fileSize)
           var currentRealSize = 0
           var currentFileSize = 0
-      
-          for(chunk <- chunks) {
+          val allFileChunks = if (filePartialMap.contains(fileId)) {
+                val partialChunks = filePartialMap(fileId)
+                filePartialMap -= fileId
+                List.concat(partialChunks.toList, chunks)
+            } else {
+                chunks
+            }
+          for(chunk <- allFileChunks) {
             if(!d.check(chunk.fp)) {
               d.update(chunk.fp)
               currentRealSize += chunk.size;

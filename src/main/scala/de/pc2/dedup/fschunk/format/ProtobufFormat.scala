@@ -31,16 +31,18 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 		val chunkList = for(i <- 0 until fileData.getChunkCount())
 			yield(parseChunkEntry(stream))
 
-                        val l : Option[String] = if (fileData.hasLabel()) {
-                            Some(fileData.getLabel())
-                        } else {
-                            None
-                        }
-
-			val file = File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l)
-
+        val message = if (fileData.getPartial()) {
+            FilePart(fileData.getFilename(), chunkList.toList)
+        } else {
+            val l : Option[String] = if (fileData.hasLabel()) {
+                Some(fileData.getLabel())
+            } else {
+                None
+            }
+			File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l)
+        } 
 		stepDownCheck(receiver)
-		receiver ! file 
+		receiver ! message 
 
 		clearMailbox()
 		parseFileEntry(stream) 
@@ -103,6 +105,14 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 		}
 	}
 
+    def finalFilename(filename : String) : String = {
+        if(privacy) {  
+            "" + filename.hashCode
+        } else {
+            filename
+        }   
+    }
+
 	def act() { 
 	    logger.debug("Start")
 	    while(true) {
@@ -113,14 +123,23 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 			report()
 			logger.debug("Exit")
 			exit()
+			case FilePart(filename, chunks) =>
+			try {
+			    val filePartData = createFilePartData(finalFilename(filename), chunks)
+                logger.debug(filePartData)
+                
+                for(c <- chunks) {
+    			  val chunkData = createChunkData(c)
+    			  chunkData.writeDelimitedTo(filestream)
+    			}
+    			chunkCount += chunks.size
+    			} catch {
+    			    case e => logger.error(e)
+    			}
 		    case File(filename, fileSize, fileType,chunks, label) =>
-                        val currentFilename = if(privacy) {  
-				"" + filename.hashCode
-			} else {
-				filename
-			} 
-			val fileData = createFileData(currentFilename, fileSize, fileType, chunks, label)
-                            logger.debug(fileData)
+		    		try {
+			val fileData = createFileData(finalFilename(filename), fileSize, fileType, chunks, label)
+            logger.debug(fileData)
 
 			fileData.writeDelimitedTo(filestream)
 			for(c <- chunks) {
@@ -130,6 +149,9 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 			fileCount += 1
 			totalFileSize += fileSize
 			chunkCount += chunks.size
+				} catch {
+    			    case e => logger.error(e)
+    			}
 			case FileError(filename, fileSize) =>
 			errorCount += 1
 			case Report =>
@@ -139,17 +161,21 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 			}  
 		}
 	}
-
+	def createFilePartData(filename: String, chunks: List[Chunk]) : de.pc2.dedup.fschunk.Protocol.File = {
+			val filePartBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder() 
+			filePartBuilder.setFilename(filename).setChunkCount(chunks.size).setPartial(true)
+			filePartBuilder.build()
+	}
 	/**
 	* Creates a protocol buffer "File" instance from the file data including the chunks as repeated field
 	*/
 	def createFileData(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk], label: Option[String]) : de.pc2.dedup.fschunk.Protocol.File = {
 			val fileBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder() 
-			fileBuilder.setFilename(filename).setSize(fileSize).setType(fileType).setChunkCount(chunks.size)
-                        label match {
-                            case Some(s) => fileBuilder.setLabel(s)
-                            case None =>
-                        }
+			fileBuilder.setFilename(filename).setSize(fileSize).setType(fileType).setChunkCount(chunks.size).setPartial(false)
+            label match {
+                case Some(s) => fileBuilder.setLabel(s)
+                case None =>
+            }
 			fileBuilder.build()
 	}
 	def createChunkData(c: Chunk) : de.pc2.dedup.fschunk.Protocol.Chunk = {

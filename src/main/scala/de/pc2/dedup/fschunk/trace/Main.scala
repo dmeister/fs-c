@@ -97,7 +97,7 @@ object Main extends Log {
           (c, handler)
       }
 
-      val chunker = if (chunkerNames.size >= 0) {  
+      val chunker = if (chunkerNames.size > 0) {  
           for {chunkerName <- chunkerNames} yield getChunker(chunkerName)
       } else {
           for {chunkerName <- List("cdc8")} yield getChunker(chunkerName)

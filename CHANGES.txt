@@ -1,3 +1,9 @@
+Version 0.3.2
+    
+    - Fix that cdc8 is not used as default chunker
+    - Add partial file trace data (to better handle large files)
+    - Add the --progress-file parameter to which all fully processed files are written
+
 Version 0.2.3
 
  - Add Visual Basic Script (VBS) for make the usage on windows easier

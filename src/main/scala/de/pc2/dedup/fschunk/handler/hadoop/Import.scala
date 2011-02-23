@@ -68,15 +68,26 @@ class ImportHandler(filesystemName: String, filename : String) extends Actor wit
 			receive { 
 			case Report =>
 			report()
+			case FilePart(filename, chunks) =>
+			if(logger.isDebugEnabled) {
+				logger.debug("Write file %s (partial)".format(filename))
+			}
+			for(chunk <- chunks) {
+				val fp = base64.encode(chunk.fp.digest)		      	
+				val chunkSize = chunk.size
+				val chunkline = "%s\t%s\t%s%n".format(filename, new String(fp), chunkSize)
+
+				chunkWriter.write(chunkline.getBytes("UTF-8"))
+			}
+			totalChunkCount += chunks.size		
 			case File(filename, fileSize, fileType, chunks, label) =>
 			if(logger.isDebugEnabled) {
 				logger.debug("Write file %s".format(filename))
 			}
-
-                        val l = label match {
-                            case Some(s) => s
-                            case None => ""
-                        }
+			val l = label match {
+                case Some(s) => s
+                case None => ""
+            }
 			val fileline = "%s\t%s\t%s\t%s%n".format(filename, fileSize, fileType, l)
 			fileWriter.write(fileline.getBytes("UTF-8"))
 
