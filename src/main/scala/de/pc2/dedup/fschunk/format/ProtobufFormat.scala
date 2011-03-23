@@ -20,11 +20,12 @@ import scala.actors.Actor._
 import de.pc2.dedup.util._
 import com.google.protobuf._
 
-class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with Log with ActorUtil {
+class ProtobufFormatReader(filename: String, receiver: Actor) extend Reader with Log {
 	private def parseChunkEntry(stream: InputStream) : Chunk = {
 	  val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
 	  Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray))
 	}
+	
 	private def parseFileEntry(stream: InputStream) {
 		val fileData = de.pc2.dedup.fschunk.Protocol.File.parseDelimitedFrom(stream)
 		
@@ -41,44 +42,41 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
             }
 			File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l)
         } 
-		stepDownCheck(receiver)
 		receiver ! message 
 
-		clearMailbox()
 		parseFileEntry(stream) 
 	}
-
-	def act() { 
+	
+	def parse() {
 		logger.debug("Start")
 		try {
 			val stream = new FileInputStream(filename);
 			try {
 				parseFileEntry(stream) 
 			} catch {
-			case e: InvalidProtocolBufferException =>
-			logger.debug("No more files")
-
-			receiver ! Quit
-			case e: Exception =>
-			logger.error("Parsing error",e)
+			    case e: InvalidProtocolBufferException =>
+			        logger.debug("No more files")
+			        receiver ! Quit
+			    case e: Exception =>
+			        logger.error("Parsing error",e)
 			} finally {
 				stream.close()
 			}
 		} catch {
-		case e: IOException =>
-		logger.fatal("Cannot read trace file " + filename, e)
+		    case e: IOException =>
+		        logger.fatal("Cannot read trace file " + filename, e)
 		}
 		logger.debug("Exit")
-		exit()
-	}  
+		exit()  
+	}
 }
 
 /**
  * Handler that saved the file and chunk data of the current trace (using this class in parse mode
  * is non-sense) in a file (named filename) using the protocol buffers format specified in the
-		* file fs-c.proto
-		*/
-    class ProtobufFormatWriter(filename: String, privacy: Boolean) extends Actor with Log {
+ * file fs-c.proto
+ */
+class ProtobufFormatWriter(filename: String, privacy: Boolean) extends Log {
 	trapExit = true
 	val filestream : OutputStream = new BufferedOutputStream(new FileOutputStream(filename), 512 * 1024)
 	var fileCount = 0L
@@ -161,11 +159,13 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 			}  
 		}
 	}
+	
 	def createFilePartData(filename: String, chunks: List[Chunk]) : de.pc2.dedup.fschunk.Protocol.File = {
 			val filePartBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder() 
 			filePartBuilder.setFilename(filename).setChunkCount(chunks.size).setPartial(true)
 			filePartBuilder.build()
 	}
+	
 	/**
 	* Creates a protocol buffer "File" instance from the file data including the chunks as repeated field
 	*/
@@ -178,6 +178,7 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
             }
 			fileBuilder.build()
 	}
+	
 	def createChunkData(c: Chunk) : de.pc2.dedup.fschunk.Protocol.Chunk = {
 		val chunkBuilder = de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
 		chunkBuilder.setFp(ByteString.copyFrom(c.fp.digest)).setSize(c.size)
@@ -186,6 +187,6 @@ class ProtobufFormatReader(filename: String, receiver: Actor) extends Actor with
 }  
 
 object ProtobufFormat extends Format {
-	def createReader(filename: String, receiver: Actor) = new ProtobufFormatReader(filename,receiver).start()
+	def createReader(filename: String, receiver: Actor) = new ProtobufFormatReader(filename, receiver)
 	def createWriter(filename: String, privacyMode: Boolean) = new ProtobufFormatWriter(filename, privacyMode).start()
 }

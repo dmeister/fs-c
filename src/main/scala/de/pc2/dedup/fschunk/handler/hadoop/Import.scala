@@ -49,7 +49,6 @@ class ImportHandler(filesystemName: String, filename : String) extends Actor wit
 		}
 	}
 
-
 	def act() {
 		logger.debug("Start")
 		logger.info("Write path %s".format(rootPath))
@@ -133,8 +132,8 @@ object Import {
 					case Some(s) => s
 					}
 					val reportInterval = cmd(Options.report) match {
-					case None => 60 * 1000
-					case Some(i) => i * 1000
+					    case None => 60 * 1000
+					    case Some(i) => i * 1000
 					}
 					val format = cmd(Options.format) match {
 						case None => "protobuf"
@@ -148,10 +147,10 @@ object Import {
 						throw new SystemExitException()
 					}
 					for(filename <- filenames) {
-						val p = new Parser(filename,format,  
-								new ImportHandler(output, output).start() :: Nil).start()
-								val reporter = new Reporter(p, reportInterval).start() 
-								p
+					    val importHandler = new ImportHandler(output, output).start()
+					    val reader = format.createReader(filename, importHandler)
+						val reporter = new Reporter(importHandler, reportInterval).start() 
+						p.parse()
 					}
 				} catch {
 				case e: MatchError => 

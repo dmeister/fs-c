@@ -4,7 +4,7 @@ import scala.actors._
 import scala.collection.mutable.Map
 
 object Format {
-  val formats : Map[String,Format] = Map("protobuf" -> ProtobufFormat, "legacy" -> LegacyFormat)
+  val formats : Map[String,Format] = Map("protobuf" -> ProtobufFormat)
   
   def registerFormat(name: String, format: Format) {
 	  formats += (name -> format)
@@ -15,7 +15,11 @@ object Format {
   def apply(name: String) = formats(name)
 }
 
+trait Reader {
+    def parse()
+}
+
 trait Format {
-    def createReader(filename: String, receiver: Actor) : Actor
+    def createReader(filename: String, receiver: Actor) : Reader
     def createWriter(filename: String, privacyMode: Boolean) : Actor
 }
