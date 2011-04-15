@@ -2,6 +2,7 @@ package de.pc2.dedup.fschunk.trace
 
 import de.pc2.dedup.chunker._
 import de.pc2.dedup.util.Log
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 import java.io.BufferedReader
 import java.io.File 
 import java.io.FileNotFoundException
@@ -12,73 +13,53 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.lang.reflect.InvocationTargetException
+import de.pc2.dedup.fschunk
 
 import scala.actors.Actor
 import scala.actors.Actor._
 import scala.actors.Exit
 
-class FileSystemChunking(listing: FileListingProvider, chunker: List[(Chunker, List[Actor])], maxThreads: Int, useDefaultIgnores: Boolean, followSymlinks: Boolean, progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Actor with Log {
-	trapExit = true
-	val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler).start()
+class FileSystemChunking(listing: FileListingProvider, 
+    chunker: List[(Chunker, List[FileDataHandler])], 
+    maxThreads: Int, 
+    useDefaultIgnores: Boolean, 
+    followSymlinks: Boolean, 
+    progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Log with Reporting {
+    
+    val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
 
-	def report() {
-		logger.debug("Queue: %d".format(
-				mailboxSize))
-	}
-
-	def act() {   
-		logger.debug("Start")
-
-		link(dispatcher)
+    def report() {
+        dispatcher.report()
         for ((_, handlers) <- chunker) {
-		    handlers.foreach(h => link(h))
+            handlers.foreach(h => h.report())
         }
+    }
 
-		// Append all files from listing to directory processor
-		for(fl <- listing) {
-			dispatcher ! (getFile(fl.filename), fl.label) 
-		}
+    logger.debug("Start")
 
-		while(true) {
-			receive {
-			case Exit(actor,'normal) =>
-			if(actor == dispatcher) {
+    // Append all files from listing to directory processor
+    for(fl <- listing) {
+        dispatcher.dispatch(getFile(fl.filename), fl.label)
+    }
 
-				// If dispatcher is finished, stop all handlers and exit
-                                for ((_, handlers) <- chunker) {    
-                                    handlers.foreach(h => h ! Quit)
-                                }
-				logger.debug("Exit")
-				exit()
-			}
-			logger.warn("Actor %s exited".format(actor))
-			case Exit(actor, reason) =>
-			  reason match {
-			    case e: InvocationTargetException => logger.warn("Actor %s exited: %s".format(actor, e.getCause().getMessage()),e.getCause())
-			    case e: Exception => logger.warn("Actor %s exited: %s".format(actor, e.getMessage()),e)
-			    case r: Any => logger.warn("Actor %s exited with reason %s".format(actor, reason))
-			  }
-			case Report =>
-			  report()
-			dispatcher ! Report
-                        for ((_, handlers) <- chunker) {
-			    handlers.foreach(h => h ! Report)
-                        }
-			case msg: Any =>
-				logger.warn("Unknown Message: " + msg)
-			}
-		}
+
+    def start() {
+        dispatcher.waitUntilFinished()
+        for ((_, handlers) <- chunker) {
+            handlers.foreach(h => h.quit())
+        }
+    }
+
+    def getFile(filename: String) : File = {
+	if(filename.equals(".")) {
+	    try {
+		new File(filename).getCanonicalFile()
+	    } catch { 
+                case e: IOException => 
+		    new File(filename)
+	    }
+	} else {
+	    new File(filename)
 	}
-
-	def getFile(filename: String) : File = {
-			if(filename.equals(".")) {
-				try {
-					new File(filename).getCanonicalFile()
-				} catch { case e: IOException => 
-				new File(filename)
-				}
-			} else {
-				new File(filename)
-			}
-	}
+    }
 }

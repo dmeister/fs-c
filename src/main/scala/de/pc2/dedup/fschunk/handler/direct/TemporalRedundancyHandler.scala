@@ -10,78 +10,82 @@ import scala.actors.Actor._
 import de.pc2.dedup.util.StorageUnit
 import de.pc2.dedup.util.Log
 
-class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends Actor with Log {
-  trapExit = true
-  val typeMap = Map.empty[String, (Long, Long)]
-  val sizeCategoryMap = Map.empty[String, (Long, Long)]
+class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
+    var lock : AnyRef = new Object()
+    val typeMap = Map.empty[String, (Long, Long)]
+    val sizeCategoryMap = Map.empty[String, (Long, Long)]
    
-  var currentSizeCategory : String = ""
-  var currentFileType : String = ""
-  var currentRealSize : Long = 0
-  var currentFileSize : Long = 0
+    var currentSizeCategory : String = ""
+    var currentFileType : String = ""
+    var currentRealSize : Long = 0
+    var currentFileSize : Long = 0
  
-   val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
+    val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
    
-  def getSizeCategory(fileSize: Long) : String = {
-    return FileSizeCategory.getCategory(fileSize).toString()
-  }
+    def getSizeCategory(fileSize: Long) : String = {
+        return FileSizeCategory.getCategory(fileSize).toString()
+    }
    
-  def act() {
     typeMap.clear
     typeMap += ("ALL" -> (0L,0L))
     sizeCategoryMap.clear
     sizeCategoryMap += ("ALL" -> (0L,0L))
-    loop {
-      react {
-          case FilePart(filename, chunks) =>
-              if (!filePartialMap.contains(filename)) {
-                  filePartialMap += (filename -> new ListBuffer[Chunk]())
-              }
-              for(chunk <- chunks) {
-                 filePartialMap(filename).append(chunk)
-                }
-        case File(fileId, fileSize, fileType, chunks, _) =>
-          var sizeCategory = getSizeCategory(fileSize)
-          var currentRealSize = 0
-          var currentFileSize = 0
-          val allFileChunks = if (filePartialMap.contains(fileId)) {
-                val partialChunks = filePartialMap(fileId)
-                filePartialMap -= fileId
-                List.concat(partialChunks.toList, chunks)
-            } else {
-                chunks
-            }
-          for(chunk <- allFileChunks) {
-            if(!d.check(chunk.fp)) {
-              d.update(chunk.fp)
-              currentRealSize += chunk.size;
-            }
-            currentFileSize += chunk.size
-          }
     
-          if(!typeMap.contains(currentFileType)) {
-            typeMap += (currentFileType -> (0L,0L))
-          } 
-          if(!sizeCategoryMap.contains(currentSizeCategory)) {
-            sizeCategoryMap += (currentSizeCategory -> (0L, 0L))
-          }
-          typeMap += (currentFileType -> (typeMap(currentFileType)._1 + currentRealSize, typeMap(currentFileType)._2 + currentFileSize))
-          typeMap += ("ALL" -> (typeMap("ALL")._1 + currentRealSize, typeMap("ALL")._2 + currentFileSize))
-      
-          sizeCategoryMap += (currentSizeCategory -> (sizeCategoryMap(currentSizeCategory)._1 + currentRealSize, sizeCategoryMap(currentSizeCategory)._2 + currentFileSize))
-          sizeCategoryMap += ("ALL" -> (sizeCategoryMap("ALL")._1 + currentRealSize, sizeCategoryMap("ALL")._2 + currentFileSize))
-        case Quit =>
-          output match {
-            case Some(runName) =>
-              writeMapToFile(typeMap, runName + "-" + chunkerName + "-tr-type.csv")
-              writeMapToFile(sizeCategoryMap, runName + "-" + chunkerName + "-tr-size.csv")
-            case None =>
-              outputMapToConsole(sizeCategoryMap, "File Size Categories: %s".format(chunkerName))
-          }
-          exit()
-      }
+    
+    def handle(fp: FilePart) {
+        lock.synchronized {
+            if (!filePartialMap.contains(fp.filename)) {
+                filePartialMap += (fp.filename -> new ListBuffer[Chunk]())
+            }
+            for(chunk <- fp.chunks) {
+                filePartialMap(fp.filename).append(chunk)
+            }
+        }
     }
-  }
+
+    def handle(f: File) {
+        lock.synchronized {
+            var sizeCategory = getSizeCategory(f.fileSize)
+            var currentRealSize = 0
+            var currentFileSize = 0
+            val allFileChunks = if (filePartialMap.contains(f.filename)) {
+                val partialChunks = filePartialMap(f.filename)
+                filePartialMap -= f.filename
+                List.concat(partialChunks.toList, f.chunks)
+            } else {
+                f.chunks
+            }
+            for(chunk <- allFileChunks) {
+                if(!d.check(chunk.fp)) {
+                    d.update(chunk.fp)
+                    currentRealSize += chunk.size;
+                }
+                currentFileSize += chunk.size
+            }
+    
+            if(!typeMap.contains(currentFileType)) {
+                typeMap += (currentFileType -> (0L,0L))
+            } 
+            if(!sizeCategoryMap.contains(currentSizeCategory)) {
+                sizeCategoryMap += (currentSizeCategory -> (0L, 0L))
+            }
+            typeMap += (currentFileType -> (typeMap(currentFileType)._1 + currentRealSize, typeMap(currentFileType)._2 + currentFileSize))
+            typeMap += ("ALL" -> (typeMap("ALL")._1 + currentRealSize, typeMap("ALL")._2 + currentFileSize))
+      
+            sizeCategoryMap += (currentSizeCategory -> (sizeCategoryMap(currentSizeCategory)._1 + currentRealSize, sizeCategoryMap(currentSizeCategory)._2 + currentFileSize))
+            sizeCategoryMap += ("ALL" -> (sizeCategoryMap("ALL")._1 + currentRealSize, sizeCategoryMap("ALL")._2 + currentFileSize))
+        }
+    }
+
+    override def quit() {
+        output match {
+            case Some(runName) =>
+                writeMapToFile(typeMap, runName + "-" + chunkerName + "-tr-type.csv")
+                writeMapToFile(sizeCategoryMap, runName + "-" + chunkerName + "-tr-size.csv")
+            case None =>
+                outputMapToConsole(sizeCategoryMap, "File Size Categories: %s".format(chunkerName))
+          }
+    }
   
   def outputMapToConsole(m: Map[String,(Long,Long)],title: String) {
 	  val msg = new StringBuffer(title);

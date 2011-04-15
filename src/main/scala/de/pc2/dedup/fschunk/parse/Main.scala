@@ -49,23 +49,22 @@ object Main {
           val chunkerNames = cmd.all(Options.chunker)
           handlerType match { 
             case "simple" => 
-              val handlerList = for {c <- chunkerNames} yield new InMemoryChunkHandler(false, new ChunkIndex(), c).start()
-              val p = new Parser(filenames(0), format, handlerList).start()
+              val handlerList = for {c <- chunkerNames} yield new InMemoryChunkHandler(false, new ChunkIndex(), c)
+              val p = new Parser(filenames(0), format, handlerList)
               val reporter = new Reporter(p, reportInterval).start()  
               p
             case "ir" => 
-              val handlerList = for {c <- chunkerNames} yield new InternalRedundancyHandler(output, new ChunkIndex(), c).start()
-              val p = new Parser(filenames(0), format, handlerList).start()
+              val handlerList = for {c <- chunkerNames} yield new InternalRedundancyHandler(output, new ChunkIndex(), c)
+              val p = new Parser(filenames(0), format, handlerList)
               val reporter = new Reporter(p, reportInterval).start()
               p
             case "tr" =>
               val handlerList1 = for {c <- chunkerNames} yield new DeduplicationHandler(new ChunkIndex(), c)
-              val handlerList2 = for {h <- handlerList1} yield h.start()
-              val p1 = new Parser(filenames(0), format, handlerList2).start()
+              val p1 = new Parser(filenames(0), format, handlerList1)
               val reporter1 = new Reporter(p1, reportInterval).start()
               
-              val handlerList3 = for {h <- handlerList1} yield new TemporalRedundancyHandler(output, h.d, h.chunkerName).start
-              val p2 = new Parser(filenames(1),  format, handlerList2).start()
+              val handlerList3 = for {h <- handlerList1} yield new TemporalRedundancyHandler(output, h.d, h.chunkerName)
+              val p2 = new Parser(filenames(1),  format, handlerList3)
               val reporter2 = new Reporter(p1, reportInterval).start()
               p2
           }         

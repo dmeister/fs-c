@@ -10,17 +10,17 @@ import scala.actors.Actor._
 import de.pc2.dedup.util.Log
 import scala.collection.mutable.Map
 
-class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) extends Actor with Log {
+class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
 	var totalFileSize = 0L 
 	var totalChunkSize = 0L
 	var totalChunkCount = 0L
 
+    var lock : AnyRef = new Object()
     val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
+    val startTime = System.currentTimeMillis()
 
-	val startTime = System.currentTimeMillis()
-
-
-	def report() {
+	override def report() {
+            lock.synchronized {
 		val stop = System.currentTimeMillis() 
 		val seconds = (stop - startTime) / 1000 
 
@@ -45,64 +45,60 @@ class InMemoryChunkHandler(silent:Boolean, d:ChunkIndex, chunkerName: String) ex
 		} else {
 			msg.append("Throughput: N/A")
 		}
-		logger.info(msg)	  
-	}
-
-	def act() { 
-            logger.debug("Start")
-	    loop {  
-		react {          
-		    case Quit =>
-		        report()
-		        logger.debug("Exit")
-		        exit()
-		    case Report =>
-			report()
-			case FilePart(filename, chunks) =>
-                if (!filePartialMap.contains(filename)) {
-                    filePartialMap += (filename -> new ListBuffer[Chunk]())
-                }
-                for(chunk <- chunks) {
-                   filePartialMap(filename).append(chunk)
-                  }
-		    case File(filename, size, fileType, chunks, label) =>
-			var chunkFileSize = 0L
-			var chunkSize = 0L 
-			var chunkCount = 0L
-            val allFileChunks : List[Chunk] = if (filePartialMap.contains(filename)) {
-                  val partialChunks = filePartialMap(filename)
-                  filePartialMap -= filename
-                  List.concat(partialChunks.toList, chunks)
-              } else {
-                  chunks
-              }
-            for(chunk <- allFileChunks) {
-			    chunkCount += 1
-			    chunkFileSize += chunk.size
-			    if(!d.check(chunk.fp)) {
-			        // New Chunk
-				d.update(chunk.fp)
-				chunkSize += chunk.size
-			    }  
-			} 
-			totalChunkCount += chunkCount
-			totalFileSize += chunkFileSize
-			totalChunkSize += chunkSize
-
-			val msg = new StringBuffer("%s - %s".format(filename, chunkerName))
-			if(!silent) {
-			    val redundancy = size - chunkSize    
-			    msg.append("\nSize: %s (%d Byte)%n".format(
-			        StorageUnit(chunkFileSize),chunkFileSize))
-			    msg.append("Redundancy: %s".format(StorageUnit(redundancy)))
-			    if(chunkFileSize > 0) {
-			        msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
-			    }
-			    msg.append("%nPatch Size: %s (%d Byte)".format(
-				StorageUnit(chunkFileSize - redundancy),chunkFileSize - redundancy))
-			}
-		    logger.info(msg)
-		} 
+		logger.info(msg)
             }
-	} 
+	}
+        
+        def handle(fp: FilePart) {
+            lock.synchronized {
+                if (!filePartialMap.contains(fp.filename)) {
+                    filePartialMap += (fp.filename -> new ListBuffer[Chunk]())
+                }
+                for(chunk <- fp.chunks) {
+                   filePartialMap(fp.filename).append(chunk)
+                }
+            }
+        }
+
+        def handle(f: File) {
+           lock.synchronized {
+                var chunkCount = 0L
+                var chunkFileSize = 0L
+                var chunkSize = 0L
+
+                val allFileChunks : List[Chunk] = if (filePartialMap.contains(f.filename)) {
+                    val partialChunks = filePartialMap(f.filename)
+                    filePartialMap -= f.filename
+                    List.concat(partialChunks.toList, f.chunks)
+                } else {
+                    f.chunks
+                }
+                for(chunk <- allFileChunks) {
+		    chunkCount += 1
+		    chunkFileSize += chunk.size
+		    if(!d.check(chunk.fp)) {
+		       // New Chunk
+		        d.update(chunk.fp)
+			chunkSize += chunk.size
+		    }  
+		} 
+		totalChunkCount += chunkCount
+		totalFileSize += chunkFileSize
+		totalChunkSize += chunkSize
+
+		val msg = new StringBuffer("%s - %s".format(f.filename, chunkerName))
+		if(!silent) {
+		    val redundancy = f.fileSize - chunkSize    
+		    msg.append("\nSize: %s (%d Byte)%n".format(
+		        StorageUnit(chunkFileSize),chunkFileSize))
+		    msg.append("Redundancy: %s".format(StorageUnit(redundancy)))
+		    if(chunkFileSize > 0) {
+		        msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
+		    }
+		    msg.append("%nPatch Size: %s (%d Byte)".format(
+		        StorageUnit(chunkFileSize - redundancy), chunkFileSize - redundancy))
+		}
+		logger.info(msg)
+            }
+        }
 }

@@ -57,7 +57,7 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
 	  	if(logger.isDebugEnabled) {
 		  logger.debug("Started Directory " + directory)
 		}
-    	DirectoryProcessor.activeCount.incrementAndGet()
+    	        DirectoryProcessor.activeCount.incrementAndGet()
 		DirectoryProcessor.totalCount.incrementAndGet()
 	  	try {
                     var fileList = directory.listFiles();

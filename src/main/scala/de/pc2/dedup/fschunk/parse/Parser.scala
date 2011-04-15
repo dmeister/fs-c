@@ -20,52 +20,36 @@ import scala.actors._
 import de.pc2.dedup.util._
 import com.google.protobuf.InvalidProtocolBufferException
 import de.pc2.dedup.fschunk.format.Format
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 
+class Parser(filename: String, format: String, handlers: List[FileDataHandler]) extends FileDataHandler with Log {
+    override def quit() {
+        for(handler <- handlers) {
+            handler.quit()
+        }
+    }
 
-class Parser(filename: String, format: String, handlers: List[Actor]) extends Actor with Log with ActorUtil {
-	trapExit = true
-	val MAILBOX_THRESHOLD = 1000
+    def parse() {
+        logger.info("Started parser with %d handlers".format(handlers.size))
+        val reader = Format(format).createReader(filename, this)
+        reader.parse()
+    }
+    
+    override def report() {
+        for(handler <- handlers) {
+            handler.report()
+        }
+    }
+    
+    def handle(fp: FilePart) {
+        for(handler <- handlers) {
+            handler.handle(fp)
+        }
+    }
 
-	def quit() {
-		notifyHandlers(Quit)
-		logger.debug("Exit")
-		exit()
-	}
-
-	def act() { 
-		logger.debug("Start")
-		logger.info("Started parser with %d handlers".format(handlers.size))
-		val reader = Format(format).createReader(filename, this)
-		link(reader)
-		handlers.foreach(h => link(h))
-		loop {
-			react {
-			case Exit(actor,reason) =>
-			logger.info("%s exited with reason %s".format(actor,reason))
-			notifyHandlers(Quit)
-			logger.debug("Exit")
-			exit()
-			case Quit =>
-			quit()
-			case f: File =>
-			if(logger.isDebugEnabled) {
-				logger.debug("Dispatch file " + f.filename)
-			}
-			notifyHandlers(f)
-			case Report =>
-			reader ! Report
-			notifyHandlers(Report)
-			case msg: Any =>
-			logger.warn("Unknown message %s".format(msg))
-			}
-		}
-	}
-
-	def notifyHandlers(msg: Any) {
-		for(handler <- handlers) {
-		  stepDownCheck(handler)
-			handler ! msg
-
-		}
-	}
+    def handle(f: File) {
+        for(handler <- handlers) {
+            handler.handle(f)
+        }
+    }
 }

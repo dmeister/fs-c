@@ -17,16 +17,32 @@ import org.apache.hadoop.conf.Configuration
 import java.net.URI
 import org.apache.commons.codec.binary.Base64
 import de.pc2.dedup.util.Log
+import de.pc2.dedup.fschunk.Reporting
 import de.pc2.dedup.fschunk.format.Format
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import java.io.OutputStream
+import org.apache.hadoop.io.compress.BZip2Codec
 
-class ImportHandler(filesystemName: String, filename : String) extends Actor with Log {
-	trapExit = true
-	val conf = new Configuration()
+class ImportHandler(filesystemName: String, filename : String, compress: Boolean) extends Reporting with FileDataHandler with Log {
+	def createCompressedStream(fs: FileSystem, filepath: Path) : OutputStream = {
+            val codec = new BZip2Codec()
+            val rawStream = fs.create(filepath)
+            codec.createOutputStream(rawStream)
+        }
+        val conf = new Configuration()
 	val fs = FileSystem.get(new URI(filesystemName), conf)
 
 	val rootPath = new Path(filesystemName, filename)
-	val chunkPath = new Path(rootPath, "chunks")
-	val filePath = new Path(rootPath, "files")
+	val chunkPath = if (compress) {
+            new Path(rootPath, "chunks.bz2")
+        } else {
+            new Path(rootPath, "chunks")
+        }
+        val filePath = if(compress) {
+            new Path(rootPath, "files.bz2")
+        } else {
+            new Path(rootPath, "files")
+        }
 
 	val base64 = new Base64()
 	var totalFileSize = 0L
@@ -34,83 +50,85 @@ class ImportHandler(filesystemName: String, filename : String) extends Actor wit
 	var totalChunkCount = 0L
 	val startTime = System.currentTimeMillis()
 
-	def report() {
-		val secs = ((System.currentTimeMillis() - startTime) / 1000)
-		if(secs > 0) {
-			val mbs = totalFileSize / secs
-			val fps = totalFileCount / secs
-			logger.info("File Count: %d (%d f/s), File Size %s (%s/s), Chunk Count: %d, Queue: %d".format(
-					totalFileCount, 
-					fps,
-					StorageUnit(totalFileSize), 
-					StorageUnit(mbs),
-					totalChunkCount,
-					mailboxSize))
-		}
+
+        logger.debug("Start")
+    	logger.info("Write path %s".format(rootPath))
+    	if(fs.exists(filePath)) {
+	    logger.warn("Overwritting " + filePath)
+	    fs.delete(filePath)
+	}
+  	if(fs.exists(chunkPath)) {
+	    logger.warn("Overwritting " + chunkPath)
+	    fs.delete(chunkPath)
 	}
 
-	def act() {
-		logger.debug("Start")
-		logger.info("Write path %s".format(rootPath))
-		if(fs.exists(filePath)) {
-		  logger.warn("Overwritting " + filePath)
-		  fs.delete(filePath)
-		}
-  		if(fs.exists(chunkPath)) {
-		  logger.warn("Overwritting " + chunkPath)
-		  fs.delete(chunkPath)
-		}
-		val fileWriter = fs.create(filePath)  
-		val chunkWriter = fs.create(chunkPath)
-		
-		while(true) {
-			receive { 
-			case Report =>
-			report()
-			case FilePart(filename, chunks) =>
-			if(logger.isDebugEnabled) {
-				logger.debug("Write file %s (partial)".format(filename))
-			}
-			for(chunk <- chunks) {
-				val fp = base64.encode(chunk.fp.digest)		      	
-				val chunkSize = chunk.size
-				val chunkline = "%s\t%s\t%s%n".format(filename, new String(fp), chunkSize)
+	val fileWriter = if (compress) {
+            createCompressedStream(fs, filePath)
+        } else {
+            fs.create(filePath)  
+        }
+    	val chunkWriter = if(compress) {
+            createCompressedStream(fs, chunkPath)
+        } else {
+            fs.create(chunkPath)
+        }
 
-				chunkWriter.write(chunkline.getBytes("UTF-8"))
-			}
-			totalChunkCount += chunks.size		
-			case File(filename, fileSize, fileType, chunks, label) =>
-			if(logger.isDebugEnabled) {
-				logger.debug("Write file %s".format(filename))
-			}
-			val l = label match {
+	override def report() {
+            val secs = ((System.currentTimeMillis() - startTime) / 1000)
+	    if(secs > 0) {
+	        val mbs = totalFileSize / secs
+		val fps = totalFileCount / secs
+		logger.info("File Count: %d (%d f/s), File Size %s (%s/s), Chunk Count: %d".format(
+		    totalFileCount, 
+		    fps,
+		    StorageUnit(totalFileSize), 
+		    StorageUnit(mbs),
+		    totalChunkCount))
+	    }
+	}
+
+        def handle(fp: FilePart) {
+	    if(logger.isDebugEnabled) {
+	        logger.debug("Write file %s (partial)".format(fp.filename))
+	    }
+	    for(chunk <- fp.chunks) {
+	        val fingerprint = base64.encode(chunk.fp.digest)		      	
+		val chunkSize = chunk.size
+		val chunkline = "%s\t%s\t%s%n".format(fp.filename, new String(fingerprint), chunkSize)
+		chunkWriter.write(chunkline.getBytes("UTF-8"))
+            }
+	    totalChunkCount += fp.chunks.size		
+        }
+
+        def handle(f: File) {
+    	    if(logger.isDebugEnabled) {
+	        logger.debug("Write file %s".format(f.filename))
+	    }
+	    val l = f.label match {
                 case Some(s) => s
                 case None => ""
             }
-			val fileline = "%s\t%s\t%s\t%s%n".format(filename, fileSize, fileType, l)
-			fileWriter.write(fileline.getBytes("UTF-8"))
+	    val fileline = "%s\t%s\t%s\t%s%n".format(f.filename, f.fileSize, f.fileType, l)
+	    fileWriter.write(fileline.getBytes("UTF-8"))
 
-			for(chunk <- chunks) {
-				val fp = base64.encode(chunk.fp.digest)		      	
-				val chunkSize = chunk.size
-				val chunkline = "%s\t%s\t%s%n".format(filename, new String(fp), chunkSize)
+	    for(chunk <- f.chunks) {
+	        val fp = base64.encode(chunk.fp.digest)		      	
+		val chunkSize = chunk.size
+		val chunkline = "%s\t%s\t%s%n".format(filename, new String(fp), chunkSize)
+		chunkWriter.write(chunkline.getBytes("UTF-8"))
+	    }
+	    totalFileSize += f.fileSize
+	    totalFileCount += 1
+	    totalChunkCount += f.chunks.size
+        }
 
-				chunkWriter.write(chunkline.getBytes("UTF-8"))
-			}
-			totalFileSize += fileSize
-			totalFileCount += 1
-			totalChunkCount += chunks.size
-			case Quit =>
-			fileWriter.close()
-			chunkWriter.close()
-			report()
-			logger.debug("Exit")
-			exit()
-			case msg : Any =>
-			logger.warn("Unknown message " + msg)
-			} 
-		}
-	}
+        override def quit() {
+            fileWriter.close()
+	    chunkWriter.close()
+	    report()
+	    logger.debug("Exit")
+
+        }
 }
 
 object Import {
@@ -147,10 +165,13 @@ object Import {
 						throw new SystemExitException()
 					}
 					for(filename <- filenames) {
-					    val importHandler = new ImportHandler(output, output).start()
-					    val reader = format.createReader(filename, importHandler)
-						val reporter = new Reporter(importHandler, reportInterval).start() 
-						p.parse()
+					    val importHandler = new ImportHandler(output, output, true)
+					    val reader = Format(format).createReader(filename, importHandler)
+					    val reporter = new ObjectReporter(importHandler, reportInterval).start() 
+					    reader.parse()
+
+                                            reporter ! Quit
+                                            importHandler.quit()
 					}
 				} catch {
 				case e: MatchError => 

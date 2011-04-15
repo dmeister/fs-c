@@ -10,6 +10,7 @@ import de.pc2.dedup.fschunk.handler.direct.InMemoryChunkHandler
 import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
 import de.pc2.dedup.fschunk.format.Format
 import de.pc2.dedup.fschunk.handler.hadoop._
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
 import scala.actors.Actor 
 
@@ -55,7 +56,7 @@ object Main extends Log {
     	  case None => 60 * 1000
     	  case Some(i) => i * 1000
       }
-	  val followSymlinks = cmd(Options.followSymlinks)
+        val followSymlinks = cmd(Options.followSymlinks)
       val privacyMode = cmd(Options.privacy)
       val format = cmd(Options.format) match {
         case None => "protobuf"
@@ -69,16 +70,12 @@ object Main extends Log {
       val chunkerNames = cmd.all(Options.chunker)
 
 
-    def getChunker(chunkerName: String) : (Chunker, List[Actor]) = {
+    def getChunker(chunkerName: String) : (Chunker, List[FileDataHandler]) = {
         val handler = cmd(Options.output) match { 
             case None => 
-                new InMemoryChunkHandler(cmd(Options.silent), new ChunkIndex, chunkerName).start() :: Nil
+                new InMemoryChunkHandler(cmd(Options.silent), new ChunkIndex, chunkerName) :: Nil
             case Some(o) => 
-                if(o.startsWith("hdfs://")) {
-                    new ImportHandler(o, o + "-" + chunkerName).start() :: Nil
-                } else {
-                    Format(format).createWriter(o + "-" + chunkerName, privacyMode) :: Nil
-                }
+                Format(format).createWriter(o + "-" + chunkerName, privacyMode) :: Nil
             }
           val c: Chunker = chunkerName match {
             case "cdc8" => new RabinChunker(2 * 1024, 8 * 1024, 32 * 1024, new DigestFactory(digestType, digestLength), "c8")
@@ -123,7 +120,9 @@ object Main extends Log {
 				fileListing,   
 				chunker,     
                 threads, useIgnoreList, followSymlinks, progressHandler)
-      val reporter = new Reporter(chunking, reportInterval).start()
+    val reporter = new Reporter(chunking, reportInterval).start()
+    chunking.start()
+    reporter ! Quit
       chunking
       } catch {
         case e: MatchError =>  
@@ -131,7 +130,7 @@ object Main extends Log {
           Options.showHelp(System.out)
           throw new SystemExitException()
       }
-      chunking.start()
+    chunking.report()
     } 
     } catch {
       case e: SystemExitException => System.exit(1)
