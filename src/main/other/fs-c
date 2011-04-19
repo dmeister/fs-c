@@ -31,8 +31,8 @@ def get_cp():
     lib_dir = from_fsc_root("lib")
     for file in os.listdir(lib_dir):
         if file.endswith(".jar"):
-            cp.append(os.path.join(lib_dir,file))
-    cp.append("conf")
+            cp.append(os.path.join(lib_dir, file))
+    cp.append(from_fsc_root("conf"))
     if "HADOOP_ROOT" in os.environ:
     	cp.extend(get_hadoop_cp())
     return cp
