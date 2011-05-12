@@ -3,3 +3,5 @@
 *.swp
 .svn
 target
+/nbproject/private/
+/.settings/
