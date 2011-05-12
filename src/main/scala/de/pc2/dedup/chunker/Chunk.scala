@@ -7,7 +7,7 @@ package de.pc2.dedup.chunker
  * @fp fingerprint of the chunk data
  */
 case class Chunk(val size: Int, val fp : Digest)  {
-  if(size < 0) {
-    throw new IllegalArgumentException("Illegal size" + size)
-  }
+    if(size < 0) {
+        throw new IllegalArgumentException("Illegal size" + size)
+    }
 }

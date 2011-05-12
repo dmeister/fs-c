@@ -20,15 +20,23 @@ import de.pc2.dedup.util.StorageUnit
 import java.util.concurrent.atomic._
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
-object FileProcessor {
+object FileProcessor extends Log {
     val activeCount = new AtomicLong(0L)
     val totalCount = new AtomicLong(0L)  
     val totalRead = new AtomicLong(0L)
 	
     val MAX_CHUNKLIST_SIZE = 10000L
+    
+    def report() {
+        logger.info("IO Stats: read: %s ops, %s bytes".format(totalCount, StorageUnit(totalRead.longValue())))
+    }
 }
 
-class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Chunker, List[FileDataHandler])], defaultBufferSize: Int, progressHandler: (File) => Unit) extends Runnable with Log {
+class FileProcessor(file: JavaFile, 
+                    label: Option[String], 
+                    chunkerList: List[(Chunker, List[FileDataHandler])],
+                    defaultBufferSize: Int, 
+                    progressHandler: (File) => Unit) extends Runnable with Log {
 
     def run() {
         if(logger.isDebugEnabled) {
@@ -51,6 +59,9 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
 	    val t = FileType.getNormalizedFiletype(file)
 	    var r = s.read(buffer)
 	    while(r > 0) {
+                if(logger.isDebugEnabled) {
+                    logger.debug("File: Read %s".format(file, StorageUnit(r)))
+                }
 		FileProcessor.totalRead.addAndGet(r)
                 for ((session, handlers, chunkList) <- sessionList) {
 	    	    session.chunk(buffer, r) { 
@@ -97,7 +108,7 @@ class FileProcessor(file: JavaFile, label: Option[String], chunkerList: List[(Ch
 	    close(s) 
 	}
   	if(logger.isDebugEnabled) {
-	  logger.debug("Finished File " + file)
+            logger.debug("Finished File " + file)
 	}
 	FileProcessor.activeCount.decrementAndGet()
     }

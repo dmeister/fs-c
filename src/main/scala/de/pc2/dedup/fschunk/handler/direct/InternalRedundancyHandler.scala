@@ -78,7 +78,7 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
                 writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName))
             case None =>
                 outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName))
-          }
+        }
     }
 
     def outputMapToConsole(m: Map[String,(Long,Long)],title: String) {
@@ -87,19 +87,19 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
         println("\tReal Size\tTotal Size\tDedup Ratio")
         for(k <- m.keySet) {
             val (realSize, totalSize) = m(k)
-        val dedupRatio = if(totalSize > 0) {
-            100.0 * (1.0 - realSize / totalSize)
-        } else {
-            0.0
+            val dedupRatio = if(totalSize > 0) {
+                100.0 * (1.0 - realSize / totalSize)
+            } else {
+                0.0
+            }
+            println("%s\t%s\t%s\t%.2f".format(
+                    StorageUnit(k.toLong),
+                    StorageUnit(realSize),
+                    StorageUnit(totalSize),
+                    dedupRatio
+                ))
         }
-        println("%s\t%s\t%s\t%.2f".format(
-            StorageUnit(k.toLong),
-            StorageUnit(realSize),
-            StorageUnit(totalSize),
-            dedupRatio
-        ))
-        }
-  }
+    }
   
     def writeMapToFile(m: Map[String,(Long,Long)], f: String) {
         val w = new BufferedWriter(new FileWriter(new java.io.File(f)))

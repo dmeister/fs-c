@@ -18,6 +18,7 @@ import scala.collection.mutable.ListBuffer
 import de.pc2.dedup.util._
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import com.google.protobuf._
+import java.util.concurrent.atomic._
 
 class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends Reader with Log {
     private def parseChunkEntry(stream: InputStream) : Chunk = {
@@ -44,28 +45,28 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
 	    receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l))
         } 
 	parseFileEntry(stream) 
-	}
+    }
 	
-	def parse() {
-		logger.debug("Start")
-		try {
-			val stream = new FileInputStream(filename);
-			try {
-				parseFileEntry(stream) 
-			} catch {
-			    case e: InvalidProtocolBufferException =>
-			        logger.debug("No more files")
-			    case e: Exception =>
-			        logger.error("Parsing error",e)
-			} finally {
-				stream.close()
-			}
-		} catch {
-		    case e: IOException =>
-		        logger.fatal("Cannot read trace file " + filename, e)
-		}
-		logger.debug("Exit")
-	}
+    def parse() {
+        logger.debug("Start")
+        try {
+            val stream = new FileInputStream(filename);
+            try {
+                parseFileEntry(stream) 
+            } catch {
+                case e: InvalidProtocolBufferException =>
+                    logger.debug("No more files")
+                case e: Exception =>
+                    logger.error("Parsing error",e)
+            } finally {
+                stream.close()
+            }
+        } catch {
+            case e: IOException =>
+                logger.fatal("Cannot read trace file " + filename, e)
+        }
+        logger.debug("Exit")
+    }
 }
 
 /**
@@ -89,13 +90,13 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
 	    val mbs = totalFileSize / secs
 	    val fps = fileCount / secs
 	    logger.info("%s: file count: %d (%d f/s), file size: %s (%s/s), chunk count: %d, error count: %d".format(
-                filename,
-		fileCount, 
-		fps,
-		StorageUnit(totalFileSize), 
-		StorageUnit(mbs),
-		chunkCount,
-		errorCount))
+                    filename,
+                    fileCount, 
+                    fps,
+                    StorageUnit(totalFileSize), 
+                    StorageUnit(mbs),
+                    chunkCount,
+                    errorCount))
 	}
     }
 
@@ -181,6 +182,6 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
 }  
 
 object ProtobufFormat extends Format {
-	def createReader(filename: String, receiver: FileDataHandler) = new ProtobufFormatReader(filename, receiver)
-	def createWriter(filename: String, privacyMode: Boolean) = new ProtobufFormatWriter(filename, privacyMode)
+    def createReader(filename: String, receiver: FileDataHandler) = new ProtobufFormatReader(filename, receiver)
+    def createWriter(filename: String, privacyMode: Boolean) = new ProtobufFormatWriter(filename, privacyMode)
 }

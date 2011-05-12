@@ -27,7 +27,7 @@ def get_hadoop_cp():
     return cp
 
 def get_cp():
-    cp = [from_fsc_root("fs-c-0.3.3.jar")]
+    cp = [from_fsc_root("fs-c-0.3.4.jar")]
     lib_dir = from_fsc_root("lib")
     for file in os.listdir(lib_dir):
         if file.endswith(".jar"):
@@ -57,16 +57,24 @@ if __name__ == "__main__":
     try:
         check_python_version()
         check_java_version()
-        
+
         java_class = None
         if len(sys.argv) < 2:
             print help()
             sys.exit()
-        if sys.argv[1] == "trace":
+        args = sys.argv[1:]
+        debugging = False
+        for i in xrange(len(args)):
+            if args[i] == "--debug":
+                debugging = True
+                del args[i]
+                break
+
+        if args[0] == "trace":
             java_class = "de.pc2.dedup.fschunk.trace.Main"
-        elif sys.argv[1] == "parse":
+        elif args[0] == "parse":
             java_class = "de.pc2.dedup.fschunk.parse.Main"
-        elif sys.argv[1] == "import":
+        elif args[0] == "import":
         	if not "HADOOP_ROOT" in os.environ:
         		print "HADOOP_ROOT not set"
         		print
@@ -75,19 +83,23 @@ if __name__ == "__main__":
         else:
             print help()
             sys.exit()
-        args = ["java"]
+        cmd_args = ["java"]
         if "JAVA_HOME" in os.environ:
-            args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
+            cmd_args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
         if "FSC_JAVA_HOME" in os.environ:
-            args[0] = os.path.join(os.environ["FSC_JAVA_HOME"], "bin/java")
+            cmd_args[0] = os.path.join(os.environ["FSC_JAVA_HOME"], "bin/java")
         if "FSC_JXM" in os.environ:
-            args.append("-Dcom.sun.management.jmxremote")
+            cmd_args.append("-Dcom.sun.management.jmxremote")
         if "FSC_XMX" in os.environ:
-            args.append("-Xmx%s" % os.environ["FSC_XMX"])
-        args.extend(["-server", "-cp",":".join(get_cp()),java_class])
-        args.extend(sys.argv[2:])
+            cmd_args.append("-Xmx%s" % os.environ["FSC_XMX"])
+        else:
+            cmd_args.append("-Xmx2G")
+        if debugging:
+            cmd_args.append("-Dlog4j.configuration=log4j_debug.xml")   
+        cmd_args.extend(["-server", "-cp",":".join(get_cp()),java_class])
+        cmd_args.extend(args[1:])
     
-        cmd = " ".join(args)
+        cmd = " ".join(cmd_args)
         os.system(cmd)
     except KeyboardInterrupt:
         sys.exit(1)

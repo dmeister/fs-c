@@ -8,11 +8,11 @@ import java.security.MessageDigest
  * a hash over the whole file contents
  */
 object FileDigest {
-  private val md = MessageDigest.getInstance("SHA-1")
-  def createFromChunkHashes(hashes: List[Digest]) : Digest = {
-    for(d <- hashes){
-      md.update(d.digest)
+    private val md = MessageDigest.getInstance("SHA-1")
+    def createFromChunkHashes(hashes: List[Digest]) : Digest = {
+        for(d <- hashes){
+            md.update(d.digest)
+        }
+        new Digest(md.digest())
     }
-    new Digest(md.digest())
-  }
 } 

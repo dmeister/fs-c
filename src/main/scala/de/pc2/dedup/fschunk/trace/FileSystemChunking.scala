@@ -20,11 +20,11 @@ import scala.actors.Actor._
 import scala.actors.Exit
 
 class FileSystemChunking(listing: FileListingProvider, 
-    chunker: List[(Chunker, List[FileDataHandler])], 
-    maxThreads: Int, 
-    useDefaultIgnores: Boolean, 
-    followSymlinks: Boolean, 
-    progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Log with Reporting {
+                         chunker: List[(Chunker, List[FileDataHandler])], 
+                         maxThreads: Int, 
+                         useDefaultIgnores: Boolean, 
+                         followSymlinks: Boolean, 
+                         progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Log with Reporting {
     
     val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
 

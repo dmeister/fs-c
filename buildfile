@@ -1,9 +1,9 @@
 
 # Version number for this release
-VERSION_NUMBER = "0.3.3"
+VERSION_NUMBER = "0.3.4"
 # Group identifier for your projects
 GROUP = "fs-c"
-COPYRIGHT = "(c) Paderborn Center for Parallel Computing, 2009. Open Source under New BSD license"
+COPYRIGHT = "(c) Paderborn Center for Parallel Computing, 2009-2011. Open Source under New BSD license"
 
 require 'buildr/scala'
 require 'buildr/java'
@@ -72,6 +72,7 @@ define "fs-c" do
   package(:zip).include file("target/fs-c-#{VERSION_NUMBER}.jar")
   package(:zip).include file("src/main/other/fs-c"), :path => "bin"
   package(:zip).include file("src/main/other/log4j.xml"), :path => "conf"
+  package(:zip).include file("src/main/other/log4j_debug.xml"), :path => "conf"
   package(:zip).include "contrib/*", :path => "contrib"
   package(:zip).include file("README.txt")
   package(:zip).include file("CHANGES.txt")
@@ -80,6 +81,7 @@ define "fs-c" do
   package(:tgz).include file("target/fs-c-#{VERSION_NUMBER}.jar")
   package(:tgz).include file("src/main/other/fs-c"), :path => "bin"
   package(:tgz).include file("src/main/other/log4j.xml"), :path => "conf"
+  package(:tgz).include file("src/main/other/log4j_debug.xml"), :path => "conf"
   package(:tgz).include "contrib/*", :path => "contrib"
   package(:tgz).include file("README.txt")
   package(:tgz).include file("CHANGES.txt")

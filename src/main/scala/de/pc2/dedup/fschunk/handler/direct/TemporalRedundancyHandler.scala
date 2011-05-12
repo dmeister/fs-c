@@ -84,37 +84,37 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
                 writeMapToFile(sizeCategoryMap, runName + "-" + chunkerName + "-tr-size.csv")
             case None =>
                 outputMapToConsole(sizeCategoryMap, "File Size Categories: %s".format(chunkerName))
-          }
+        }
     }
   
-  def outputMapToConsole(m: Map[String,(Long,Long)],title: String) {
-	  val msg = new StringBuffer(title);
-    msg.append("\t\tReal Size\tTotal Size\tPatch Ratio\n")
-    for(k <- m.keySet) {
-      val (realSize, totalSize) = m(k)
-          val patchRatio = if(totalSize > 0) {
-        100.0 * (realSize / totalSize)
-      } else {
-        100.0
-      }
-      msg.append("%s\t%s\t%s\t%.2f%n".format(
-        k,
-        StorageUnit(realSize),
-        StorageUnit(totalSize),
-        patchRatio
-      ))
+    def outputMapToConsole(m: Map[String,(Long,Long)],title: String) {
+        val msg = new StringBuffer(title);
+        msg.append("\t\tReal Size\tTotal Size\tPatch Ratio\n")
+        for(k <- m.keySet) {
+            val (realSize, totalSize) = m(k)
+            val patchRatio = if(totalSize > 0) {
+                100.0 * (realSize / totalSize)
+            } else {
+                100.0
+            }
+            msg.append("%s\t%s\t%s\t%.2f%n".format(
+                    k,
+                    StorageUnit(realSize),
+                    StorageUnit(totalSize),
+                    patchRatio
+                ))
+        }
+        logger.info(msg)
     }
-    logger.info(msg)
-  }
   
-  def writeMapToFile(m: Map[String,(Long,Long)], f: String) {
-    val w = new BufferedWriter(new FileWriter(new java.io.File(f)))	
-    for(k <- m.keySet) {
-      val (realSize, totalSize) = m(k)
-      w.write("\"" + k + "\";" + realSize + ";" + totalSize)
-      w.newLine()
+    def writeMapToFile(m: Map[String,(Long,Long)], f: String) {
+        val w = new BufferedWriter(new FileWriter(new java.io.File(f)))	
+        for(k <- m.keySet) {
+            val (realSize, totalSize) = m(k)
+            w.write("\"" + k + "\";" + realSize + ";" + totalSize)
+            w.newLine()
+        }
+        w.flush()
+        w.close()
     }
-    w.flush()
-    w.close()
-  }
 }

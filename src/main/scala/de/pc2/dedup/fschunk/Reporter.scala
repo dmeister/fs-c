@@ -13,19 +13,19 @@ trait Reporting {
 class Reporter(r : Reporting, reportInterval: Int) extends Actor with Log {
     def act() {      
         if(reportInterval <= 0) {
-    	    exit()
-	}
+            exit()
+        }
 
         while(true) {
-	    receiveWithin(reportInterval) {
-	        case TIMEOUT =>
-		    r.report()
+            receiveWithin(reportInterval) {
+                case TIMEOUT =>
+                    r.report()
                 case Quit =>
                     exit()
-		case msg: Any =>
-		    logger.error("Unknown Message" + msg)
-	    }
-	}
+                case msg: Any =>
+                    logger.error("Unknown Message" + msg)
+            }
+        }
     }
 }
 
