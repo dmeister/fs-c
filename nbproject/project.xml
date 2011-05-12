@@ -5,7 +5,10 @@
         <data xmlns="http://www.netbeans.org/ns/scala-project/1">
             <name>fs-c</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
-            <source-roots/>
+            <source-roots>
+                <root id="src.scala.dir"/>
+                <root id="src.java15.dir"/>
+            </source-roots>
             <test-roots/>
         </data>
     </configuration>
