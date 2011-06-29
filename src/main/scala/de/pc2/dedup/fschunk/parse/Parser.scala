@@ -6,11 +6,10 @@ import java.io.InputStream
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.charset.Charset
-import java.util.ArrayList  
+import java.util.ArrayList
 
 import de.pc2.dedup.chunker._
 import de.pc2.dedup.util.FileType
-import scala.collection.jcl.Conversions._ 
 import com.google.protobuf.CodedInputStream
 import scala.actors.Actor
 import scala.collection.mutable.ListBuffer
@@ -23,33 +22,33 @@ import de.pc2.dedup.fschunk.format.Format
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
 class Parser(filename: String, format: String, handlers: List[FileDataHandler]) extends FileDataHandler with Log {
-    override def quit() {
-        for(handler <- handlers) {
-            handler.quit()
-        }
+  override def quit() {
+    for (handler <- handlers) {
+      handler.quit()
     }
+  }
 
-    def parse() {
-        logger.info("Started parser with %d handlers".format(handlers.size))
-        val reader = Format(format).createReader(filename, this)
-        reader.parse()
-    }
-    
-    override def report() {
-        for(handler <- handlers) {
-            handler.report()
-        }
-    }
-    
-    def handle(fp: FilePart) {
-        for(handler <- handlers) {
-            handler.handle(fp)
-        }
-    }
+  def parse() {
+    logger.info("Started parser with %d handlers".format(handlers.size))
+    val reader = Format(format).createReader(filename, this)
+    reader.parse()
+  }
 
-    def handle(f: File) {
-        for(handler <- handlers) {
-            handler.handle(f)
-        }
+  override def report() {
+    for (handler <- handlers) {
+      handler.report()
     }
+  }
+
+  def handle(fp: FilePart) {
+    for (handler <- handlers) {
+      handler.handle(fp)
+    }
+  }
+
+  def handle(f: File) {
+    for (handler <- handlers) {
+      handler.handle(f)
+    }
+  }
 }

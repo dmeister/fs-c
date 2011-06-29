@@ -29,5 +29,4 @@ public class FileSizeCategory extends EvalFunc<Long> {
 	            throw WrappedIOException.wrap("Caught exception processing input row ", e);
 	        }
 	}
-
 }
