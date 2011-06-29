@@ -32,7 +32,7 @@ class FixedChunker(chunkSize: Int, digestFactory: DigestFactory, val chunkerName
             currentChunkPos = 0
         }
 		
-        def chunk(data: Array[Byte], size:Int)(h: (Chunk => Unit)) {
+        def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit)) {
             for(i <- 0 until size) {
                 currentChunk(this.currentChunkPos) = data(i)
                 currentChunkPos += 1

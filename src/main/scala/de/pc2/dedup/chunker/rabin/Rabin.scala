@@ -48,9 +48,6 @@ class Rabin(val polynom: Long) {
      * @return
      */
     def append(fingerprint: Long, data: Int) : Long = {
-        if(data < 0 || data > 255) {
-            throw new IllegalArgumentException("data")
-        }
         val shifted = (fingerprint >> 55).toInt
         return ((fingerprint << 8) | data) ^ T(shifted)
     }

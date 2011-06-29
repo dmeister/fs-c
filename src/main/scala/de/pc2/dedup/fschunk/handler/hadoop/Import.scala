@@ -167,7 +167,7 @@ object Import {
                     for(filename <- filenames) {
                         val importHandler = new ImportHandler(output, output, true)
                         val reader = Format(format).createReader(filename, importHandler)
-                        val reporter = new ObjectReporter(importHandler, reportInterval).start() 
+                        val reporter = new Reporter(importHandler, reportInterval).start() 
                         reader.parse()
 
                         reporter ! Quit

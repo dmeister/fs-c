@@ -1,6 +1,7 @@
 package de.pc2.dedup.chunker.rabin
 
-import de.pc2.dedup.chunker.RollingFingerprint;
+import de.pc2.dedup.chunker.RollingFingerprint
+import java.util.Arrays
 
 /**
  * A rolling fingerprint variant of Rabin's Fingerprinting Method.
@@ -40,7 +41,9 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
         var windowPos = -1
         var fingerprint = 0L
 		
-        def clear() = {	}
+        def clear() = {
+            Arrays.fill(window, 0)
+        }
 		
         def append(data: Int) {
             windowPos = windowPos + 1

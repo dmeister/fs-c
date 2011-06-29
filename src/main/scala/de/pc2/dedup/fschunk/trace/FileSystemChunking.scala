@@ -39,7 +39,8 @@ class FileSystemChunking(listing: FileListingProvider,
 
     // Append all files from listing to directory processor
     for(fl <- listing) {
-        dispatcher.dispatch(getFile(fl.filename), fl.label)
+        val f = getFile(fl.filename)
+        dispatcher.dispatch(f, f.getCanonicalPath(), f.isDirectory(), fl.label)
     }
 
 

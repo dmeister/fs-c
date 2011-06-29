@@ -27,14 +27,12 @@ class RabinChunker(minimalSize: Int,
         val rabinSession = rabinWindow.createSession()
         val overflowChunk = new Array[Byte](maximalSize)
         var overflowChunkPos: Int = 0
+        val digestBuilder = digestFactory.builder()
 		  
         def acceptChunk(h: (Chunk => Unit), data: Array[Byte], dataPos: Int, dataLen: Int) {
-            val digest = digestFactory.builder().append(overflowChunk, 0, overflowChunkPos)
+            val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos)
             .append(data, dataPos, dataLen).build()
             
-            if(logger.isDebugEnabled) {
-                logger.debug("Accept chunk: size %s".format(overflowChunkPos + dataLen))
-            }
             val c = Chunk(this.overflowChunkPos + dataLen, digest)
             h(c)
             rabinSession.clear()
@@ -42,10 +40,6 @@ class RabinChunker(minimalSize: Int,
         }  
 		 
         def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit))  {
-      
-            if(logger.isDebugEnabled) {
-                logger.debug("Chunk %s".format(size))
-            }
             var current = 0
             var nonChunkedData = 0
             var break = false;
@@ -57,14 +51,6 @@ class RabinChunker(minimalSize: Int,
                 }
                 var countToMin = positionWindowBeforeMin - overflowChunkPos
         
-                if(logger.isDebugEnabled) {
-                    logger.debug("Offset %s, todo %s, count to max %s, count to min %s, overflow %s".format(
-                            current, 
-                            todo, 
-                            countToMax, 
-                            countToMin,
-                            overflowChunkPos))
-                }
                 if (countToMin > todo) {
                     // break (but Scala has no break
                     break = true
@@ -101,9 +87,6 @@ class RabinChunker(minimalSize: Int,
             }
             // end of outer loop
             if (size - nonChunkedData > 0) {
-                if(logger.isDebugEnabled) {
-                    logger.debug("Copy to overflow: size %s, new overflow data %s".format(size, size - nonChunkedData))
-                }
                 System.arraycopy(data, nonChunkedData, overflowChunk, overflowChunkPos, size - nonChunkedData)
                 overflowChunkPos += (size - nonChunkedData)
             }
@@ -112,9 +95,6 @@ class RabinChunker(minimalSize: Int,
          * Closes the rabin chunker
          */
         def close()(h: (Chunk => Unit)) {
-            if(logger.isDebugEnabled) {
-                logger.debug("Close chunker session %s".format(overflowChunkPos))
-            }
             if(overflowChunkPos > 0) {
                 acceptChunk(h, null, 0, 0)
             }

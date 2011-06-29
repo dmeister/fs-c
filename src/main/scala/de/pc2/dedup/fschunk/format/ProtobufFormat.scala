@@ -48,7 +48,6 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
     }
 	
     def parse() {
-        logger.debug("Start")
         try {
             val stream = new FileInputStream(filename);
             try {
@@ -115,27 +114,24 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
     }
 
     def handle(fp: FilePart) {
-        lock.synchronized {
             try {
                 val filePartData = createFilePartData(finalFilename(fp.filename), fp.chunks)
-                logger.debug(filePartData)
-                
+                lock.synchronized {
                 for(c <- fp.chunks) {
     	            val chunkData = createChunkData(c)
     	            chunkData.writeDelimitedTo(filestream)
     	        }
     	        chunkCount += fp.chunks.size
+                }
     	    } catch {
     	        case e => logger.error(e)
             }
-        }
     }
 
     def handle(f: File) {
-        lock.synchronized {
             try {
 	        val fileData = createFileData(finalFilename(f.filename), f.fileSize, f.fileType, f.chunks, f.label)
-                logger.debug(fileData)
+        lock.synchronized {
 
 	        fileData.writeDelimitedTo(filestream)
 	        for(c <- f.chunks) {
@@ -145,10 +141,10 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
 	        fileCount += 1
 	        totalFileSize += f.fileSize
 	        chunkCount += f.chunks.size
+        }
 	    } catch {
     	        case e => logger.error(e)
     	    }
-        }
     }
  
     override def fileError(filename: String, fileSize: Long) {

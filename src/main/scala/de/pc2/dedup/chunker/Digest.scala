@@ -42,6 +42,7 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
                 System.arraycopy(fullDigest, 0, d, 0, digestLength)
                 d
             }    
+            md.reset()
             return new Digest(digest)
 
         }

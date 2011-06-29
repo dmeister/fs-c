@@ -24,33 +24,26 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
         return f.getCanonicalPath() != f.getAbsolutePath()
     }
     val ignoreSet = Set("/dev", "/proc/")
-    def isDefaultIgnoreDirectory(f: File) : Boolean = {
-        ignoreSet.contains(f.getCanonicalPath)
+    def isDefaultIgnoreDirectory(filePath: String) : Boolean = {
+        ignoreSet.contains(filePath)
     }
 
     def processList(list: List[File]) {
         def processFile(file: File) {
-            if(!file.isDirectory) {
-                if(mightBeSymlink(file) && !followSymlinks) {
-                    logger.debug("Skip symlink file %s".format(file))	
-                } else {
-                    dispatcher.dispatch(file, label)
-                }
+            val cp = file.getCanonicalPath()
+            val ap = file.getAbsolutePath()
+            if (!followSymlinks && cp != ap) {
+                logger.debug("Skip symlink file %s".format(file))	
             }
-        }
-        def processDirectory(file: File) {
-            if(file.isDirectory) {  
-                if(!useDefaultIgnores || !isDefaultIgnoreDirectory(file)) {
-                    if(mightBeSymlink(file) && !followSymlinks) {
-                        logger.debug("Skip symlink directory %s".format(file))	
-                    } else {
-                        dispatcher.dispatch(file, label)
-                    } 	
+            if(!file.isDirectory) {
+                dispatcher.dispatch(file, cp, false, label)
+            } else {
+                if(!useDefaultIgnores || !isDefaultIgnoreDirectory(cp)) {
+                    dispatcher.dispatch(file, cp, true, label)
                 }
             }
         }
         list.foreach(processFile)
-        list.foreach(processDirectory)
     }
 
     def run() { 

@@ -33,75 +33,86 @@ object FileProcessor extends Log {
 }
 
 class FileProcessor(file: JavaFile, 
+                    path: String,
                     label: Option[String], 
                     chunkerList: List[(Chunker, List[FileDataHandler])],
                     defaultBufferSize: Int, 
                     progressHandler: (File) => Unit) extends Runnable with Log {
 
-    def run() {
+    def readIntoBuffer(s: InputStream, buffer: Array[Byte], offset: Long) : Int = {
         if(logger.isDebugEnabled) {
-	    logger.debug("Started File %s (%s)".format(file, StorageUnit(file.length)))
-	}
+            logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
+        }
+        var r = s.read(buffer)
+        if(logger.isDebugEnabled) {
+            logger.debug("File: Read %s finished, offset %s, data size %s".format(file, StorageUnit(offset), StorageUnit(r)))
+        }
+        return r
+    }
+
+    def run() {
 	FileProcessor.activeCount.incrementAndGet()
 	FileProcessor.totalCount.incrementAndGet()
   
 	var s : InputStream = null
+        val fileLength = file.length
+        if(logger.isDebugEnabled) {
+	    logger.debug("Started File %s (%s)".format(file, StorageUnit(fileLength)))
+	}
 	try {
-	    val bufferSize : Int = if(file.length >= defaultBufferSize) {
+	    val bufferSize : Int = if(fileLength >= defaultBufferSize) {
 	        defaultBufferSize
 	    } else {
-		file.length.toInt
+		fileLength.toInt
 	    }
 	    val buffer = new Array[Byte](bufferSize)
 	    val sessionList = for {chunker <- chunkerList} yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
 
 	    s = new FileInputStream(file)
 	    val t = FileType.getNormalizedFiletype(file)
-	    var r = s.read(buffer)
+	    var r = readIntoBuffer(s, buffer, 0)
+            var offset = 0L
 	    while(r > 0) {
-                if(logger.isDebugEnabled) {
-                    logger.debug("File: Read %s".format(file, StorageUnit(r)))
-                }
+                offset += r
 		FileProcessor.totalRead.addAndGet(r)
                 for ((session, handlers, chunkList) <- sessionList) {
 	    	    session.chunk(buffer, r) { 
 		        chunk => chunkList.append(chunk)
 		    }
 		    if (chunkList.size > FileProcessor.MAX_CHUNKLIST_SIZE) {
-		        val fp = new FilePart(file.getCanonicalPath, chunkList.toList)
+		        val fp = new FilePart(path, chunkList.toList)
                         for (handler <- handlers) {
                             handler.handle(fp)
                         }
                         chunkList.clear()
 		    }
                 }
-	        r = s.read(buffer)
+	        r = readIntoBuffer(s, buffer, offset)
 	    }
             for ((session, handlers, chunkList) <- sessionList) {
 	        session.close() { 
 		    chunk => chunkList.append(chunk)
 	        }
-	        val f = new File(file.getCanonicalPath, file.length, t, chunkList.toList, label)
-	        logger.debug(f)
+	        val f = new File(path, fileLength, t, chunkList.toList, label)
 	        for(handler <- handlers) {
 	            handler.handle(f)
                 }  
             }
-            val fileWithoutChunks = new File(file.getCanonicalPath, file.length, t, List(), label)
+            val fileWithoutChunks = new File(path, fileLength, t, List(), label)
             progressHandler(fileWithoutChunks) 
 	} catch {
 	    case e: FileNotFoundException =>
                 for (val (chunker, handlers) <- chunkerList) {
 	            for(handler <- handlers) {
-	                handler.fileError(file.getCanonicalPath, file.length)
+	                handler.fileError(path, fileLength)
 		    }  
                 }
 		logger.warn("File %s".format(e.getMessage))
 	    case  e: Exception => 
-		logger.error("Processing Error %s (%s)".format(file,StorageUnit(file.length)),e)
+		logger.error("Processing Error %s (%s)".format(file,StorageUnit(fileLength)),e)
                 for (val (chunker, handlers) <- chunkerList) {
 		    for(handler <- handlers) {
-		        handler.fileError(file.getCanonicalPath, file.length)
+		        handler.fileError(file.getCanonicalPath, fileLength)
 		    }  
                 }
 	} finally {
