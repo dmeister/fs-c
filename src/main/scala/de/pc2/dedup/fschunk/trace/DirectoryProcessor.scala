@@ -6,6 +6,8 @@ import java.io.File
 import de.pc2.dedup.chunker._
 import de.pc2.dedup.util.Log
 import java.util.concurrent.atomic._
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 case class Directory(f: File)
 
@@ -28,7 +30,6 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
     ignoreSet.contains(filePath)
   }
 
-  def processList(list: List[File]) {
     def processFile(file: File) {
       val cp = file.getCanonicalPath()
       val ap = file.getAbsolutePath()
@@ -43,7 +44,19 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
         }
       }
     }
-    list.foreach(processFile)
+  
+  def listDirectory(directory: File, handler: (File) => Unit) {
+      val pb = new ProcessBuilder("ls")
+      pb.directory(directory)
+      val p = pb.start()
+      val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
+      
+      var line = reader.readLine()
+      while (line != null) {
+          val file = new File(directory, line)
+          handler(file)
+          line = reader.readLine()
+      }
   }
 
   def run() {
@@ -53,12 +66,7 @@ class DirectoryProcessor(directory: File, label: Option[String], useDefaultIgnor
     DirectoryProcessor.activeCount.incrementAndGet()
     DirectoryProcessor.totalCount.incrementAndGet()
     try {
-      var fileList = directory.listFiles();
-      if (fileList != null) {
-        processList(fileList.toList)
-      } else {
-        logger.warn("Failed to list directory " + directory)
-      }
+        listDirectory(directory, processFile)
     } finally {
       DirectoryProcessor.activeCount.decrementAndGet()
     }
