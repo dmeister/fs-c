@@ -9,6 +9,11 @@ import java.security.MessageDigest
  */
 object FileDigest {
   private val md = MessageDigest.getInstance("SHA-1")
+
+  /**
+   * Creates a overall digest from a list of digests.
+   * May be used for a full file deduplication analysis
+   */
   def createFromChunkHashes(hashes: List[Digest]): Digest = {
     for (d <- hashes) {
       md.update(d.digest)

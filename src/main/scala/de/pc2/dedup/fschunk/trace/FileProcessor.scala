@@ -15,6 +15,7 @@ import de.pc2.dedup.chunker.File
 import de.pc2.dedup.util._
 import scala.actors.Actor
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Map
 import scala.actors.Actor._
 import de.pc2.dedup.util.StorageUnit
 import java.util.concurrent.atomic._
@@ -30,14 +31,24 @@ object FileProcessor extends Log {
   def report() {
     logger.info("IO Stats: read: %s ops, %s bytes".format(totalCount, StorageUnit(totalRead.longValue())))
   }
+
+  var chunker: Seq[(Chunker, List[FileDataHandler])] = null
+  var progressHandler: ((File) => Unit) = null
+
+  def init(c: Seq[(Chunker, List[FileDataHandler])], p: ((File) => Unit)) {
+    synchronized {
+      chunker = c
+      progressHandler = p
+      this.notifyAll()
+    }
+  }
+
 }
 
 class FileProcessor(file: JavaFile,
   path: String,
   label: Option[String],
-  chunkerList: Seq[(Chunker, List[FileDataHandler])],
-  defaultBufferSize: Int,
-  progressHandler: (File) => Unit) extends Runnable with Log {
+  defaultBufferSize: Int) extends Runnable with Log with Serializable {
 
   def readIntoBuffer(s: InputStream, buffer: Array[Byte], offset: Long): Int = {
     if (logger.isDebugEnabled) {
@@ -54,6 +65,12 @@ class FileProcessor(file: JavaFile,
     FileProcessor.activeCount.incrementAndGet()
     FileProcessor.totalCount.incrementAndGet()
 
+    FileProcessor.synchronized {
+      while (FileProcessor.chunker == null || FileProcessor.progressHandler == null) {
+        FileProcessor.wait()
+      }
+    }
+
     var s: InputStream = null
     val fileLength = file.length
     if (logger.isDebugEnabled) {
@@ -66,7 +83,7 @@ class FileProcessor(file: JavaFile,
         fileLength.toInt
       }
       val buffer = new Array[Byte](bufferSize)
-      val sessionList = for { chunker <- chunkerList } yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
+      val sessionList = for { chunker <- FileProcessor.chunker } yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
 
       s = new FileInputStream(file)
       val t = FileType.getNormalizedFiletype(file)
@@ -99,10 +116,10 @@ class FileProcessor(file: JavaFile,
         }
       }
       val fileWithoutChunks = new File(path, fileLength, t, List(), label)
-      progressHandler(fileWithoutChunks)
+      FileProcessor.progressHandler(fileWithoutChunks)
     } catch {
       case e: FileNotFoundException =>
-        for ((chunker, handlers) <- chunkerList) {
+        for ((chunker, handlers) <- FileProcessor.chunker) {
           for (handler <- handlers) {
             handler.fileError(path, fileLength)
           }
@@ -110,7 +127,7 @@ class FileProcessor(file: JavaFile,
         logger.warn("File %s".format(e.getMessage))
       case e: Exception =>
         logger.error("Processing Error %s (%s)".format(file, StorageUnit(fileLength)), e)
-        for ((chunker, handlers) <- chunkerList) {
+        for ((chunker, handlers) <- FileProcessor.chunker) {
           for (handler <- handlers) {
             handler.fileError(file.getCanonicalPath, fileLength)
           }

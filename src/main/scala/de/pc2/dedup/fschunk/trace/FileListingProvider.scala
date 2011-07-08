@@ -5,6 +5,9 @@ import scala.collection.mutable.ListBuffer
 
 case class FilenameLabel(val filename: String, val label: Option[String])
 
+/**
+ * object for the file listing provided
+ */
 object FileListingProvider {
   // we always try to follow initial symlinks
   def g(filename: String, label: Option[String], f: (FilenameLabel) => Unit): Unit = {
@@ -18,6 +21,9 @@ object FileListingProvider {
     }
   }
 
+  /**
+   * Create a listing provied from a direct file.
+   */
   def fromDirectFile(filenames: Seq[String], label: Option[String]): FileListingProvider = {
     class DirectFileProvider extends FileListingProvider {
       def foreach(f: (FilenameLabel) => Unit): Unit = {
@@ -26,6 +32,10 @@ object FileListingProvider {
     }
     new DirectFileProvider()
   }
+  
+  /**
+   * Create a listing provider for a listing file
+   */
   def fromListingFile(filenames: Seq[String], defaultLabel: Option[String]): FileListingProvider = {
     class ListingFileProvider extends FileListingProvider {
       var reader: BufferedReader = null;

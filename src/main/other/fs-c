@@ -2,6 +2,7 @@
 import sys
 import os
 import subprocess
+from xml.dom import minidom
     
 def help():
     return "fs-c trace [Options]\nfs-c parse [Options]\nfs-c import [Options]"
@@ -63,15 +64,24 @@ if __name__ == "__main__":
             print help()
             sys.exit()
         args = sys.argv[1:]
+        system_properties = []
         debugging = False
+        cluster = False
         for i in xrange(len(args)):
             if args[i] == "--debug":
                 debugging = True
                 del args[i]
                 break
-
+        for i in xrange(len(args)):
+            if args[i] == "--cluster":
+                cluster = True
+                
         if args[0] == "trace":
             java_class = "de.pc2.dedup.fschunk.trace.Main"
+            
+            for arg in args[1:]:
+                if arg == "--cluster":
+                    cluster = True
         elif args[0] == "parse":
             java_class = "de.pc2.dedup.fschunk.parse.Main"
         elif args[0] == "import":
@@ -83,6 +93,32 @@ if __name__ == "__main__":
         else:
             print help()
             sys.exit()
+        
+        if debugging:
+            system_properties.append("-Dlog4j.configuration=log4j_debug.xml")   
+        
+        if cluster:
+            hosts_file = from_fsc_root("conf/hosts")
+            hosts = open(hosts_file).read().split()
+            
+            hazelcast_file = from_fsc_root("conf/hazelcast.xml")
+            hazelcast_config_doc = minidom.parse(hazelcast_file)
+            
+            hosts_tag = hazelcast_config_doc.getElementsByTagName('tcp-ip')[0]
+            
+            if len(hosts) == 0:
+                print "No hosts set in conf/hosts"
+                print help()
+                sys.exit(1)
+                
+            for hostname in hosts:
+                tag = hazelcast_config_doc.createElement("hostname")
+                text = hazelcast_config_doc.createTextNode(hostname)
+                tag.appendChild(text)
+                hosts_tag.appendChild(tag)
+            my_hazelcast_file = from_fsc_root("conf/my-hazelcast.xml")
+            hazelcast_config_doc.writexml(open(my_hazelcast_file, "w"))
+            system_properties.append("-Dhazelcast.config=%s" % my_hazelcast_file)
         cmd_args = ["java"]
         if "JAVA_HOME" in os.environ:
             cmd_args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
@@ -94,8 +130,9 @@ if __name__ == "__main__":
             cmd_args.append("-Xmx%s" % os.environ["FSC_XMX"])
         else:
             cmd_args.append("-Xmx2G")
-        if debugging:
-            cmd_args.append("-Dlog4j.configuration=log4j_debug.xml")   
+        if "FSC_NICE" in os.environ:
+            cmd_args.insert(0, "nice -%s" % os.environ["FSC_NICE"])
+        cmd_args.extend(system_properties)
         cmd_args.extend(["-server", "-cp",":".join(get_cp()),java_class])
         cmd_args.extend(args[1:])
     

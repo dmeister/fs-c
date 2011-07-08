@@ -5,6 +5,9 @@ import de.pc2.dedup.chunker.FilePart
 import scala.actors._
 import de.pc2.dedup.fschunk.Reporting
 
+/**
+ * Trait for handling of file data
+ */
 trait FileDataHandler extends Reporting {
   def handle(f: File)
 

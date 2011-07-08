@@ -17,15 +17,27 @@ import de.pc2.dedup.fschunk.Reporting
 import scala.actors.Actor
 import scala.actors.Actor._
 import scala.actors.Exit
+import com.hazelcast.core.Hazelcast
 
+/**
+ * Main tracing class
+ */
 class FileSystemChunking(listing: FileListingProvider,
   chunker: Seq[(Chunker, List[FileDataHandler])],
   maxThreads: Int,
   useDefaultIgnores: Boolean,
   followSymlinks: Boolean,
+  clustered: Boolean,
   progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Log with Reporting {
 
-  val dispatcher = new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
+  /**
+   * Dispatching object
+   */
+  val dispatcher = if (clustered) {
+    new DistributedFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
+  } else {
+    new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
+  }
 
   def report() {
     dispatcher.report()
@@ -34,16 +46,24 @@ class FileSystemChunking(listing: FileListingProvider,
     }
   }
 
-  logger.debug("Start")
+  logger.debug("Start chunking")
 
   // Append all files from listing to directory processor
-  for (fl <- listing) {
-    val f = getFile(fl.filename)
-    dispatcher.dispatch(f, f.getCanonicalPath(), f.isDirectory(), fl.label)
+  if (dispatcher.isLeader) {
+    for (fl <- listing) {
+      val f = getFile(fl.filename)
+      dispatcher.dispatch(f, f.getCanonicalPath(), f.isDirectory(), fl.label)
+    }
+  }
+
+  def quit() {
+    dispatcher.quit()
   }
 
   def start() {
     dispatcher.waitUntilFinished()
+    logger.debug("Finished waiting")
+
     for ((_, handlers) <- chunker) {
       handlers.foreach(h => h.quit())
     }

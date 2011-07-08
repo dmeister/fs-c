@@ -23,9 +23,16 @@ object Rabin {
    */
   def createDefaultRabin() = new Rabin(new BigInteger("13827942727904890243").longValue())
 }
+
+/**
+ * Rabin fingerprinter class
+ */
 class Rabin(val polynom: Long) {
   private val T = createModTable(polynom)
 
+  /**
+   * Calculates the module table for a given polynom
+   */
   def createModTable(polynom: Long): Array[Long] = {
     val T = new Array[Long](256)
     val T1 = PolynomUtil.mod(0, Rabin.MSD_SET, polynom)

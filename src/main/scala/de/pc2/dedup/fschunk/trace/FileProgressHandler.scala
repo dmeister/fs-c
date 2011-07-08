@@ -6,6 +6,9 @@ import java.util.concurrent.locks.ReentrantLock
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 
+/**
+ * File progress handler specially developed for BSC to track all processed files
+ */
 class FileProgressHandler(progressFilename: String) {
 
   var index: Int = 0

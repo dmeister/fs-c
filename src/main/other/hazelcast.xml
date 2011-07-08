@@ -1,0 +1,21 @@
+<hazelcast>
+    <network>
+        <port auto-increment="true">5701</port>
+        <join>
+            <multicast enabled="false">
+            </multicast>
+            <tcp-ip enabled="true">
+            </tcp-ip>
+        </join>
+    </network>
+    <executor-service name="file">
+        <core-pool-size>4</core-pool-size>
+        <max-pool-size>4</max-pool-size>
+        <keep-alive-seconds>60</keep-alive-seconds>
+    </executor-service>
+    <executor-service name="dir">
+        <core-pool-size>2</core-pool-size>
+        <max-pool-size>2</max-pool-size>
+        <keep-alive-seconds>60</keep-alive-seconds>
+    </executor-service>
+</hazelcast>

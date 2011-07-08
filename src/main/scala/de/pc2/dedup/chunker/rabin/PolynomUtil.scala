@@ -2,6 +2,7 @@ package de.pc2.dedup.chunker.rabin
 
 /**
  * Utility class for Polynom operations on a 64-bit integer.
+ * In the C++ version, I used the polynom operations provided by cryptopp
  *
  * References: Donald Knuth, The Art of Computer Programming, Volume 2
  */

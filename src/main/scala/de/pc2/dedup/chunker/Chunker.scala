@@ -17,6 +17,9 @@ trait ChunkerSession {
    */
   def close()(h: (Chunk => Unit))
 
+  /**
+   * name of the chunker
+   */
   def chunkerName(): String
 }
 
@@ -30,5 +33,8 @@ trait Chunker {
    */
   def createSession(): ChunkerSession
 
+  /**
+   * name of the chunker
+   */
   def chunkerName(): String
 }

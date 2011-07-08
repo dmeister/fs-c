@@ -34,6 +34,9 @@ class FixedChunker(chunkSize: Int, digestFactory: DigestFactory, val chunkerName
       currentChunkPos = 0
     }
 
+    /**
+     * Chunks the data
+     */
     def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit)) {
       for (i <- 0 until size) {
         currentChunk(this.currentChunkPos) = data(i)
@@ -44,6 +47,9 @@ class FixedChunker(chunkSize: Int, digestFactory: DigestFactory, val chunkerName
       }
     }
 
+    /**
+     * Closes the chunker session
+     */
     def close()(h: (Chunk => Unit)) {
       if (currentChunkPos > 0) {
         acceptChunk(h)

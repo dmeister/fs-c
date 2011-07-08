@@ -16,7 +16,15 @@ class RabinChunker(minimalSize: Int,
   maximalSize: Int,
   digestFactory: DigestFactory,
   val chunkerName: String) extends Chunker with Log {
+
+  /**
+   * windows rabin instance
+   */
   private val rabinWindow = new RabinWindow(Rabin.createDefaultRabin(), 48)
+
+  /**
+   * breakmark bit pattern
+   */
   private val breakmark: Long = (Math.pow(2.0, BigInteger.valueOf(averageSize).bitLength() - 1) - 1).toLong
   val positionWindowBeforeMin: Int = minimalSize - 48
 
@@ -25,6 +33,9 @@ class RabinChunker(minimalSize: Int,
    */
   def createSession(): ChunkerSession = new RabinChunkerSession(chunkerName)
 
+  /**
+   * session class
+   */
   private class RabinChunkerSession(val chunkerName: String) extends ChunkerSession {
     val rabinSession = rabinWindow.createSession()
     val overflowChunk = new Array[Byte](maximalSize)
@@ -41,6 +52,9 @@ class RabinChunker(minimalSize: Int,
       overflowChunkPos = 0
     }
 
+    /**
+     * Chunks the data
+     */
     def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit)) {
       var current = 0
       var nonChunkedData = 0

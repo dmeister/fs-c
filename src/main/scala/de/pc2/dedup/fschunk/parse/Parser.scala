@@ -21,7 +21,10 @@ import com.google.protobuf.InvalidProtocolBufferException
 import de.pc2.dedup.fschunk.format.Format
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
-class Parser(filename: String, format: String, handlers: List[FileDataHandler]) extends FileDataHandler with Log {
+/**
+ * Parses a file and calls all handler for each file and file part
+ */
+class Parser(filename: String, format: String, handlers: Seq[FileDataHandler]) extends FileDataHandler with Log {
   override def quit() {
     for (handler <- handlers) {
       handler.quit()

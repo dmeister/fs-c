@@ -14,5 +14,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Pig 0.7.0"/>
 	<classpathentry kind="lib" path="src/main/other"/>
 	<classpathentry kind="lib" path="lib/protobuf-java-2.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-all-1.9.3.1.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/argot_2.9.0-0.3.1.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/grizzled-scala_2.9.0-1.0.6.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/jline-0.9.94.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

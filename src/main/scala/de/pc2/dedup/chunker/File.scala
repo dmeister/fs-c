@@ -1,6 +1,6 @@
 package de.pc2.dedup.chunker
 
-/*
+/**
  * Represents a file
  * @filename filename (or hash of a filename in privacy mode)
  * @fileSize logical file size in bytes

@@ -19,6 +19,9 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
 import com.google.protobuf._
 import java.util.concurrent.atomic._
 
+/**
+ * Reader of the protobuf format files
+ */
 class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends Reader with Log {
   private def parseChunkEntry(stream: InputStream): Chunk = {
     val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
@@ -46,6 +49,9 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
     parseFileEntry(stream)
   }
 
+  /**
+   * Parses the given file
+   */
   def parse() {
     try {
       val stream = new FileInputStream(filename);

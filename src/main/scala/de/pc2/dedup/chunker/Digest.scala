@@ -8,6 +8,10 @@ import java.security.NoSuchAlgorithmException
  * Compation object to create fingerprints of a chunk or a file
  */
 class DigestFactory(val digestType: String, val digestLength: Int) {
+
+  /**
+   * Tests if the digest type is valid
+   */
   def testDigestType() {
     try {
       val md = MessageDigest.getInstance(digestType)
@@ -21,9 +25,15 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
   }
   testDigestType()
 
+  /**
+   * builder class for digests
+   */
   class DigestBuilder {
     val md = MessageDigest.getInstance(digestType)
 
+    /**
+     * Append new bytes to the current digest builder
+     */
     def append(buf: Array[Byte], pos: Int, len: Int): DigestBuilder = {
       if (len > 0) {
         md.update(buf, pos, len)
@@ -31,6 +41,9 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
       return this;
     }
 
+    /**
+     * create a new digest from the current data. Rests the digest builder
+     */
     def build(): Digest = {
       val fullDigest = md.digest()
       val digest = if (digestLength == md.getDigestLength) {
@@ -46,6 +59,9 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
     }
   }
 
+  /**
+   * Creates a new digest builder
+   */
   def builder(): DigestBuilder = {
     return new DigestBuilder()
   }
