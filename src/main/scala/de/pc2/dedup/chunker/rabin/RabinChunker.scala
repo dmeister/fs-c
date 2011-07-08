@@ -3,10 +3,12 @@ package de.pc2.dedup.chunker.rabin
 import java.math.BigInteger
 import de.pc2.dedup.chunker.Chunker
 import scala.collection.mutable._
+import scala.math.pow;
 import de.pc2.dedup.util._
 import de.pc2.dedup.chunker.DigestFactory
 import de.pc2.dedup.chunker.ChunkerSession
 import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.util._
 
 /**
  * Rabin Chunking
@@ -25,7 +27,7 @@ class RabinChunker(minimalSize: Int,
   /**
    * breakmark bit pattern
    */
-  private val breakmark: Long = (Math.pow(2.0, BigInteger.valueOf(averageSize).bitLength() - 1) - 1).toLong
+  private val breakmark: Long = (pow(2.0, BigInteger.valueOf(averageSize).bitLength() - 1) - 1).toLong
   val positionWindowBeforeMin: Int = minimalSize - 48
 
   /**

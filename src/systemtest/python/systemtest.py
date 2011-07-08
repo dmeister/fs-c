@@ -52,6 +52,7 @@ class FSCSystemTest(unittest.TestCase):
         return os.path.abspath(from_fsc_root(dir))
     
     def setUp(self):
+        print
         self.run = Run()
         
         def setUpWorkingDirectory():
@@ -74,6 +75,66 @@ class FSCSystemTest(unittest.TestCase):
             Tests if symlinks are followed when --follow-symlinks is given
         """
         self._ignore_symlink_test(False)
+        
+    def test_find_simple_redundancy(self):
+        """ test_find_simple_redundancy
+        """
+        work_dir = self.get_working_directory()
+        def prepareWorkingDirectory():            
+            os.mkdir(os.path.join(work_dir, "c"))
+            
+            urandom = open("/dev/urandom")
+            data = urandom.read(1024 * 1024)
+            
+            f1 = open(os.path.join(work_dir, "c", "1"), "w")
+            f2 = open(os.path.join(work_dir, "c", "2"), "w")
+            
+            f1.write(data)
+            f2.write(data)            
+            
+        prepareWorkingDirectory()         
+        output = self.run_fs_c("trace -f %s" % work_dir)
+            
+        self.assertTrue(any(re.search(r"Redundancy: .* \(50,00%\)", line) for line in output.split("\n")))
+  
+    def test_find_simple_shifted_redundancy(self):
+        """ test_find_simple_shifted_redundancy
+        """
+        work_dir = self.get_working_directory()
+        def prepareWorkingDirectory():            
+            os.mkdir(os.path.join(work_dir, "c"))
+
+            f1 = open(os.path.join(work_dir, "c", "1"), "w")
+            f2 = open(os.path.join(work_dir, "c", "2"), "w")
+            
+            urandom = open("/dev/urandom")
+            
+            # Shifting
+            data = urandom.read(4 * 1024)
+            f2.write(data)   
+                        
+            data = urandom.read(1024 * 1024)
+            f1.write(data)
+            f2.write(data)            
+            
+        prepareWorkingDirectory()         
+        output = self.run_fs_c("trace -f %s" % work_dir)
+        
+        percent_intervals = [(0, 0), (95, 100), (45, 50)]
+        
+        for line in output.split("\n"):
+            match = re.search("Redundancy: .* \((\d{1,2}),\d{1,2}%\)", line)
+            if match:
+                percent_value = int(match.groups()[0])
+                self.assertTrue(len(percent_intervals) > 0)
+                
+                percent_interval = percent_intervals[0]
+                del percent_intervals[0]
+                
+                self.assertTrue(percent_value >= percent_interval[0])
+                self.assertTrue(percent_value <= percent_interval[1])
+                
+        #self.assertTrue(any(re.search(r"Redundancy: .* \(50,00%\)", line) for line in output.split("\n")))
         
     def _ignore_symlink_test(self, ignore):
         work_dir = self.get_working_directory()

@@ -10,13 +10,17 @@ class DirectoryProcessorTest extends FunSuite with ShouldMatchers {
 	class FileDispatcherMock extends FileDispatcher {
 		val files = new ListBuffer[File]()
 		
-		def dispatch(f: File) {
+		def dispatch(f: File, path: String, isDir: Boolean, label: Option[String]) {
 			files.append(f)
 		}
 		
-		def act() {
-			
-		}
+		 def waitUntilFinished() {
+		    
+		 }
+		 
+		 def report() {
+		   
+		 }
 	}
 	def exec(cmd: String) : Boolean = {
 		val p = Runtime.getRuntime().exec(cmd)
@@ -42,15 +46,15 @@ class DirectoryProcessorTest extends FunSuite with ShouldMatchers {
 	test("symlink handling") {
 		if(isUNIX()) {
 			val tmp = getTempDirectoryName()
-			println(tmp)
 			exec("mkdir %s".format(tmp))
 			exec("mkdir %s/a".format(tmp))
 			exec("ln -s a %s/b".format(tmp))
 			exec("touch %s/a/c".format(tmp))
 			
 			val mock = new FileDispatcherMock()
+			DirectoryProcessor.init(mock)
 			
-			val d = new DirectoryProcessor("%s".format(tmp),true,mock)
+			val d = new DirectoryProcessor("%s".format(tmp), Some(""), true, false)
 			d.run()
 			mock.files should have length (1)
 			

@@ -3,7 +3,7 @@ package de.pc2.dedup.chunker.rabin
 import org.scalatest._
 import org.scalatest.matchers._
 import org.scalatest.junit._ 
-
+import scala.math.pow
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -22,7 +22,7 @@ class RabinChunkerTest extends FunSuite with ShouldMatchers {
 
 	test("breakmark calculation") {
 		val averageSize = 8 * 1024
-		val breakmark = (Math.pow(2.0, BigInteger.valueOf(averageSize).bitLength()-1)-1).toInt
+		val breakmark = (pow(2.0, BigInteger.valueOf(averageSize).bitLength()-1)-1).toInt
 		
 		(breakmark + 1) should be (averageSize)
 	}
@@ -46,16 +46,24 @@ class RabinChunkerTest extends FunSuite with ShouldMatchers {
 	}
 	
 	test("invert table calculation") {
-		val window = new RabinWindow(Rabin.createDefaultRabin(), 48)
+		val window = new RabinWindow(Rabin.createDefaultRabin(), 48)		
+		val invertTable = window.invertTable
+		
+		invertTable(1) should be (3516854836665139219L)
+		invertTable(131) should be (846774551824259960L)		
+	}
+	
+	test("two appends") {
+	  		val window = new RabinWindow(Rabin.createDefaultRabin(), 48)	
 		val sess = window.createSession()
 
 		for(i <- 0 until 128) {
 			  sess.append(2)
 		  }
-		val oldFingerprint = sess.getFingerprint()
+		val oldFingerprint = sess.fingerprint
 		for(i <- 128 until 256) {
 			  sess.append(2)
-			  val fingerprint : Long = sess.getFingerprint() 
+			  val fingerprint : Long = sess.fingerprint 
 			  	  
 			  fingerprint should be (oldFingerprint)
 		  }
@@ -112,7 +120,7 @@ class RabinChunkerTest extends FunSuite with ShouldMatchers {
 			}
 			sess1.append(value)
 		}
-		val fp1 = sess1.getFingerprint()
+		val fp1 = sess1.fingerprint
 		
 		sess1.clear()
 		for(i <- 12 until 128) {
@@ -124,7 +132,7 @@ class RabinChunkerTest extends FunSuite with ShouldMatchers {
 			sess1.append(value)
 		}
 		
-		val fp2 = sess1.getFingerprint()
+		val fp2 = sess1.fingerprint
 		fp2 should be (fp1)
 	}
 }

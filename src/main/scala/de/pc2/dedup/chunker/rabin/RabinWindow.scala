@@ -2,8 +2,10 @@ package de.pc2.dedup.chunker.rabin
 
 import de.pc2.dedup.chunker.RollingFingerprint
 import java.util.Arrays
+import de.pc2.dedup.util._
 
 /**
+
  * A rolling fingerprint variant of Rabin's Fingerprinting Method.
  * It used a "invert table" to speed up the processing.
  *
@@ -30,23 +32,33 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
     val it = for (i <- 0 until 256) yield PolynomUtil.modmult(i, shift, rabin.polynom)
     it.toArray
   }
+  
+  def printInvertTable() = {
+    for(i <- 0 until 256) {
+      println("%s => %s".format(i, invertTable(i)))
+    }
+  }
 
   /**
    * Creates a new windowed rabin fingerprint session
    */
   def createSession(): Session = new RabinWindowSession()
 
-  class RabinWindowSession extends Session {
+  class RabinWindowSession extends Session with Log {
     val window = new Array[Int](windowSize)
     var windowPos = -1
     var fingerprint = 0L
 
     def clear() = {
+      //logger.info("Clear session")
       Arrays.fill(window, 0)
+      windowPos = -1
+      fingerprint = 0L
     }
 
     def append(data: Int) {
       windowPos = windowPos + 1
+      
       if (windowPos == window.length) {
         windowPos = 0
       }
@@ -57,6 +69,7 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
        * Removed oldest byte from fingerprint and adds new byte (data) to it
        */
       fingerprint = rabin.append(fingerprint ^ invertTable(oldestByte), data)
+      //logger.info("Updated fingerprint %s, oldest byte %s, new byte %s".format(fingerprint, oldestByte, data))
     }
   }
 }

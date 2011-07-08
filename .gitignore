@@ -1,3 +1,8 @@
+fs-c-*.tgz
+lib_managed/
+project/boot/
+src/systemtest/resources/work/
+tmp/
 .DS_Store
 *.tmp
 *.swp

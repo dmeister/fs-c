@@ -25,4 +25,5 @@ class FSCProject(info: ProjectInfo) extends DefaultProject(info)
   override def mainClass = Some("de.pc2.dedup.fschunk.trace.Main")
     
   val argot = "org.clapper" %% "argot" % "0.3.1"
+  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
 }
