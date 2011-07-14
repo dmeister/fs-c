@@ -1,5 +1,7 @@
 package de.pc2.dedup.chunker
 
+import java.nio.ByteBuffer
+
 /**
  * Trait of all chunker sessions.
  */
@@ -8,7 +10,7 @@ trait ChunkerSession {
    * chunks "size" bytes of the data array.
    * The session may contain data from that array in an additinal open chunk.
    */
-  def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit))
+  def chunk(data: ByteBuffer)(h: (Chunk => Unit))
 
   /**
    * Return additional chunks that stayed open after chunk calls. The

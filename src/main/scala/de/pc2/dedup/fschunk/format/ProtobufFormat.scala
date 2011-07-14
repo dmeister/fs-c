@@ -79,7 +79,7 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
  * file fs-c.proto
  */
 class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataHandler with Log {
-  val filestream: OutputStream = new BufferedOutputStream(new FileOutputStream(filename), 512 * 1024)
+  val filestream: OutputStream = new BufferedOutputStream(new FileOutputStream(filename), 4 * 1024 * 1024)
   var fileCount = 0L
   var chunkCount = 0L
   var totalFileSize = 0L

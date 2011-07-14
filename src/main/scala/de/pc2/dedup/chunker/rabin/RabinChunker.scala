@@ -9,6 +9,7 @@ import de.pc2.dedup.chunker.DigestFactory
 import de.pc2.dedup.chunker.ChunkerSession
 import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.util._
+import java.nio.ByteBuffer
 
 /**
  * Rabin Chunking
@@ -44,77 +45,105 @@ class RabinChunker(minimalSize: Int,
     var overflowChunkPos: Int = 0
     val digestBuilder = digestFactory.builder()
 
-    def acceptChunk(h: (Chunk => Unit), data: Array[Byte], dataPos: Int, dataLen: Int) {
-      val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos)
-        .append(data, dataPos, dataLen).build()
-
-      val c = Chunk(this.overflowChunkPos + dataLen, digest)
+    def acceptChunk(h: (Chunk => Unit), nonChunkedData: ByteBuffer) {
+      val c = if (nonChunkedData != null) {
+        val remaining = nonChunkedData.remaining
+        val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos).append(nonChunkedData).build()
+        Chunk(this.overflowChunkPos + remaining, digest)
+      } else {
+        val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos).build()
+        Chunk(this.overflowChunkPos, digest)
+      }
+      //logger.debug("Chunk: len %s".format(c.size))
       h(c)
       rabinSession.clear()
       overflowChunkPos = 0
     }
 
+    def debugString(b: ByteBuffer): String = {
+      return "position %s, limit %s, capacity %s".format(b.position, b.limit, b.capacity)
+    }
+
     /**
      * Chunks the data
      */
-    def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit)) {
-      var current = 0
-      var nonChunkedData = 0
-      var break = false;
-      while (current < size && !break) {
-        var todo = size - current
-        var countToMax = maximalSize - overflowChunkPos
-        if (todo > countToMax) {
-          todo = countToMax
-        }
-        var countToMin = positionWindowBeforeMin - overflowChunkPos
+    def chunk(data: ByteBuffer)(h: (Chunk => Unit)) {
+      try {
+        var current = 0
+        var nonChunkedData: ByteBuffer = data.slice()
+        var break = false;
 
-        if (countToMin > todo) {
-          // break (but Scala has no break
-          break = true
-        } else {
-          if (countToMin < 0) {
-            countToMin = 0
+        while (current < data.limit && !break) {
+          var todo = data.limit - current
+          var countToMax = maximalSize - overflowChunkPos
+          if (todo > countToMax) {
+            todo = countToMax
           }
-          val end = current + todo
-          current += countToMin
-          var innerBreak = false
-          while (current < end && !innerBreak) {
-            val value: Int = if (data(current) < 0) {
-              256 + data(current)
-            } else {
-              data(current)
+          var countToMin = positionWindowBeforeMin - overflowChunkPos
+
+          if (countToMin > todo) {
+            // break (but Scala has no break)
+            break = true
+          } else {
+            if (countToMin < 0) {
+              countToMin = 0
             }
-            current += 1
-            this.rabinSession.append(value)
-            val isBreakmark = (this.rabinSession.fingerprint & breakmark) == breakmark;
+            val end = current + todo
+            current += countToMin
+            var innerBreak = false
+            data.position(current)
+            while (current < end && !innerBreak) {
+              val b = data.get()
+              val value: Int = if (b < 0) {
+                256 + b
+              } else {
+                b
+              }
+              current += 1
+              this.rabinSession.append(value)
+              val isBreakmark = (this.rabinSession.fingerprint & breakmark) == breakmark;
+              if (isBreakmark) {
+                nonChunkedData.limit(data.position)
+                //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
+                acceptChunk(h, nonChunkedData)
+                innerBreak = true
+              }
+            }
 
-            if (isBreakmark) {
-              acceptChunk(h, data, nonChunkedData, current - nonChunkedData)
-              nonChunkedData = current
-              innerBreak = true
+            // end of inner loop
+            if (current == end && todo == countToMax) {
+              //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
+              nonChunkedData.limit(data.position)
+              acceptChunk(h, nonChunkedData)
             }
           }
+        }
+        // end of outer loop
 
-          // end of inner loop
-          if (current == end && todo == countToMax) {
-            acceptChunk(h, data, nonChunkedData, current - nonChunkedData)
-            nonChunkedData = current
+        //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
+        if (nonChunkedData.position < nonChunkedData.capacity) {
+          nonChunkedData.limit(nonChunkedData.capacity)
+
+          //logger.debug("Copy %s bytes to overflow chunk buffer: pos %s, len %s".format(nonChunkedData.remaining, overflowChunkPos, overflowChunk.length))
+          if (nonChunkedData.remaining > 0) {
+            val remaining = nonChunkedData.remaining
+            nonChunkedData.get(overflowChunk, overflowChunkPos, nonChunkedData.remaining)
+            overflowChunkPos += remaining
           }
         }
-      }
-      // end of outer loop
-      if (size - nonChunkedData > 0) {
-        System.arraycopy(data, nonChunkedData, overflowChunk, overflowChunkPos, size - nonChunkedData)
-        overflowChunkPos += (size - nonChunkedData)
+      } catch {
+        case e: Exception =>
+          logger.error("Chunking error".format(e))
+          throw e
       }
     }
     /**
      * Closes the rabin chunker
      */
     def close()(h: (Chunk => Unit)) {
+      //logger.debug("Close session: overflow chunk pos %s".format(overflowChunkPos))
       if (overflowChunkPos > 0) {
-        acceptChunk(h, null, 0, 0)
+        acceptChunk(h, null)
       }
     }
   }

@@ -50,7 +50,6 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
     var fingerprint = 0L
 
     def clear() = {
-      //logger.info("Clear session")
       Arrays.fill(window, 0)
       windowPos = -1
       fingerprint = 0L
@@ -69,7 +68,6 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
        * Removed oldest byte from fingerprint and adds new byte (data) to it
        */
       fingerprint = rabin.append(fingerprint ^ invertTable(oldestByte), data)
-      //logger.info("Updated fingerprint %s, oldest byte %s, new byte %s".format(fingerprint, oldestByte, data))
     }
   }
 }

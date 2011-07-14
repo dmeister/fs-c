@@ -32,7 +32,7 @@ class Parser(filename: String, format: String, handlers: Seq[FileDataHandler]) e
   }
 
   def parse() {
-    logger.info("Started parser with %d handlers".format(handlers.size))
+    logger.debug("Started parser with %d handlers".format(handlers.size))
     val reader = Format(format).createReader(filename, this)
     reader.parse()
   }

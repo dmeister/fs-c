@@ -5,6 +5,7 @@ import de.pc2.dedup.chunker.Chunk
 import scala.collection.mutable._
 import de.pc2.dedup.chunker.DigestFactory
 import de.pc2.dedup.chunker.ChunkerSession
+import java.nio.ByteBuffer
 
 /**
  * Chunker for Static (or Fixed)-size chunking
@@ -37,9 +38,9 @@ class FixedChunker(chunkSize: Int, digestFactory: DigestFactory, val chunkerName
     /**
      * Chunks the data
      */
-    def chunk(data: Array[Byte], size: Int)(h: (Chunk => Unit)) {
-      for (i <- 0 until size) {
-        currentChunk(this.currentChunkPos) = data(i)
+    def chunk(data: ByteBuffer)(h: (Chunk => Unit)) {
+      for (i <- 0 until data.limit) {
+        currentChunk(this.currentChunkPos) = data.get()
         currentChunkPos += 1
         if (currentChunkPos >= chunkSize) {
           acceptChunk(h)

@@ -3,6 +3,7 @@ package de.pc2.dedup.chunker;
 import java.util.Arrays
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import java.nio.ByteBuffer
 
 /**
  * Compation object to create fingerprints of a chunk or a file
@@ -38,7 +39,12 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
       if (len > 0) {
         md.update(buf, pos, len)
       }
-      return this;
+      return this
+    }
+    
+    def append(buf: ByteBuffer): DigestBuilder = {
+    	md.update(buf)
+      return this
     }
 
     /**

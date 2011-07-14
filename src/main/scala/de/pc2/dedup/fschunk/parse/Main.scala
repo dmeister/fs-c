@@ -4,6 +4,7 @@ import scalax.io._
 import scalax.io.CommandLineParser
 import de.pc2.dedup.fschunk.handler.direct._
 import java.io.File
+import de.pc2.dedup.fschunk._
 import de.pc2.dedup.util.SystemExitException
 import de.pc2.dedup.fschunk.format.Format
 import org.clapper.argot._
@@ -55,24 +56,43 @@ object Main {
 
       handlerType match {
         case "simple" =>
+          output match {
+            case None => 
+            case _ => throw new Exception("Output paramter is not supported by simple handler type")
+          }
           val handlerList = for { c <- chunkerNames } yield new InMemoryChunkHandler(false, new ChunkIndex(), c)
           val p = new Parser(filenames(0), format, handlerList)
           val reporter = new Reporter(p, reportInterval).start()
-          p
+          p.parse()
+          reporter ! Quit
+          for { handler <- handlerList} {
+            handler.quit()
+          }
         case "ir" =>
           val handlerList = for { c <- chunkerNames } yield new InternalRedundancyHandler(output, new ChunkIndex(), c)
           val p = new Parser(filenames(0), format, handlerList)
           val reporter = new Reporter(p, reportInterval).start()
-          p
+          p.parse()
+          reporter ! Quit
+          for { handler <- handlerList} {
+            handler.quit()
+          }
         case "tr" =>
           val handlerList1 = for { c <- chunkerNames } yield new DeduplicationHandler(new ChunkIndex(), c)
           val p1 = new Parser(filenames(0), format, handlerList1)
           val reporter1 = new Reporter(p1, reportInterval).start()
+          p1.parse()
+          reporter1 ! Quit
 
           val handlerList3 = for { h <- handlerList1 } yield new TemporalRedundancyHandler(output, h.d, h.chunkerName)
           val p2 = new Parser(filenames(1), format, handlerList3)
           val reporter2 = new Reporter(p1, reportInterval).start()
-          p2
+          p2.parse()
+          reporter2 ! Quit
+          
+          for { handler <- handlerList3} {
+            handler.quit()
+          }
       }
     } catch {
       case e: SystemExitException => System.exit(1)

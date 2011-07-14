@@ -26,7 +26,8 @@ class DistributedFileDispatcher(
   val startTime = System.currentTimeMillis()
   var lock: AnyRef = new Object()
   var finished: Boolean = false
-
+  
+  val activeAllCount = Hazelcast.getAtomicNumber("all count")
   val activeDirCount = Hazelcast.getAtomicNumber("dir count")
   val activeFileCount = Hazelcast.getAtomicNumber("file count")
   
@@ -39,7 +40,7 @@ class DistributedFileDispatcher(
    * true iff the executor service should be shut down.
    */
   def shouldShutdown: Boolean = {
-    return activeDirCount.get() + activeFileCount.get() == 0
+    return activeAllCount.get() == 0
   }
 
   /**
@@ -77,12 +78,13 @@ class DistributedFileDispatcher(
       logger.debug("Dispatch " + f)
     }
 
+    activeAllCount.incrementAndGet()
     val runnable = if (isDir) {
       activeDirCount.incrementAndGet()
       new DirectoryProcessor(f, label, useDefaultIgnores, followSymlinks)
     } else {
       activeFileCount.incrementAndGet()
-      new FileProcessor(f, path, label, 4 * 1024 * 1024)
+      new FileProcessor(f, path, label)
     }
     // the task type id is a) necessary for the executor callback and b) is used to determine the 
     // correct operations in the executor callback
@@ -102,6 +104,7 @@ class DistributedFileDispatcher(
         } else {
           activeFileCount.decrementAndGet()
         }
+        activeAllCount.decrementAndGet()
         if (shouldShutdown) {
           executorFinished()
         }

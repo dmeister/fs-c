@@ -9,8 +9,10 @@ import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
+import scala.math.Ordering
 
-class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends FileDataHandler {
+class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
@@ -39,7 +41,7 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
 
   def handle(f: File) {
     lock.synchronized {
-      println(f.filename)
+      logger.debug("Handle file %s".format(f.filename))
       val sizeCategory = getSizeCategory(f.fileSize)
       var currentRealSize = 0
       var currentFileSize = 0
@@ -75,36 +77,65 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
   override def quit() {
     output match {
       case Some(runName) =>
-        writeMapToFile(typeMap, "%s-%s-ir-type.csv".format(runName, chunkerName))
-        writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName))
+        writeMapToFile(typeMap, "%s-%s-ir-type.csv".format(runName, chunkerName), orderingForTypes)
+        writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName), orderingForSizeCategories)
       case None =>
-        outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName))
+        outputMapToConsole(typeMap, "File type categories: %s".format(chunkerName), orderingForTypes)
+        println()
+        outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName), orderingForSizeCategories)
     }
   }
+  
+  def orderingForTypes( value : (String, (Long, Long)) ) : (Long, String) = {
+    if (value._1 == "ALL") {
+      return (1L, value._1)
+    }
+    return (0L, value._1)
+  }
 
-  def outputMapToConsole(m: Map[String, (Long, Long)], title: String) {
+  def orderingForSizeCategories( value : (String, (Long, Long)) ) : (Long, String) = {
+    if (value._1 == "ALL") {
+      return (java.lang.Long.MAX_VALUE, value._1)
+    }
+    return (StorageUnit.fromString(value._1), value._1)
+  }
+  
+  def outputMapToConsole(m: Map[String, (Long, Long)], title: String, ord: ((String, (Long, Long))) => (Long, String)) {
+    def storageUnitIfPossible(k: String) : String = {
+      try {
+        return StorageUnit(k.toLong).toString() + "B"
+      } catch {
+        case _ =>
+          // pass
+      }
+      return k
+    }
     println(title)
     println()
-    println("\tReal Size\tTotal Size\tDedup Ratio")
-    for (k <- m.keySet) {
-      val (realSize, totalSize) = m(k)
+    println("%-20s %14s %14s %-8s".format("","Real Size", "Total Size", "Dedup Ratio"))
+    
+    //  {_._1}
+    val valueList = m.toList sortBy(ord)
+    for ( (k, v) <- valueList) {
+      val (realSize, totalSize) = v
       val dedupRatio = if (totalSize > 0) {
-        100.0 * (1.0 - realSize / totalSize)
+        100.0 * (1.0 - (1.0 * realSize / totalSize))
       } else {
         0.0
       }
-      println("%s\t%s\t%s\t%.2f".format(
-        StorageUnit(k.toLong),
+      println("%-20s %14sB %14sB %8.2f%%".format(
+        storageUnitIfPossible(k),
         StorageUnit(realSize),
         StorageUnit(totalSize),
         dedupRatio))
     }
   }
 
-  def writeMapToFile(m: Map[String, (Long, Long)], f: String) {
+  def writeMapToFile(m: Map[String, (Long, Long)], f: String, ord: ((String, (Long, Long))) => (Long, String)) {
     val w = new BufferedWriter(new FileWriter(new java.io.File(f)))
-    for (k <- m.keySet) {
-      val (realSize, totalSize) = m(k)
+    val valueList = m.toList sortBy ord
+    for ( (k, v) <- valueList) {
+      val (realSize, totalSize) = v
       w.write("\"" + k + "\";" + realSize + ";" + totalSize)
       w.newLine()
     }

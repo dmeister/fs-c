@@ -134,7 +134,31 @@ class FSCSystemTest(unittest.TestCase):
                 self.assertTrue(percent_value >= percent_interval[0])
                 self.assertTrue(percent_value <= percent_interval[1])
                 
-        #self.assertTrue(any(re.search(r"Redundancy: .* \(50,00%\)", line) for line in output.split("\n")))
+    def test_two_chunkers(self):
+        """ test_two_chunkers
+            
+            Tests fs-c trave with two chunkers
+        """
+        work_dir = self.get_working_directory()
+        def prepareWorkingDirectory():            
+            os.mkdir(os.path.join(work_dir, "c"))
+
+            f1 = open(os.path.join(work_dir, "c", "1"), "w")
+            f2 = open(os.path.join(work_dir, "c", "2"), "w")
+            
+            urandom = open("/dev/urandom")
+            
+            # Shifting
+            data = urandom.read(4 * 1024)
+            f2.write(data)   
+                        
+            data = urandom.read(1024 * 1024)
+            f1.write(data)
+            f2.write(data)            
+            
+        prepareWorkingDirectory()         
+        output = self.run_fs_c("trace -c cdc8 -c cdc16 -f %s" % work_dir)    
+        self.assertFalse("ERROR" in output)
         
     def _ignore_symlink_test(self, ignore):
         work_dir = self.get_working_directory()

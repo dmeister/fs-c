@@ -20,6 +20,8 @@ import scala.actors.Actor._
 import de.pc2.dedup.util.StorageUnit
 import java.util.concurrent.atomic._
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 
 object FileProcessor extends Log {
   val activeCount = new AtomicLong(0L)
@@ -27,6 +29,8 @@ object FileProcessor extends Log {
   val totalRead = new AtomicLong(0L)
 
   val MAX_CHUNKLIST_SIZE = 10000L
+  val defaultBufferSize: Long = 4L * 1024 * 1024
+  val directBufferThreshold: Long = 4L * 1024 * 1024 * 1024
 
   def report() {
     logger.info("IO Stats: read: %s ops, %s bytes".format(totalCount, StorageUnit(totalRead.longValue())))
@@ -47,18 +51,29 @@ object FileProcessor extends Log {
 
 class FileProcessor(file: JavaFile,
   path: String,
-  label: Option[String],
-  defaultBufferSize: Int) extends Runnable with Log with Serializable {
+  label: Option[String]) extends Runnable with Log with Serializable {
 
-  def readIntoBuffer(s: InputStream, buffer: Array[Byte], offset: Long): Int = {
+  def readIntoBuffer(c: FileChannel, buffer: ByteBuffer, offset: Long): Int = {
     if (logger.isDebugEnabled) {
       logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
     }
-    var r = s.read(buffer)
+    val r = c.read(buffer)
     if (logger.isDebugEnabled) {
       logger.debug("File: Read %s finished, offset %s, data size %s".format(file, StorageUnit(offset), StorageUnit(r)))
     }
+    buffer.flip()
     return r
+  }
+
+  def allocateBuffer(fileLength: Long): ByteBuffer = {
+    val buffer = if (fileLength > FileProcessor.directBufferThreshold) {
+      ByteBuffer.allocateDirect(FileProcessor.defaultBufferSize.toInt)
+    } else if (fileLength > FileProcessor.defaultBufferSize) {
+      ByteBuffer.allocate(FileProcessor.defaultBufferSize.toInt)
+    } else {
+      ByteBuffer.allocate(fileLength.toInt)
+    }
+    buffer
   }
 
   def run() {
@@ -71,29 +86,36 @@ class FileProcessor(file: JavaFile,
       }
     }
 
-    var s: InputStream = null
+    val startMillis = System.currentTimeMillis()
+    var s: FileInputStream = null
+    var c: FileChannel = null
     val fileLength = file.length
     if (logger.isDebugEnabled) {
       logger.debug("Started File %s (%s)".format(file, StorageUnit(fileLength)))
     }
     try {
-      val bufferSize: Int = if (fileLength >= defaultBufferSize) {
-        defaultBufferSize
-      } else {
-        fileLength.toInt
+      if (logger.isDebugEnabled) {
+        logger.debug("File %s: Allocate buffer".format(file))
       }
-      val buffer = new Array[Byte](bufferSize)
+      val buffer = allocateBuffer(fileLength)
       val sessionList = for { chunker <- FileProcessor.chunker } yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
-
-      s = new FileInputStream(file)
       val t = FileType.getNormalizedFiletype(file)
-      var r = readIntoBuffer(s, buffer, 0)
+
+      if (logger.isDebugEnabled) {
+        logger.debug("File %s: Open".format(file))
+      }
+      s = new FileInputStream(file)
+      c = s.getChannel()
+      var r = readIntoBuffer(c, buffer, 0)
       var offset = 0L
       while (r > 0) {
         offset += r
         FileProcessor.totalRead.addAndGet(r)
+        
+        val startChunkMillis = System.currentTimeMillis()
         for ((session, handlers, chunkList) <- sessionList) {
-          session.chunk(buffer, r) { chunk =>
+          val chunkBuffer = buffer.slice()
+          session.chunk(chunkBuffer) { chunk =>
             chunkList.append(chunk)
           }
           if (chunkList.size > FileProcessor.MAX_CHUNKLIST_SIZE) {
@@ -104,7 +126,16 @@ class FileProcessor(file: JavaFile,
             chunkList.clear()
           }
         }
-        r = readIntoBuffer(s, buffer, offset)
+        buffer.clear()
+        val endChunkMillis = System.currentTimeMillis()
+        if (logger.isDebugEnabled) {
+          logger.debug("File %s: Chunk finished, time %sms".format(file, (endChunkMillis - startChunkMillis)))
+        }
+        if (offset >= fileLength) {
+          r = 0
+        } else {
+          r = readIntoBuffer(c, buffer, offset)
+        }
       }
       for ((session, handlers, chunkList) <- sessionList) {
         session.close() { chunk =>
@@ -124,9 +155,9 @@ class FileProcessor(file: JavaFile,
             handler.fileError(path, fileLength)
           }
         }
-        logger.warn("File %s".format(e.getMessage))
+        logger.debug("File %s".format(e.getMessage))
       case e: Exception =>
-        logger.error("Processing Error %s (%s)".format(file, StorageUnit(fileLength)), e)
+        logger.error("File %s: %s".format(file, e))
         for ((chunker, handlers) <- FileProcessor.chunker) {
           for (handler <- handlers) {
             handler.fileError(file.getCanonicalPath, fileLength)
@@ -135,8 +166,10 @@ class FileProcessor(file: JavaFile,
     } finally {
       close(s)
     }
+    val endMillis = System.currentTimeMillis()
+    val diffMillis = endMillis - startMillis
     if (logger.isDebugEnabled) {
-      logger.debug("Finished File " + file)
+      logger.debug("Finished File %s: time %sms, size %s".format(file, diffMillis, StorageUnit(fileLength)))
     }
     FileProcessor.activeCount.decrementAndGet()
   }

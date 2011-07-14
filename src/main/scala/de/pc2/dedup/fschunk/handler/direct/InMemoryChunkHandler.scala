@@ -19,6 +19,10 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
   var lock: AnyRef = new Object()
   val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
   val startTime = System.currentTimeMillis()
+  
+  override def quit() {
+    report()
+  }
 
   override def report() {
     lock.synchronized {
@@ -84,22 +88,33 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
         }
       }
       totalChunkCount += chunkCount
-      totalFileSize += chunkFileSize
+      totalFileSize += f.fileSize
       totalChunkSize += chunkSize
 
+      val redundancy = f.fileSize - chunkSize
+      val patchSize = f.fileSize - redundancy
+      val illegalFile = patchSize < 0 || redundancy < 0 || f.fileSize != chunkFileSize
+
       val msg = new StringBuffer("%s - %s".format(f.filename, chunkerName))
-      if (!silent) {
-        val redundancy = f.fileSize - chunkSize
+      if (!silent || illegalFile) {
         msg.append("\nSize: %s (%d Byte)%n".format(
-          StorageUnit(chunkFileSize), chunkFileSize))
-        msg.append("Redundancy: %s".format(StorageUnit(redundancy)))
+          StorageUnit(f.fileSize), f.fileSize))
+        if (illegalFile) {
+          msg.append("\nChunks size: %s (%d Byte)%n".format(
+            StorageUnit(chunkFileSize), chunkFileSize))
+        }
+        msg.append("Redundancy: %s  (%d Byte)".format(StorageUnit(redundancy), redundancy))
         if (chunkFileSize > 0) {
           msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
         }
         msg.append("%nPatch Size: %s (%d Byte)".format(
           StorageUnit(chunkFileSize - redundancy), chunkFileSize - redundancy))
       }
-      logger.info(msg)
+      if (illegalFile) {
+        throw new Exception("Illegel file: %s".format(msg))
+      } else {
+        logger.info(msg)
+      }
     }
   }
 }
