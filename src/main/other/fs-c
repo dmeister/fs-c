@@ -2,7 +2,6 @@
 import sys
 import os
 import subprocess
-from xml.dom import minidom
     
 def help():
     return "fs-c trace [Options]\nfs-c parse [Options]\nfs-c import [Options]"
@@ -28,7 +27,7 @@ def get_hadoop_cp():
     return cp
 
 def get_cp():
-    cp = [from_fsc_root("fs-c-0.3.5.jar")]
+    cp = [from_fsc_root("fs-c-0.3.6.jar")]
     lib_dir = from_fsc_root("lib")
     for file in os.listdir(lib_dir):
         if file.endswith(".jar"):
@@ -54,6 +53,28 @@ def check_java_version():
         raise Exception("Failed to detect java version")
     raise Exception("No supported java version found")
 
+def adapt_hazelcast_config():
+    from xml.dom import minidom
+    hosts_file = from_fsc_root("conf/hosts")
+    hosts = open(hosts_file).read().split()
+    
+    hazelcast_file = from_fsc_root("conf/hazelcast.xml")
+    hazelcast_config_doc = minidom.parse(hazelcast_file)
+    
+    hosts_tag = hazelcast_config_doc.getElementsByTagName('tcp-ip')[0]
+    
+    if len(hosts) == 0:
+        raise Exception("No hosts found in conf/hosts")
+        
+    for hostname in hosts:
+        tag = hazelcast_config_doc.createElement("hostname")
+        text = hazelcast_config_doc.createTextNode(hostname)
+        tag.appendChild(text)
+        hosts_tag.appendChild(tag)
+    my_hazelcast_file = from_fsc_root("conf/my-hazelcast.xml")
+    hazelcast_config_doc.writexml(open(my_hazelcast_file, "w"))
+    return my_hazelcast_file
+    
 if __name__ == "__main__":
     try:
         check_python_version()
@@ -98,27 +119,9 @@ if __name__ == "__main__":
             system_properties.append("-Dlog4j.configuration=log4j_debug.xml")   
         
         if cluster:
-            hosts_file = from_fsc_root("conf/hosts")
-            hosts = open(hosts_file).read().split()
-            
-            hazelcast_file = from_fsc_root("conf/hazelcast.xml")
-            hazelcast_config_doc = minidom.parse(hazelcast_file)
-            
-            hosts_tag = hazelcast_config_doc.getElementsByTagName('tcp-ip')[0]
-            
-            if len(hosts) == 0:
-                print "No hosts set in conf/hosts"
-                print help()
-                sys.exit(1)
-                
-            for hostname in hosts:
-                tag = hazelcast_config_doc.createElement("hostname")
-                text = hazelcast_config_doc.createTextNode(hostname)
-                tag.appendChild(text)
-                hosts_tag.appendChild(tag)
-            my_hazelcast_file = from_fsc_root("conf/my-hazelcast.xml")
-            hazelcast_config_doc.writexml(open(my_hazelcast_file, "w"))
+            my_hazelcast_file = adapt_hazelcast_config()
             system_properties.append("-Dhazelcast.config=%s" % my_hazelcast_file)
+            
         cmd_args = ["java"]
         if "JAVA_HOME" in os.environ:
             cmd_args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
