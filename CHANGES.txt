@@ -1,3 +1,9 @@
+Version 0.3.6
+
+    - Import xml.minidom in fs-c only if actually needed. Not all Python installations have xml support available
+    - Use a fs-c directory in the installation package as most software has it.
+    - Fix the github download
+    
 Version 0.3.5
 
     - Overall performance improvements
