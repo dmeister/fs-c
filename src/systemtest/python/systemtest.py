@@ -126,7 +126,8 @@ class FSCSystemTest(unittest.TestCase):
             match = re.search("Redundancy: .* \((\d{1,2}),\d{1,2}%\)", line)
             if match:
                 percent_value = int(match.groups()[0])
-                self.assertTrue(len(percent_intervals) > 0)
+                if len(percent_intervals) == 0:
+                    break
                 
                 percent_interval = percent_intervals[0]
                 del percent_intervals[0]
