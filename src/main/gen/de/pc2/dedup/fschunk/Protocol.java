@@ -323,7 +323,7 @@ public final class Protocol {
       return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_File_fieldAccessorTable;
     }
     
-    // required string filename = 1;
+    // optional string filename = 1;
     public static final int FILENAME_FIELD_NUMBER = 1;
     private boolean hasFilename;
     private java.lang.String filename_ = "";
@@ -344,7 +344,7 @@ public final class Protocol {
     public boolean hasType() { return hasType; }
     public java.lang.String getType() { return type_; }
     
-    // required uint32 chunkCount = 4;
+    // optional uint32 chunkCount = 4;
     public static final int CHUNKCOUNT_FIELD_NUMBER = 4;
     private boolean hasChunkCount;
     private int chunkCount_ = 0;
@@ -368,8 +368,6 @@ public final class Protocol {
     private void initFields() {
     }
     public final boolean isInitialized() {
-      if (!hasFilename) return false;
-      if (!hasChunkCount) return false;
       return true;
     }
     
@@ -657,7 +655,7 @@ public final class Protocol {
       }
       
       
-      // required string filename = 1;
+      // optional string filename = 1;
       public boolean hasFilename() {
         return result.hasFilename();
       }
@@ -717,7 +715,7 @@ public final class Protocol {
         return this;
       }
       
-      // required uint32 chunkCount = 4;
+      // optional uint32 chunkCount = 4;
       public boolean hasChunkCount() {
         return result.hasChunkCount();
       }
@@ -813,14 +811,14 @@ public final class Protocol {
       return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_Chunk_fieldAccessorTable;
     }
     
-    // required bytes fp = 2;
+    // optional bytes fp = 2;
     public static final int FP_FIELD_NUMBER = 2;
     private boolean hasFp;
     private com.google.protobuf.ByteString fp_ = com.google.protobuf.ByteString.EMPTY;
     public boolean hasFp() { return hasFp; }
     public com.google.protobuf.ByteString getFp() { return fp_; }
     
-    // required uint32 size = 3;
+    // optional uint32 size = 3;
     public static final int SIZE_FIELD_NUMBER = 3;
     private boolean hasSize;
     private int size_ = 0;
@@ -830,8 +828,6 @@ public final class Protocol {
     private void initFields() {
     }
     public final boolean isInitialized() {
-      if (!hasFp) return false;
-      if (!hasSize) return false;
       return true;
     }
     
@@ -1063,7 +1059,7 @@ public final class Protocol {
       }
       
       
-      // required bytes fp = 2;
+      // optional bytes fp = 2;
       public boolean hasFp() {
         return result.hasFp();
       }
@@ -1084,7 +1080,7 @@ public final class Protocol {
         return this;
       }
       
-      // required uint32 size = 3;
+      // optional uint32 size = 3;
       public boolean hasSize() {
         return result.hasSize();
       }
@@ -1140,10 +1136,10 @@ public final class Protocol {
     java.lang.String[] descriptorData = {
       "\n\031src/main/other/fs-c.proto\022\024de.pc2.dedu" +
       "p.fschunk\"\036\n\010ChunkRun\022\022\n\nstart_date\030\001 \002(" +
-      "\t\"o\n\004File\022\020\n\010filename\030\001 \002(\t\022\014\n\004size\030\002 \001(" +
-      "\004\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \002(\r\022\r\n\005l" +
+      "\t\"o\n\004File\022\020\n\010filename\030\001 \001(\t\022\014\n\004size\030\002 \001(" +
+      "\004\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \001(\r\022\r\n\005l" +
       "abel\030\005 \001(\t\022\026\n\007partial\030\006 \001(\010:\005false\"!\n\005Ch" +
-      "unk\022\n\n\002fp\030\002 \002(\014\022\014\n\004size\030\003 \002(\rB\nB\010Protoco" +
+      "unk\022\n\n\002fp\030\002 \001(\014\022\014\n\004size\030\003 \001(\rB\nB\010Protoco" +
       "l"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =

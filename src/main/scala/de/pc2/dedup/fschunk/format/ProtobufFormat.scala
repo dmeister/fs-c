@@ -4,6 +4,7 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.BufferedOutputStream
+import java.io.BufferedInputStream
 import java.io.FileOutputStream
 import java.net.URI
 import java.net.URISyntaxException
@@ -23,28 +24,56 @@ import java.util.concurrent.atomic._
  * Reader of the protobuf format files
  */
 class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends Reader with Log {
+  private var faultyTestPartFoundCount : Long = 0
+
+  private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk) : Chunk = {
+      Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray))
+  }
+    
   private def parseChunkEntry(stream: InputStream): Chunk = {
     val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
-    Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray))
+    convertChunkData(chunkData)
   }
 
   private def parseFileEntry(stream: InputStream) {
-    val fileData = de.pc2.dedup.fschunk.Protocol.File.parseDelimitedFrom(stream)
+    stream.mark(1024)
+    var fileData = de.pc2.dedup.fschunk.Protocol.File.parseDelimitedFrom(stream)
     if (fileData == null) {
       return
     }
-    val chunkList = for (i <- 0 until fileData.getChunkCount())
-      yield (parseChunkEntry(stream))
+    val chunkList : List[Chunk] = if (fileData.getFilename().size == 0) {
+        // Pseudo fallback mode
+        stream.reset()
 
-    if (fileData.getPartial()) {
-      receiver.handle(FilePart(fileData.getFilename(), chunkList.toList))
+        if (faultyTestPartFoundCount == 0) {
+            logger.warn("Found faulty test part data. Falling back mode active")
+        }
+        val chunk = parseChunkEntry(stream) // try again as chunk entry
+        // use dummy file data
+        fileData = de.pc2.dedup.fschunk.Protocol.File.newBuilder().
+            setFilename("").
+            setSize(chunk.size).
+            setType("FALLBACK").
+            setFilename("FALLBACK %s".format(faultyTestPartFoundCount)).
+            setChunkCount(1).build()
+        faultyTestPartFoundCount += 1
+        List(chunk)
     } else {
-      val l: Option[String] = if (fileData.hasLabel()) {
-        Some(fileData.getLabel())
-      } else {
-        None
-      }
-      receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l))
+        // normal mode
+        val chunkList = for (i <- 0 until fileData.getChunkCount())
+            yield(parseChunkEntry(stream))
+        List[Chunk]() ++ chunkList
+    }
+    
+    if (fileData.getPartial()) {
+            receiver.handle(FilePart(fileData.getFilename(), chunkList.toList))
+    } else {
+        val l: Option[String] = if (fileData.hasLabel()) {
+            Some(fileData.getLabel())
+        } else {
+            None
+        }
+        receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l))
     }
     parseFileEntry(stream)
   }
@@ -54,12 +83,12 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
    */
   def parse() {
     try {
-      val stream = new FileInputStream(filename);
+      val stream = new BufferedInputStream(new FileInputStream(filename));
       try {
         parseFileEntry(stream)
       } catch {
         case e: InvalidProtocolBufferException =>
-          logger.debug("No more files")
+          logger.debug("No more files", e)
         case e: Exception =>
           logger.error("Parsing error", e)
       } finally {
@@ -122,6 +151,7 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
     try {
       val filePartData = createFilePartData(finalFilename(fp.filename), fp.chunks)
       lock.synchronized {
+        filePartData.writeDelimitedTo(filestream)
         for (c <- fp.chunks) {
           val chunkData = createChunkData(c)
           chunkData.writeDelimitedTo(filestream)

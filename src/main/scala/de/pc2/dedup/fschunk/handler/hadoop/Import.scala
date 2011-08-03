@@ -105,7 +105,7 @@ class ImportHandler(filesystemName: String, filename: String, compress: Boolean)
 
   def handle(f: File) {
     if (logger.isDebugEnabled) {
-      logger.debug("Write file %s".format(f.filename))
+      logger.debug("Write file %s, chunks %s".format(f.filename, f.chunks.size))
     }
     val l = f.label match {
       case Some(s) => s
@@ -163,49 +163,5 @@ object Import {
       reporter ! Quit
       importHandler.quit()
     }
-    /*  
-    try {
-      Options.parseOrHelp(args) { cmd =>
-        try {
-          val filenames = cmd.all(Options.filename)
-          val output = cmd(Options.output) match {
-            case None =>
-              Options.showHelp(System.out)
-              throw new SystemExitException()
-            case Some(s) => s
-          }
-          val reportInterval = cmd(Options.report) match {
-            case None => 60 * 1000
-            case Some(i) => i * 1000
-          }
-          val format = cmd(Options.format) match {
-            case None => "protobuf"
-            case Some(s) => if (Format.isFormat(s)) {
-              s
-            } else {
-              throw new MatchError("Unsupported format")
-            }
-          }
-          if (filenames.size == 0) {
-            throw new SystemExitException()
-          }
-          for (filename <- filenames) {
-            val importHandler = new ImportHandler(output, output, true)
-            val reader = Format(format).createReader(filename, importHandler)
-            val reporter = new Reporter(importHandler, reportInterval).start()
-            reader.parse()
-
-            reporter ! Quit
-            importHandler.quit()
-          }
-        } catch {
-          case e: MatchError =>
-            Options.showHelp(System.out)
-            throw new SystemExitException()
-        }
-      }
-    } catch {
-      case e: SystemExitException => System.exit(1)
-    }*/
   }
 }
