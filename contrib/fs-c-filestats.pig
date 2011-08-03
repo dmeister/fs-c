@@ -1,4 +1,4 @@
-REGISTER fs-c-0.3.6.jar
+REGISTER fs-c-0.3.7.jar
 FILES = LOAD '$RUN/files' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
 
 A = FOREACH FILES GENERATE filetype, filelength, 1 as filecount;

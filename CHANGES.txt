@@ -1,3 +1,8 @@
+Version 0.3.7
+
+    - Fix a bug that causes a trace file corruptions
+    - Add command fs-c validate, which checks if a given trace file is valid
+
 Version 0.3.6
 
     - Import xml.minidom in fs-c only if actually needed. Not all Python installations have xml support available
