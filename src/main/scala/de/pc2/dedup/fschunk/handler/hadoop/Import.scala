@@ -117,7 +117,7 @@ class ImportHandler(filesystemName: String, filename: String, compress: Boolean)
     for (chunk <- f.chunks) {
       val fp = base64.encode(chunk.fp.digest)
       val chunkSize = chunk.size
-      val chunkline = "%s\t%s\t%s%n".format(filename, new String(fp), chunkSize)
+      val chunkline = "%s\t%s\t%s%n".format(f.filename, new String(fp), chunkSize)
       chunkWriter.write(chunkline.getBytes("UTF-8"))
     }
     totalFileSize += f.fileSize
