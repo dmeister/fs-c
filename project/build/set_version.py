@@ -3,6 +3,17 @@ import sys
 import re
 import optparse
 
+def replace_version_in_file(filename, options):
+    file_data = open(filename).read()
+    if re.search(options.old_version, open(filename).read()):
+        print "Found version identifier in", filename
+        
+        new_contents = re.sub(options.old_version, options.version, file_data)
+        f = open(filename + ".bak", "w").write(file_data)
+        f = open(filename, "w").write(new_contents)
+        
+        os.unlink(filename + ".bak")
+        
 if __name__ == "__main__":
     parser = optparse.OptionParser()
 
@@ -21,16 +32,8 @@ if __name__ == "__main__":
                 if (filename.endswith(".bak")):
                     continue
                 
-                file_data = open(full_filename).read()
-                if re.search(options.old_version, open(full_filename).read()):
-                    print "Found version identifier in ", full_filename
-                    
-                    new_contents = re.sub(options.old_version, options.version, file_data)
-                    f = open(full_filename + ".bak", "w").write(file_data)
-                    f = open(full_filename, "w").write(new_contents)
-                    
-                    os.unlink(full_filename + ".bak")
-                    
+                replace_version_in_file(full_filename, options)
+    replace_version_in_file("project/build.properties", options)
                     
                     
         
