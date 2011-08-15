@@ -2,7 +2,7 @@ import os
 import sys
 import tarfile
 
-version = "0.3.6"
+version = "0.3.7"
 
 release_tar = tarfile.TarFile("fs-c-%s.tgz" % version, mode="w")
 release_tar.add("README.txt", "fs-c/README.txt")
