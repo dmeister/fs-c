@@ -20,7 +20,7 @@ object Main extends Log {
     try {
       import ArgotConverters._
 
-      val parser = new ArgotParser("fs-c trace", preUsage = Some("Version 3.5.0"))
+      val parser = new ArgotParser("fs-c trace", preUsage = Some("Version 0.3.8"))
 
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
       val optionChunkerNames = parser.multiOption[String](List("c", "chunker"), "chunker", "Chunker to use")
@@ -97,7 +97,7 @@ object Main extends Log {
           case "cdc8" => new RabinChunker(2 * 1024, 8 * 1024, 32 * 1024, new DigestFactory(digestType, digestLength), "c8")
           case "cdc4" => new RabinChunker(1 * 1024, 4 * 1024, 16 * 1024, new DigestFactory(digestType, digestLength), "c4")
           case "cdc16" => new RabinChunker(4 * 1024, 16 * 1024, 64 * 1024, new DigestFactory(digestType, digestLength), "c16")
-          case "cdc32" => new RabinChunker(128 * 1024, 32 * 1024, 128 * 1024, new DigestFactory(digestType, digestLength), "c32")
+          case "cdc32" => new RabinChunker(8 * 1024, 32 * 1024, 128 * 1024, new DigestFactory(digestType, digestLength), "c32")
           case "cdc2" => new RabinChunker(512, 2 * 1024, 8 * 1024, new DigestFactory(digestType, digestLength), "c2")
 
           case "fixed8" => new FixedChunker(8 * 1024, new DigestFactory(digestType, digestLength), "f8")
