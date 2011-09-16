@@ -42,9 +42,17 @@ def check_python_version():
     if v[0] != 2 or v[1] < 4:
         raise Exception("No supported python version")
 
+def get_java_command():
+    cmd_args = ["java"]
+    if "JAVA_HOME" in os.environ:
+        cmd_args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
+    if "FSC_JAVA_HOME" in os.environ:
+        cmd_args[0] = os.path.join(os.environ["FSC_JAVA_HOME"], "bin/java")
+    return " ".join(cmd_args)
+    
 def check_java_version():
     try:
-        r = run("java -version")
+        r = run("%s -version" % get_java_command())
         supported_version = ["1.5", "1.6", "1.7"]
         for v in supported_version:
             if r.find(v) >= 0:
@@ -124,11 +132,7 @@ if __name__ == "__main__":
             my_hazelcast_file = adapt_hazelcast_config()
             system_properties.append("-Dhazelcast.config=%s" % my_hazelcast_file)
             
-        cmd_args = ["java"]
-        if "JAVA_HOME" in os.environ:
-            cmd_args[0] = os.path.join(os.environ["JAVA_HOME"], "bin/java")
-        if "FSC_JAVA_HOME" in os.environ:
-            cmd_args[0] = os.path.join(os.environ["FSC_JAVA_HOME"], "bin/java")
+        cmd_args = [get_java_command()]
         if "FSC_JXM" in os.environ:
             cmd_args.append("-Dcom.sun.management.jmxremote")
         if "FSC_XMX" in os.environ:
