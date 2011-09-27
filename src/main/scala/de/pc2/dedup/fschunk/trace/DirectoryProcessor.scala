@@ -31,7 +31,7 @@ object OSDetector {
 /**
  * Object for the directory processor
  */
-object DirectoryProcessor {
+object DirectoryProcessor extends Log {
   val activeCount = new AtomicLong(0L)
   val totalCount = new AtomicLong(0L)
   val skipCount = new AtomicLong(0L)
@@ -42,8 +42,11 @@ object DirectoryProcessor {
    */
   def listDirectoryPortable(directory: File, handler: (File) => Unit) : Long = {
     val files = directory.listFiles()
+    if (files == null) {
+        throw new Exception(directory + " is invalid or IO error occured")
+    }
     files.foreach(handler)
-    return files.length
+    files.length
   }
 
   /**
@@ -65,7 +68,7 @@ object DirectoryProcessor {
     }
     reader.close()
     p.destroy()
-    return count
+    count
   }
 
   /**
@@ -73,9 +76,9 @@ object DirectoryProcessor {
    */
   def directoryLister(): ((File, (File) => Unit) => Long) = {
     if (OSDetector.runsOnWindows()) {
-      return listDirectoryPortable
+      listDirectoryPortable
     } else {
-      return listDirectoryLinux
+      listDirectoryLinux
     }
   }
 
