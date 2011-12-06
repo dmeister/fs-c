@@ -5,7 +5,7 @@ import scala.collection.mutable.Map
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
 object Format {
-  val formats: Map[String, Format] = Map("protobuf" -> ProtobufFormat)
+  val formats: Map[String, Format] = Map("protobuf" -> ProtobufFormat, "legacy" -> LegacyFormat)
 
   def registerFormat(name: String, format: Format) {
     formats += (name -> format)
