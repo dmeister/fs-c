@@ -4,6 +4,7 @@ import java.util.Arrays
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.nio.ByteBuffer
+import java.math.BigInteger
 
 /**
  * Compation object to create fingerprints of a chunk or a file
@@ -91,5 +92,15 @@ case class Digest(digest: Array[Byte]) {
       case Digest(fp) => Arrays.equals(this.digest, fp)
       case _ => false
     }
+  }
+  
+  override def toString() : String = {
+      val bi = new BigInteger(1, digest)
+      val result = bi.toString(16)
+      if (result.length() % 2 != 0) {
+          "0" + result
+      } else {
+          result
+      }
   }
 }
