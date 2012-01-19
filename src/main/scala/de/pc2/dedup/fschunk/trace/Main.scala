@@ -31,6 +31,7 @@ object Main extends Log {
       val optionPrivacy = parser.flag[Boolean](List("p", "privacy"), "Privacy Mode")
       val optionDigestLength = parser.option[Int]("digest-length", "digestLength", "Length of Digest (Fingerprint)")
       val optionDigestType = parser.option[String]("digest-type", "digestType", "Type of Digest (Fingerprint)")
+      val optionCustomHandler = parser.option[String]("custom-handler", "custom chunk handler", "Full classname of a custom chunk handler")
       val optionNoDefaultIgnores = parser.flag[Boolean]("no-default-ignores", false, "Avoid using the default ignore list")
       val optionFollowSymlinks = parser.flag[Boolean]("follow-symlinks", false, "Follow symlinks")
       val optionLabel = parser.option[String]("label", "label", "File label")
@@ -83,8 +84,22 @@ object Main extends Log {
       def getChunker(chunkerName: String): (Chunker, List[FileDataHandler]) = {
         val handler = optionOutput.value match {
           case None =>
-            new InMemoryChunkHandler(silent, new ChunkIndex, chunkerName) :: Nil
+            optionCustomHandler.value match {
+                case Some(className) => 
+                    try {
+                        val customHandler = Class.forName(className).newInstance.asInstanceOf[FileDataHandler]
+                        customHandler :: Nil
+                    } catch {
+                        case e: Exception => throw new Exception("Failed to instanciate custom chunk handler %s: %s".format(className, e))
+                    }
+                case None => 
+                    new InMemoryChunkHandler(silent, new ChunkIndex, chunkerName) :: Nil
+            }
           case Some(o) =>
+            optionCustomHandler.value match {
+                case Some(className) => throw new Exception("Cannot use custom chunk handler with output option")
+                case None => // ook
+            }
             val outputFilename = if (distributedMode) {
               val memberId = Hazelcast.getCluster().getLocalMember().getInetSocketAddress().getHostName()
               "%s-%s-%s".format(o, chunkerName, memberId)

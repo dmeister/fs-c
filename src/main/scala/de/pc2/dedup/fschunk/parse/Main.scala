@@ -9,6 +9,7 @@ import de.pc2.dedup.util.SystemExitException
 import de.pc2.dedup.fschunk.format.Format
 import org.clapper.argot._
 import de.pc2.dedup.fschunk.Reporter
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 
 /**
  * Main object for the parser.
@@ -93,6 +94,15 @@ object Main {
           for { handler <- handlerList3} {
             handler.quit()
           }
+        case customName =>
+           val handlerList = for { c <- chunkerNames } yield Class.forName(customName).newInstance.asInstanceOf[FileDataHandler]
+              val p = new Parser(filenames(0), format, handlerList)
+              val reporter = new Reporter(p, reportInterval).start()
+              p.parse()
+              reporter ! Quit
+              for { handler <- handlerList} {
+                handler.quit()
+              }
       }
     } catch {
       case e: SystemExitException => System.exit(1)

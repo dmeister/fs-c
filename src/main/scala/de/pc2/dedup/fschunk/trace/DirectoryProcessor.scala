@@ -9,8 +9,23 @@ import java.util.concurrent.atomic._
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.IOException
+import collection.JavaConversions._
 
 case class Directory(f: File)
+
+object JavaVersionDetector extends Log {
+    var detected: Boolean = false
+    var runsOnJava7Cached: Boolean = false
+
+    def runsOnJava7(): Boolean = {
+      if (!detected) {
+        logger.info("Java version %s".format(System.getProperty("java.version")))
+        runsOnJava7Cached = System.getProperty("java.version").contains("7")
+        detected = true
+      }
+      return runsOnJava7Cached
+    }    
+}
 
 /**
  * Detects the Operating system
@@ -48,6 +63,16 @@ object DirectoryProcessor extends Log {
     files.foreach(handler)
     files.length
   }
+  
+  def listDirectoryJava7(directory: File, handler: (File) => Unit) : Long = {
+        val dirstream = java.nio.file.Files.newDirectoryStream(directory.toPath)
+        var filecount = 0
+        for (path <- dirstream) {
+            handler(path.toFile)
+            filecount += 1
+        }
+        filecount
+  }
 
   /**
    * Linux specific directory listener
@@ -71,14 +96,21 @@ object DirectoryProcessor extends Log {
     count
   }
 
+  lazy val directoryLister = getDirectoryLister()
+  
   /**
    * returns the best matching directory listener
    */
-  def directoryLister(): ((File, (File) => Unit) => Long) = {
-    if (OSDetector.runsOnWindows()) {
-      listDirectoryPortable
+  def getDirectoryLister(): ((File, (File) => Unit) => Long) = {
+    if (JavaVersionDetector.runsOnJava7()) {
+      logger.info("Using Java 7 directory listing")
+        listDirectoryJava7
     } else {
-      listDirectoryLinux
+        if (OSDetector.runsOnWindows()) {
+        listDirectoryPortable
+      } else {
+        listDirectoryLinux
+        }
     }
   }
 
@@ -158,8 +190,7 @@ class DirectoryProcessor(directory: File,
     DirectoryProcessor.totalCount.incrementAndGet()
     var dirEntryCount = 0L
     try {
-      val listDirectory = DirectoryProcessor.directoryLister()
-      dirEntryCount = listDirectory(directory, processFile)
+      dirEntryCount = DirectoryProcessor.directoryLister(directory, processFile)
     } catch {
       case ioe: IOException =>
         val e = ioe.getCause() match {

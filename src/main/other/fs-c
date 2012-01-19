@@ -35,6 +35,8 @@ def get_cp():
     cp.append(from_fsc_root("conf"))
     if "HADOOP_ROOT" in os.environ:
     	cp.extend(get_hadoop_cp())
+    if "FSC_EXTRA_CLASSPATH" in os.environ:
+        cp.append(os.environ["FSC_EXTRA_CLASSPATH"])
     return cp
 
 def check_python_version():
