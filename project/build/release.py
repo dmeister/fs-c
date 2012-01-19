@@ -11,7 +11,7 @@ if not options.version:
     print "Specify version with -v"
     sys.exit(1)
 
-release_tar = tarfile.TarFile("fs-c-%s.tgz" % options.version, mode="w:gz")
+release_tar = tarfile.open("fs-c-%s.tgz" % options.version, mode="w:gz")
 release_tar.add("README.txt", "fs-c/README.txt")
 release_tar.add("CHANGES.txt", "fs-c/CHANGES.txt")
 release_tar.add("lib", "fs-c/lib")

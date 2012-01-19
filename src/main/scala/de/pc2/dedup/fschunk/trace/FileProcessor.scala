@@ -54,13 +54,9 @@ class FileProcessor(file: JavaFile,
   label: Option[String]) extends Runnable with Log with Serializable {
 
   def readIntoBuffer(c: FileChannel, buffer: ByteBuffer, offset: Long): Int = {
-    if (logger.isDebugEnabled) {
-      logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
-    }
+    logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
     val r = c.read(buffer)
-    if (logger.isDebugEnabled) {
-      logger.debug("File: Read %s finished, offset %s, data size %s".format(file, StorageUnit(offset), StorageUnit(r)))
-    }
+    logger.debug("File: Read %s finished, offset %s, data size %s".format(file, StorageUnit(offset), StorageUnit(r)))
     buffer.flip()
     return r
   }
@@ -90,20 +86,14 @@ class FileProcessor(file: JavaFile,
     var s: FileInputStream = null
     var c: FileChannel = null
     val fileLength = file.length
-    if (logger.isDebugEnabled) {
-      logger.debug("Started File %s (%s)".format(file, StorageUnit(fileLength)))
-    }
+    logger.debug("Started File %s (%s)".format(file, StorageUnit(fileLength)))
     try {
-      if (logger.isDebugEnabled) {
-        logger.debug("File %s: Allocate buffer".format(file))
-      }
+     logger.debug("File %s: Allocate buffer".format(file))
       val buffer = allocateBuffer(fileLength)
       val sessionList = for { chunker <- FileProcessor.chunker } yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
       val t = FileType.getNormalizedFiletype(file)
 
-      if (logger.isDebugEnabled) {
-        logger.debug("File %s: Open".format(file))
-      }
+      logger.debug("File %s: Open".format(file))
       s = new FileInputStream(file)
       c = s.getChannel()
       var r = readIntoBuffer(c, buffer, 0)
@@ -128,9 +118,7 @@ class FileProcessor(file: JavaFile,
         }
         buffer.clear()
         val endChunkMillis = System.currentTimeMillis()
-        if (logger.isDebugEnabled) {
-          logger.debug("File %s: Chunk finished, time %sms".format(file, (endChunkMillis - startChunkMillis)))
-        }
+        logger.debug("File %s: Chunk finished, time %sms".format(file, (endChunkMillis - startChunkMillis)))
         if (offset >= fileLength) {
           r = 0
         } else {
@@ -168,9 +156,7 @@ class FileProcessor(file: JavaFile,
     }
     val endMillis = System.currentTimeMillis()
     val diffMillis = endMillis - startMillis
-    if (logger.isDebugEnabled) {
-      logger.debug("Finished File %s: time %sms, size %s".format(file, diffMillis, StorageUnit(fileLength)))
-    }
+    logger.debug("Finished File %s: time %sms, size %s".format(file, diffMillis, StorageUnit(fileLength)))
     FileProcessor.activeCount.decrementAndGet()
   }
 

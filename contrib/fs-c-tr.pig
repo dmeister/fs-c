@@ -1,4 +1,4 @@
-REGISTER fs-c-0.3.8.jar
+REGISTER fs-c-0.3.9.jar
 CHUNKS1 = LOAD '$RUN1/chunks' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
 
 CHUNKS2 = LOAD '$RUN2/chunks' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);

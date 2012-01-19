@@ -74,9 +74,7 @@ class DistributedFileDispatcher(
    * Dispatch the given file to the correct executor service
    */
   def dispatch(f: File, path: String, isDir: Boolean, label: Option[String]) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Dispatch " + f)
-    }
+      logger.debug("Dispatch %s".format(f))
 
     activeAllCount.incrementAndGet()
     val runnable = if (isDir) {

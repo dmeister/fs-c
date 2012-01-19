@@ -124,14 +124,10 @@ class DirectoryProcessor(directory: File,
     val ap = file.getAbsolutePath()
     if (!followSymlinks && cp != ap) {
       DirectoryProcessor.skipCount.incrementAndGet()
-      if (logger.isDebugEnabled) {
-    	  logger.debug("Skip symlink file %s".format(file))
-      }
+    logger.debug("Skip symlink file %s".format(file))
     } else if (!file.canRead()) {
       DirectoryProcessor.skipCount.incrementAndGet()
-      if (logger.isDebugEnabled) {
-    	  logger.debug("Skip unreadable file %s".format(file))
-      }
+      logger.debug("Skip unreadable file %s".format(file))
     } else {
       if (!file.isDirectory) {
         DirectoryProcessor.dispatcher.dispatch(file, cp, false, label)
@@ -148,9 +144,7 @@ class DirectoryProcessor(directory: File,
    */
   def run() {
     val startMillis = System.currentTimeMillis()
-    if (logger.isDebugEnabled) {
-      logger.debug("Started Directory %s".format(directory))
-    }
+    logger.debug("Started Directory %s".format(directory))
 
     // Wait until the directory processor object is inited
     DirectoryProcessor.synchronized {
@@ -178,8 +172,6 @@ class DirectoryProcessor(directory: File,
     }
     val endMillis = System.currentTimeMillis()
     val diffMillis = endMillis - startMillis
-    if (logger.isDebugEnabled) {
-      logger.debug("Finished Directory %s: time %sms, %s files".format(directory, diffMillis, dirEntryCount))
-    }
+    logger.debug("Finished Directory %s: time %sms, %s files".format(directory, diffMillis, dirEntryCount))
   }
 }

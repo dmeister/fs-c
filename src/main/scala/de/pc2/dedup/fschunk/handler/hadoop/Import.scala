@@ -91,9 +91,7 @@ class ImportHandler(filesystemName: String, filename: String, compress: Boolean)
   }
 
   def handle(fp: FilePart) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Write file %s (partial)".format(fp.filename))
-    }
+    logger.debug("Write file %s (partial)".format(fp.filename))
     for (chunk <- fp.chunks) {
       val fingerprint = base64.encode(chunk.fp.digest)
       val chunkSize = chunk.size
@@ -104,9 +102,7 @@ class ImportHandler(filesystemName: String, filename: String, compress: Boolean)
   }
 
   def handle(f: File) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Write file %s, chunks %s".format(f.filename, f.chunks.size))
-    }
+    logger.debug("Write file %s, chunks %s".format(f.filename, f.chunks.size))
     val l = f.label match {
       case Some(s) => s
       case None => ""
@@ -138,9 +134,9 @@ object Import {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c import", preUsage = Some("Version 3.5.0"))
+    val parser = new ArgotParser("fs-c import", preUsage = Some("Version 0.3.9"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
-    val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
+    val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progress reports in seconds (Default: 1 minute, 0 = no report)")
     val optionOutput = parser.option[String](List("o", "output"), "output", "HDFS directory for output")
     parser.parse(args)
 

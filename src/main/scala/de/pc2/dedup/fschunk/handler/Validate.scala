@@ -49,16 +49,12 @@ class ValidateHandler() extends Reporting with FileDataHandler with Log {
   }
 
   def handle(fp: FilePart) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Validate file %s (partial)".format(fp.filename))
-    }
+    logger.debug("Validate file %s (partial)".format(fp.filename))
     totalChunkCount += fp.chunks.size
   }
 
   def handle(f: File) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Validate file %s, chunks %s".format(f.filename, f.chunks.size))
-    }
+    logger.debug("Validate file %s, chunks %s".format(f.filename, f.chunks.size))
     totalFileSize += f.fileSize
     totalFileCount += 1
     totalChunkCount += f.chunks.size
@@ -75,7 +71,7 @@ object Validate {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c import", preUsage = Some("Version 3.5.0"))
+    val parser = new ArgotParser("fs-c validate", preUsage = Some("Version 0.3.9"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
     parser.parse(args)
