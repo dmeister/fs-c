@@ -123,6 +123,8 @@ if __name__ == "__main__":
         	java_class = "de.pc2.dedup.fschunk.handler.hadoop.Import"
         elif args[0] == "validate":
             java_class = "de.pc2.dedup.fschunk.handler.Validate"
+        elif args[0] == "view":
+            java_class = "de.pc2.dedup.fschunk.handler.View"
         else:
             print help()
             sys.exit()
