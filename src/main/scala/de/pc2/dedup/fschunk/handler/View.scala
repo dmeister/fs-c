@@ -66,7 +66,7 @@ class ViewHandler() extends Reporting with FileDataHandler with Log {
     for (chunk <- allFileChunks) {
       val msg = chunk.chunkHash match {
         case Some(ch) =>
-          "Chunk %s, offset %s, size %s, chunk hash %s".format(chunk.fp, offset, chunk.size, ch)
+          "Chunk %s, offset %s, size %s, chunk hash %s".format(chunk.fp, offset, chunk.size, ch.toHexString)
         case None =>
           "Chunk %s, offset %s, size %s".format(chunk.fp, offset, chunk.size)
       }
