@@ -19,7 +19,7 @@ object JavaVersionDetector extends Log {
 
     def runsOnJava7(): Boolean = {
       if (!detected) {
-        logger.info("Java version %s".format(System.getProperty("java.version")))
+        logger.debug("Java version %s".format(System.getProperty("java.version")))
         runsOnJava7Cached = System.getProperty("java.version").contains("7")
         detected = true
       }
@@ -103,8 +103,8 @@ object DirectoryProcessor extends Log {
    */
   def getDirectoryLister(): ((File, (File) => Unit) => Long) = {
     if (JavaVersionDetector.runsOnJava7()) {
-      logger.info("Using Java 7 directory listing")
-        listDirectoryJava7
+      logger.debug("Using Java 7 directory listing")
+      listDirectoryJava7
     } else {
         if (OSDetector.runsOnWindows()) {
         listDirectoryPortable
