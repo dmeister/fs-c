@@ -58,11 +58,11 @@ class ImportHandler(filesystemName: String, filename: String, compress: Boolean)
   logger.info("Write path %s".format(rootPath))
   if (fs.exists(filePath)) {
     logger.warn("Overwritting " + filePath)
-    fs.delete(filePath)
+    fs.delete(filePath, true)
   }
   if (fs.exists(chunkPath)) {
     logger.warn("Overwritting " + chunkPath)
-    fs.delete(chunkPath)
+    fs.delete(chunkPath, true)
   }
 
   val fileWriter = if (compress) {
