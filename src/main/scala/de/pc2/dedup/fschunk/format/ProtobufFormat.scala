@@ -27,7 +27,11 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
   private var faultyTestPartFoundCount : Long = 0
 
   private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk) : Chunk = {
-      Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray))
+    if (chunkData.hasChunkHash) {
+      Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), Some(chunkData.getChunkHash))
+    } else {
+      Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), None)
+    }
   }
     
   private def parseChunkEntry(stream: InputStream): Chunk = {
@@ -208,6 +212,10 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
   def createChunkData(c: Chunk): de.pc2.dedup.fschunk.Protocol.Chunk = {
     val chunkBuilder = de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
     chunkBuilder.setFp(ByteString.copyFrom(c.fp.digest)).setSize(c.size)
+    c.chunkHash match {
+      case None => 
+      case Some(chunkHash) => chunkBuilder.setChunkHash(chunkHash)
+    }
     chunkBuilder.build()
   }
 }

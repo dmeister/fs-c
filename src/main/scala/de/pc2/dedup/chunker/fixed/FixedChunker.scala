@@ -30,7 +30,7 @@ class FixedChunker(chunkSize: Int, digestFactory: DigestFactory, val chunkerName
      */
     def acceptChunk(h: (Chunk => Unit)) {
       val digest = digestFactory.builder().append(currentChunk, 0, currentChunkPos).build()
-      val c = Chunk(this.currentChunkPos, digest)
+      val c = Chunk(this.currentChunkPos, digest, None)
       h(c)
       currentChunkPos = 0
     }

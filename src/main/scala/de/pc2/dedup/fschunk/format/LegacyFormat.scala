@@ -78,7 +78,7 @@ class LegacyFormatReader(filename: String, receiver: FileDataHandler) extends Re
 			for(i <- 0 to 19) {
 				fp(i) = buffer(4 + i).toByte
 			}
-			h(Chunk(chunkSize, Digest(fp)))
+			h(Chunk(chunkSize, Digest(fp), None))
 		}
 		chunkCount += 1
 		parseChunks(reader)(h)

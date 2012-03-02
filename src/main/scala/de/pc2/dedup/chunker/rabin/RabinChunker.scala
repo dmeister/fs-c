@@ -17,6 +17,7 @@ import java.nio.ByteBuffer
 class RabinChunker(minimalSize: Int,
   averageSize: Int,
   maximalSize: Int,
+  logChunkHashes: Boolean,
   digestFactory: DigestFactory,
   val chunkerName: String) extends Chunker with Log {
 
@@ -45,16 +46,27 @@ class RabinChunker(minimalSize: Int,
     var overflowChunkPos: Int = 0
     val digestBuilder = digestFactory.builder()
 
+    /**
+     * Also, adds the rabin fingerprint (hash) to the chunk. Usually the rabin hash has
+     * the hash breakmark as a suffix, but this is not the case when the chunk has been
+     * closed due to size limitations
+     */
     def acceptChunk(h: (Chunk => Unit), nonChunkedData: ByteBuffer) {
+      def getChunkHash() : Option[Long] = {
+        if (logChunkHashes) {
+          Some(this.rabinSession.fingerprint)
+        } else {
+          None
+        }
+      }
       val c = if (nonChunkedData != null) {
         val remaining = nonChunkedData.remaining
         val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos).append(nonChunkedData).build()
-        Chunk(this.overflowChunkPos + remaining, digest)
+        Chunk(this.overflowChunkPos + remaining, digest, getChunkHash())
       } else {
         val digest = digestBuilder.append(overflowChunk, 0, overflowChunkPos).build()
-        Chunk(this.overflowChunkPos, digest)
+        Chunk(this.overflowChunkPos, digest, getChunkHash())
       }
-      //logger.debug("Chunk: len %s".format(c.size))
       h(c)
       rabinSession.clear()
       overflowChunkPos = 0
@@ -104,7 +116,6 @@ class RabinChunker(minimalSize: Int,
               val isBreakmark = (this.rabinSession.fingerprint & breakmark) == breakmark;
               if (isBreakmark) {
                 nonChunkedData.limit(data.position)
-                //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
                 acceptChunk(h, nonChunkedData)
                 innerBreak = true
               }
@@ -112,7 +123,6 @@ class RabinChunker(minimalSize: Int,
 
             // end of inner loop
             if (current == end && todo == countToMax) {
-              //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
               nonChunkedData.limit(data.position)
               acceptChunk(h, nonChunkedData)
             }
@@ -120,11 +130,9 @@ class RabinChunker(minimalSize: Int,
         }
         // end of outer loop
 
-        //logger.debug("Data %s, non chunked data %s".format(debugString(data), debugString(nonChunkedData)))
         if (nonChunkedData.position < nonChunkedData.capacity) {
           nonChunkedData.limit(nonChunkedData.capacity)
 
-          //logger.debug("Copy %s bytes to overflow chunk buffer: pos %s, len %s".format(nonChunkedData.remaining, overflowChunkPos, overflowChunk.length))
           if (nonChunkedData.remaining > 0) {
             val remaining = nonChunkedData.remaining
             nonChunkedData.get(overflowChunk, overflowChunkPos, nonChunkedData.remaining)
@@ -141,7 +149,6 @@ class RabinChunker(minimalSize: Int,
      * Closes the rabin chunker
      */
     def close()(h: (Chunk => Unit)) {
-      //logger.debug("Close session: overflow chunk pos %s".format(overflowChunkPos))
       if (overflowChunkPos > 0) {
         acceptChunk(h, null)
       }

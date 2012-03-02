@@ -15,6 +15,10 @@ message File {
 }
 
 message Chunk {
+    /* Usually a sha1/md5 fingerprint */
     optional bytes fp = 2;
     optional uint32 size = 3;
+
+    /* value of a rabin fingerprinter when the chunk was accepted. May not be set */
+    optional int64 chunkHash = 4;
 }

@@ -34,6 +34,7 @@ object Main extends Log {
       val optionCustomHandler = parser.option[String]("custom-handler", "custom chunk handler", "Full classname of a custom chunk handler")
       val optionNoDefaultIgnores = parser.flag[Boolean]("no-default-ignores", false, "Avoid using the default ignore list")
       val optionFollowSymlinks = parser.flag[Boolean]("follow-symlinks", false, "Follow symlinks")
+      val optionChunkHashes = parser.flag[Boolean]("log-chunker-hashes", false, "Logs chunker hashes (e.g. rabin fingerprints) and stores them in trace files")
       val optionLabel = parser.option[String]("label", "label", "File label")
       val optionProgressFile = parser.option[String]("progress-file", "progressFile", "File containing all processed filenames")
       val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
@@ -80,7 +81,10 @@ object Main extends Log {
         case Some(b) => !b
         case None => true
       }
-
+      val logChunkHashes = optionChunkHashes.value match {
+        case Some(b) => b
+        case None => false
+      }
       def getChunker(chunkerName: String): (Chunker, List[FileDataHandler]) = {
         val handler = optionOutput.value match {
           case None =>
@@ -109,12 +113,12 @@ object Main extends Log {
             Format(format).createWriter(outputFilename, privacyMode) :: Nil
         }
         val c: Chunker = chunkerName match {
-          case "cdc2" => new RabinChunker(512, 2 * 1024, 8 * 1024, new DigestFactory(digestType, digestLength), "c2")
-          case "cdc4" => new RabinChunker(1 * 1024, 4 * 1024, 16 * 1024, new DigestFactory(digestType, digestLength), "c4")
-          case "cdc8" => new RabinChunker(2 * 1024, 8 * 1024, 32 * 1024, new DigestFactory(digestType, digestLength), "c8")
-          case "cdc16" => new RabinChunker(4 * 1024, 16 * 1024, 64 * 1024, new DigestFactory(digestType, digestLength), "c16")
-          case "cdc32" => new RabinChunker(8 * 1024, 32 * 1024, 128 * 1024, new DigestFactory(digestType, digestLength), "c32")
-          case "cdc64" => new RabinChunker(16 * 1024, 64 * 1024, 256 * 1024, new DigestFactory(digestType, digestLength), "c64")
+          case "cdc2" => new RabinChunker(512, 2 * 1024, 8 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c2")
+          case "cdc4" => new RabinChunker(1 * 1024, 4 * 1024, 16 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c4")
+          case "cdc8" => new RabinChunker(2 * 1024, 8 * 1024, 32 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c8")
+          case "cdc16" => new RabinChunker(4 * 1024, 16 * 1024, 64 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c16")
+          case "cdc32" => new RabinChunker(8 * 1024, 32 * 1024, 128 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c32")
+          case "cdc64" => new RabinChunker(16 * 1024, 64 * 1024, 256 * 1024, logChunkHashes, new DigestFactory(digestType, digestLength), "c64")
 
           case "fixed2" => new FixedChunker(2 * 1024, new DigestFactory(digestType, digestLength), "f2")
           case "fixed4" => new FixedChunker(4 * 1024, new DigestFactory(digestType, digestLength), "f4")
