@@ -4,7 +4,7 @@ import os
 import subprocess
     
 def help():
-    return "fs-c trace [Options]\nfs-c parse [Options]\nfs-c import [Options]\nfs-c validate [Options]"
+    return "fs-c trace [Options]\nfs-c parse [Options]\nfs-c import [Options]\nfs-c validate [Options]\nfs-c view [Options]"
 
 def run(cmd):
     return subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT).stdout.read()
