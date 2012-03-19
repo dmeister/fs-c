@@ -24,7 +24,7 @@ object Main {
     try {
       import ArgotConverters._
 
-      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 3.5.0"))
+      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.10"))
       val optionType = parser.option[String](List("t", "type"), "type", "Handler Type")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")

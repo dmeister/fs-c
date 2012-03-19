@@ -71,7 +71,7 @@ object Validate {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c validate", preUsage = Some("Version 0.3.9"))
+    val parser = new ArgotParser("fs-c validate", preUsage = Some("Version 0.3.10"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
     parser.parse(args)

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     if not options.version or not options.old_version:
-        print "Specify version with -v"
+        print "Specify version with -v/-o"
         sys.exit(1)
 
     for dir in ["src", "contrib"]:

@@ -78,21 +78,32 @@ object DirectoryProcessor extends Log {
    * Linux specific directory listener
    */
   def listDirectoryLinux(directory: File, handler: (File) => Unit) : Long = {
-    val pb = new ProcessBuilder("ls")
-    pb.directory(directory)
-    val p = pb.start()
-    val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
-
+    var p: Process = null
     var count = 0L
-    var line = reader.readLine()
-    while (line != null) {
-      val file = new File(directory, line)
-      handler(file)
-      count += 1
-      line = reader.readLine()
+
+    try {
+      val pb = new ProcessBuilder("ls")
+      pb.directory(directory)
+      pb.redirectErrorStream(true)
+      p = pb.start()
+      val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
+
+      var line = reader.readLine()
+      while (line != null) {
+        val file = new File(directory, line)
+        handler(file)
+        count += 1
+        line = reader.readLine()
+      }
+      reader.close()
+    } finally {
+      if (p != null) {
+        p.getInputStream().close()
+        p.getOutputStream().close()
+        p.getErrorStream().close()
+        p.destroy()
+      }
     }
-    reader.close()
-    p.destroy()
     count
   }
 

@@ -1,7 +1,7 @@
 Option explicit
 Dim vers, searchPath, cmd, cp, javaClass, args, wsh
 
-vers = "0.3.9"
+vers = "0.3.10"
 searchPath = "'%\\fs-c-" & vers & "\\%'"
 cmd = "java"
 cp = "-cp "
