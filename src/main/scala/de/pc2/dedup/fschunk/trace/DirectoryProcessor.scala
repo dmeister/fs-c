@@ -84,8 +84,10 @@ object DirectoryProcessor extends Log {
     try {
       val pb = new ProcessBuilder("ls")
       pb.directory(directory)
-      pb.redirectErrorStream(true)
       p = pb.start()
+      p.getOutputStream().close()
+      p.getErrorStream().close()
+
       val reader = new BufferedReader(new InputStreamReader(p.getInputStream()))
 
       var line = reader.readLine()
@@ -99,8 +101,6 @@ object DirectoryProcessor extends Log {
     } finally {
       if (p != null) {
         p.getInputStream().close()
-        p.getOutputStream().close()
-        p.getErrorStream().close()
         p.destroy()
       }
     }

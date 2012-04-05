@@ -70,14 +70,14 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
     }
     
     if (fileData.getPartial()) {
-            receiver.handle(FilePart(fileData.getFilename(), chunkList.toList))
+      receiver.handle(FilePart(fileData.getFilename(), chunkList))
     } else {
         val l: Option[String] = if (fileData.hasLabel()) {
             Some(fileData.getLabel())
         } else {
             None
         }
-        receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList.toList, l))
+        receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList, l))
     }
     parseFileEntry(stream)
   }

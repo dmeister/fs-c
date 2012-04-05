@@ -19,6 +19,7 @@ class FSCProject(info: ProjectInfo) extends DefaultProject(info)
     val jars = descendents(Path.fromFile(new File(path)), "*.jar")
     return jars
   }
+  override def javaCompileOptions = super.javaCompileOptions ++ javaCompileOptions("-source", "1.6") ++ javaCompileOptions("-target", "1.6")
   override def dependencyPath = "lib"
   override def unmanagedClasspath = super.unmanagedClasspath +++ getHadoopJars() +++ getPigJars()
   override def mainSourceRoots = super.mainSourceRoots +++ ("src" / "main" / "gen")

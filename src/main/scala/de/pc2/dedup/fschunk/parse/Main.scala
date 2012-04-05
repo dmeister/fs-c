@@ -17,6 +17,14 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
  */
 object Main {
 
+  def getCustomHandler(handlerName: String) : FileDataHandler = {
+    try {
+        Class.forName(handlerName).newInstance.asInstanceOf[FileDataHandler]
+      } catch {
+        case ioe: ClassNotFoundException => Class.forName("de.pc2.dedup.fschunk.handler.direct." + handlerName).newInstance.asInstanceOf[FileDataHandler]
+      }
+  }
+
   /**
    * @param args the command line arguments
    */
@@ -24,7 +32,7 @@ object Main {
     try {
       import ArgotConverters._
 
-      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.10"))
+      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.12"))
       val optionType = parser.option[String](List("t", "type"), "type", "Handler Type")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
@@ -95,7 +103,7 @@ object Main {
             handler.quit()
           }
         case customName =>
-           val handlerList = for { c <- chunkerNames } yield Class.forName(customName).newInstance.asInstanceOf[FileDataHandler]
+           val handlerList = for { c <- chunkerNames } yield getCustomHandler(customName)
               val p = new Parser(filenames(0), format, handlerList)
               val reporter = new Reporter(p, reportInterval).start()
               p.parse()

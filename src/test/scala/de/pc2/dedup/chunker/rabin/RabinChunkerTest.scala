@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException
 import java.util.Arrays
 import java.util.LinkedList
 import java.util.List
+import java.nio.ByteBuffer
+import de.pc2.dedup.chunker._
 
 import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.Chunker
@@ -134,5 +136,38 @@ class RabinChunkerTest extends FunSuite with ShouldMatchers {
 		
 		val fp2 = sess1.fingerprint
 		fp2 should be (fp1)
+	}
+
+	test("rabin chunk size") {
+		val chunker = new RabinChunker(0 * 1024, 8 * 1024, 128 * 1024, false, 
+			new DigestFactory("SHA-1", 10), "c8")
+		val file = new FileInputStream("/dev/urandom")
+		
+		val sess1 = chunker.createSession()
+		val buffer = new Array[Byte](65536)
+
+		var chunkCount = 0
+		var chunkSize = 0
+
+		for(i <- 0 until 64 * 1024) {
+			file.read(buffer)
+			val bb = ByteBuffer.wrap(buffer)
+			sess1.chunk(bb)  { c =>
+			chunkCount += 1
+			chunkSize += c.size
+          }
+		}
+		sess1.close()  { c =>
+			chunkCount += 1
+			chunkSize += c.size
+          }
+		file.close()
+
+		val averageChunkSize = 1.0 * chunkSize / chunkCount
+
+		println(averageChunkSize)
+		
+		assert(averageChunkSize >= (7 * 1024))
+		assert(averageChunkSize <= (9 * 1024))
 	}
 }

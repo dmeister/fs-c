@@ -84,7 +84,7 @@ object View {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c view", preUsage = Some("Version 0.3.10"))
+    val parser = new ArgotParser("fs-c view", preUsage = Some("Version 0.3.12"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
     parser.parse(args)
 
