@@ -9,6 +9,9 @@ import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
 import scalax.io._
+import java.io.Writer
+import java.io.BufferedWriter
+import java.io.OutputStreamWriter
 import java.util.concurrent._
 import java.util.concurrent.atomic._
 import scalax.io.CommandLineParser
@@ -26,6 +29,7 @@ import org.apache.hadoop.io.compress.BZip2Codec
 import org.clapper.argot._
 import de.pc2.dedup.fschunk._
 import java.security.MessageDigest
+import java.util.concurrent.atomic._
 
 class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Boolean) extends Log {
   val globPath = new Path(rootPath, suffix + "*")
@@ -36,22 +40,23 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
     }
   }
 
-  def files = ListBuffer[OutputStream]()
+  def files = ListBuffer[Writer]()
   val uniqueId = new AtomicInteger(0);
   val threadLocalFile = 
-    new ThreadLocal[OutputStream]() {
-      override def initialValue() : OutputStream = {
+    new ThreadLocal[Writer]() {
+      override def initialValue() : Writer = {
         val id = uniqueId.getAndIncrement()
         val filePath = if (compress) {
           new Path(rootPath, suffix + id + ".bz2")
         } else {
           new Path(rootPath, suffix  + id )
         }
-        val writer = if (compress) {
+        val stream = if (compress) {
           createCompressedStream(fs, filePath)
         } else {
           fs.create(filePath)
         }
+        val writer = new BufferedWriter(new OutputStreamWriter(stream), 1024 * 1024)
         files += writer
         return writer
       }
@@ -63,7 +68,7 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
     codec.createOutputStream(rawStream)
   }
 
-  def localOutputStream : OutputStream = {
+  def localOutputWriter : Writer = {
     return threadLocalFile.get()
   }
 
@@ -79,6 +84,7 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
  */
 class ImportHandler(filesystemName: String, 
     filename: String, 
+    threadCount: Int,
     compress: Boolean,
     withFingerprint: Boolean) extends Reporting with FileDataHandler with Log {
   val conf = new Configuration()
@@ -93,9 +99,10 @@ class ImportHandler(filesystemName: String,
   }
   val chunkDataManager = new FileManager(fs, rootPath, "chunks", compress)
 
-  var totalFileSize = 0L
-  var totalFileCount = 0L
-  var totalChunkCount = 0L
+  var totalFileSize = new AtomicLong()
+  var totalChunkSize = new AtomicLong()
+  var totalFileCount = new AtomicLong()
+  var totalChunkCount = new AtomicLong()
   val startTime = System.currentTimeMillis()
 
   /* Only used with withFingerprint
@@ -105,11 +112,15 @@ class ImportHandler(filesystemName: String,
   logger.debug("Start")
   logger.info("Write path %s".format(rootPath))
 
-  class ImportThreadPoolExecutor() extends ThreadPoolExecutor(1, 8, 30, TimeUnit.SECONDS,
+  class ImportThreadPoolExecutor() extends ThreadPoolExecutor(1, threadCount, 30, TimeUnit.SECONDS,
     new ArrayBlockingQueue[Runnable](32),
     new ThreadPoolExecutor.CallerRunsPolicy()) {
   }
-  val executor = new ImportThreadPoolExecutor()
+  val executor = if (threadCount > 0) {
+      new ImportThreadPoolExecutor()
+    } else {
+      null
+    }
 
   class FilePartRunnable(fp: FilePart) extends Runnable {
     override def run() {
@@ -123,34 +134,53 @@ class ImportHandler(filesystemName: String,
             getFileDigestBuilder(fp.filename).update(chunk.fp.digest)
           }
         }
+        val chunkWriter = chunkDataManager.localOutputWriter
+        chunkWriter.write(getChunkLine(fp.filename, chunk))
 
-        val fingerprint : String = base64.encodeToString(chunk.fp.digest)
-        val chunkSize = chunk.size
-        val chunkline = "%s\t%s\t%s%n".format(fp.filename, fingerprint, chunkSize)
-        val msg = chunkline.getBytes("UTF-8")
-
-        val chunkWriter = chunkDataManager.localOutputStream
-        chunkWriter.write(chunkline.getBytes("UTF-8"))
+        totalChunkSize.addAndGet(chunk.size)
       }
-      totalChunkCount += fp.chunks.size
+      totalChunkCount.addAndGet(fp.chunks.size)
     }
   }
 
+  def getChunkLine(filename: String, chunk: Chunk) : String = {
+    val base64 = new Base64()
+    val fp : String = base64.encodeToString(chunk.fp.digest)
+    val sb = new StringBuilder()
+    sb.append(filename)
+    sb.append('\t')
+    sb.append(fp)
+    sb.append('\t')
+    sb.append(chunk.size)
+    sb.append('\n')
+    return sb.toString()
+  }
 
+  def getFileLine(f: File) : String = {
+    val l = f.label match {
+      case Some(s) => s
+      case None => "-"
+    }
+
+    val sb = new StringBuilder()
+    sb.append(f.filename)
+    sb.append('\t')
+    sb.append(f.fileSize)
+    sb.append('\t')
+    sb.append(f.fileType)
+    sb.append('\t')
+    sb.append(l)
+    sb.append('\n')
+    return sb.toString()
+  }
   class FileRunnable(f: File) extends Runnable {
     override def run() {
-      val base64 = new Base64()
+
 
       logger.debug("Write file %s, chunks %s".format(f.filename, f.chunks.size))
 
-  
-      val l = f.label match {
-        case Some(s) => s
-        case None => "-"
-      }
-      val fileline = "%s\t%s\t%s\t%s%n".format(f.filename, f.fileSize, f.fileType, l)
-      val fileWriter = fileDataManager.localOutputStream
-      fileWriter.write(fileline.getBytes("UTF-8"))
+      val fileWriter = fileDataManager.localOutputWriter
+      fileWriter.write(getFileLine(f))
     
       for (chunk <- f.chunks) {
         if (withFingerprint) {
@@ -158,47 +188,50 @@ class ImportHandler(filesystemName: String,
             getFileDigestBuilder(f.filename).update(chunk.fp.digest)
           }
         }
-        val fp : String = base64.encodeToString(chunk.fp.digest)
-        val chunkSize = chunk.size
-        val chunkline = "%s\t%s\t%s%n".format(f.filename, fp, chunkSize)
-        val msg = chunkline.getBytes("UTF-8")
-        val chunkWriter = chunkDataManager.localOutputStream
-        chunkWriter.write(msg)
+        val chunkWriter = chunkDataManager.localOutputWriter
+        chunkWriter.write(getChunkLine(f.filename, chunk))
+        totalChunkSize.addAndGet(chunk.size)
       }
 
       if (withFingerprint) {
         openFileMap synchronized {
-        val fileFingerprint : String = base64.encodeToString(getFileDigestBuilder(f.filename).digest())
-        val fileFingerprintLine = "%s\t%s%n".format(f.filename, fileFingerprint)
+          val base64 = new Base64()
+          val fileFingerprint : String = base64.encodeToString(getFileDigestBuilder(f.filename).digest())
+          val fileFingerprintLine = "%s\t%s%n".format(f.filename, fileFingerprint)
 
-        val fileFingerpintWriter = fileFingerprintDataManager.localOutputStream
-        fileFingerpintWriter.write(fileFingerprintLine.getBytes("UTF-8"))
+        val fileFingerpintWriter = fileFingerprintDataManager.localOutputWriter
+        fileFingerpintWriter.write(fileFingerprintLine)
         openFileMap -= f.filename
         }
       }
-    totalFileSize += f.fileSize
-    totalFileCount += 1
-    totalChunkCount += f.chunks.size
+      totalFileSize.addAndGet(f.fileSize)
+      totalFileCount.addAndGet(1)
+      totalChunkCount.addAndGet(f.chunks.size)
     }
   }
 
   override def report() {
     val secs = ((System.currentTimeMillis() - startTime) / 1000)
     if (secs > 0) {
-      val mbs = totalFileSize / secs
-      val fps = totalFileCount / secs
-      logger.info("File Count: %d (%d f/s), File Size %s (%s/s), Chunk Count: %d".format(
-        totalFileCount,
+      val mbs = totalFileSize.get() / secs
+      val fps = totalFileCount.get() / secs
+      logger.info("File Count: %d (%d f/s), File Size %s (%s/s), Chunk Size %s, Chunk Count: %d".format(
+        totalFileCount.get(),
         fps,
-        StorageUnit(totalFileSize),
+        StorageUnit(totalFileSize.get()),
         StorageUnit(mbs),
-        totalChunkCount))
+        StorageUnit(totalChunkSize.get()),
+        totalChunkCount.get()))
     }
   }
 
   def handle(fp: FilePart) {
     val r = new FilePartRunnable(fp)
-    executor.execute(r)
+    if (executor != null) {
+      executor.execute(r)
+    } else {
+      r.run()
+    }
   }
 
 
@@ -214,11 +247,17 @@ class ImportHandler(filesystemName: String,
 
   def handle(f: File) {
     val r = new FileRunnable(f)
-    executor.execute(r)
+    if (executor != null) {
+      executor.execute(r)
+    } else {
+      r.run()
+    }
   }
 
   override def quit() {
-    executor.shutdown()
+    if (executor != null) {
+      executor.shutdown()
+    }
 
     fileDataManager.quit()
     if (fileFingerprintDataManager != null) {
@@ -241,12 +280,17 @@ object Import {
     val optionOutput = parser.option[String](List("o", "output"), "output", "HDFS directory for output")
     val optionWithFileFingerprint = parser.flag[Boolean](List("with-file-fingerprint"), "Import file fingerprint only")
     val optionCompress = parser.flag[Boolean](List("c", "compress"), "Compress output")
+    val optionThreads = parser.option[Int](List("t", "threads"), "threads", "number of concurrent threads")
 
     parser.parse(args)
 
     val reportInterval = optionReport.value match {
       case None => 60 * 1000
       case Some(i) => i * 1000
+    }
+    val threadCount = optionThreads.value match {
+      case Some(t) => t
+      case None => 0
     }
     val format = "protobuf"
     val output = optionOutput.value match {
@@ -262,7 +306,7 @@ object Import {
       case None => false
     }
     for (filename <- optionFilenames.value) {
-      val importHandler = new ImportHandler(output, output, compress, withFingerprint)
+      val importHandler = new ImportHandler(output, output, threadCount, compress, withFingerprint)
       val reader = Format(format).createReader(filename, importHandler)
       val reporter = new Reporter(importHandler, reportInterval).start()
       reader.parse()
