@@ -27,6 +27,8 @@ class FileSystemChunking(listing: FileListingProvider,
   maxThreads: Int,
   useDefaultIgnores: Boolean,
   followSymlinks: Boolean,
+  useRelativePaths: Boolean,
+  useJavaDirectoryListing: Boolean,
   clustered: Boolean,
   progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends Log with Reporting {
 
@@ -34,9 +36,9 @@ class FileSystemChunking(listing: FileListingProvider,
    * Dispatching object
    */
   val dispatcher = if (clustered) {
-    new DistributedFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
+    new DistributedFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, useRelativePaths, useJavaDirectoryListing, progressHandler)
   } else {
-    new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, progressHandler)
+    new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, useRelativePaths, useJavaDirectoryListing, progressHandler)
   }
 
   def report() {
@@ -52,7 +54,7 @@ class FileSystemChunking(listing: FileListingProvider,
   if (dispatcher.isLeader) {
     for (fl <- listing) {
       val f = getFile(fl.filename)
-      dispatcher.dispatch(f, f.getCanonicalPath(), f.isDirectory(), fl.label)
+      dispatcher.dispatch(f, f.getCanonicalPath(), f.isDirectory(), fl.source, fl.label)
     }
   }
 

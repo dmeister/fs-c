@@ -3,6 +3,10 @@ package de.pc2.dedup.fschunk.format
 import scala.actors._
 import scala.collection.mutable.Map
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import java.io.InputStream
+import java.io.OutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 object Format {
   val formats: Map[String, Format] = Map("protobuf" -> ProtobufFormat, "legacy" -> LegacyFormat)
@@ -21,6 +25,13 @@ trait Reader {
 }
 
 trait Format {
-  def createReader(filename: String, receiver: FileDataHandler): Reader
-  def createWriter(filename: String, privacyMode: Boolean): FileDataHandler
+  def createReader(filename: String, receiver: FileDataHandler): Reader = {
+    return createReader(new FileInputStream(filename), receiver)
+  }
+  def createWriter(filename: String, privacyMode: Boolean): FileDataHandler = {
+    return createWriter(new FileOutputStream(filename), privacyMode)
+  }
+
+  def createReader(file: InputStream, receiver: FileDataHandler): Reader
+  def createWriter(file: OutputStream, privacyMode: Boolean): FileDataHandler
 }

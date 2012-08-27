@@ -23,9 +23,17 @@ public class FileSizeCategory extends EvalFunc<Long> {
 		 if (input == null || input.size() == 0)
 	            return null;
 	        try{
-	        	double fileSize = Double.parseDouble(input.get(0).toString());
+	        	Object o = input.get(0);
+	        	if (o == null) {
+	        		return null;
+	        	}
+	        	if (o instanceof Number) {
+	        		Number n = (Number) o;
+	        		return getCategory(n.doubleValue());
+	        	}
+	        	double fileSize = Double.parseDouble(o.toString());
 	            return getCategory(fileSize);
-	        }catch(Exception e){
+	        } catch(Exception e) {
 	            throw WrappedIOException.wrap("Caught exception processing input row ", e);
 	        }
 	}

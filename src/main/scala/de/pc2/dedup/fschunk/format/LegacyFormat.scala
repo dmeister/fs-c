@@ -22,6 +22,8 @@ import de.pc2.dedup.util._
 import java.nio._
 import de.pc2.dedup.fschunk._
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import java.io.InputStream
+import java.io.OutputStream
 
 object IntStreamConverstion {
   	def apply(buffer : Array[Char], offset: Int) : Int = {
@@ -49,7 +51,7 @@ object IntStreamConverstion {
 
 class ParseException(msg: String) extends Exception(msg)
 
-class LegacyFormatReader(filename: String, receiver: FileDataHandler) extends Reader with Log {
+class LegacyFormatReader(file: InputStream, receiver: FileDataHandler) extends Reader with Log {
 	var fileCount = 0L
 	var chunkCount = 0L
  
@@ -118,7 +120,7 @@ class LegacyFormatReader(filename: String, receiver: FileDataHandler) extends Re
    */
   def parse() {
     try {
-      val reader = new BufferedReader(new InputStreamReader(new FileInputStream(filename), Charset.forName("ISO-8859-1")));
+      val reader = new BufferedReader(new InputStreamReader(file, Charset.forName("ISO-8859-1")));
       try {
         parseFileEntry(reader)
       } catch {
@@ -129,7 +131,7 @@ class LegacyFormatReader(filename: String, receiver: FileDataHandler) extends Re
       }
     } catch {
       case e: IOException =>
-        logger.fatal("Cannot read trace file " + filename, e)
+        logger.fatal("Cannot read trace file", e)
     }
     logger.debug("Exit")
   }
@@ -146,6 +148,6 @@ class LegacyFormatWriter extends FileDataHandler with Log {
 }
 
 object LegacyFormat extends Format {
-	def createReader(filename: String, receiver: FileDataHandler) = new LegacyFormatReader(filename, receiver)
-	def createWriter(filename: String, privacyMode: Boolean) = new LegacyFormatWriter()
+	def createReader(file: InputStream, receiver: FileDataHandler) = new LegacyFormatReader(file, receiver)
+	def createWriter(file: OutputStream, privacyMode: Boolean) = new LegacyFormatWriter()
 }

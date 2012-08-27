@@ -38,20 +38,31 @@ object FileProcessor extends Log {
 
   var chunker: Seq[(Chunker, List[FileDataHandler])] = null
   var progressHandler: ((File) => Unit) = null
+  var useRelativePaths: (Boolean) = false
 
-  def init(c: Seq[(Chunker, List[FileDataHandler])], p: ((File) => Unit)) {
+  def init(c: Seq[(Chunker, List[FileDataHandler])], p: ((File) => Unit), useRelPath: Boolean) {
     synchronized {
       chunker = c
       progressHandler = p
+      useRelativePaths = useRelPath
       this.notifyAll()
     }
   }
 
 }
 
+/**
+ * Used to read and process a file on disk
+ */
 class FileProcessor(file: JavaFile,
   path: String,
+  source: Option[String],
   label: Option[String]) extends Runnable with Log with Serializable {
+
+  val sourcePath: Option[String] = source match {
+    case None => None
+    case Some(s) => Some(new JavaFile(s).getCanonicalPath())
+  }
 
   def readIntoBuffer(c: FileChannel, buffer: ByteBuffer, offset: Long): Int = {
     logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
@@ -72,6 +83,24 @@ class FileProcessor(file: JavaFile,
     buffer
   }
 
+  def filenameToStore(): String = {
+    logger.debug("%s %s %s".format(source, sourcePath, path))
+    if (FileProcessor.useRelativePaths == false) {
+      path
+    } else {
+      sourcePath match {
+        case None => path
+        case Some(s) =>
+
+          if (path.startsWith(s)) {
+            path.drop(s.size + 1)
+          } else {
+            path
+          }
+      }
+    }
+  }
+
   def run() {
     FileProcessor.activeCount.incrementAndGet()
     FileProcessor.totalCount.incrementAndGet()
@@ -88,7 +117,7 @@ class FileProcessor(file: JavaFile,
     val fileLength = file.length
     logger.debug("Started File %s (%s)".format(file, StorageUnit(fileLength)))
     try {
-     logger.debug("File %s: Allocate buffer".format(file))
+      logger.debug("File %s: Allocate buffer".format(file))
       val buffer = allocateBuffer(fileLength)
       val sessionList = for { chunker <- FileProcessor.chunker } yield (chunker._1.createSession(), chunker._2, new ListBuffer[Chunk]())
       val t = FileType.getNormalizedFiletype(file)
@@ -101,7 +130,7 @@ class FileProcessor(file: JavaFile,
       while (r > 0) {
         offset += r
         FileProcessor.totalRead.addAndGet(r)
-        
+
         val startChunkMillis = System.currentTimeMillis()
         for ((session, handlers, chunkList) <- sessionList) {
           val chunkBuffer = buffer.slice()
@@ -109,7 +138,7 @@ class FileProcessor(file: JavaFile,
             chunkList.append(chunk)
           }
           if (chunkList.size > FileProcessor.MAX_CHUNKLIST_SIZE) {
-            val fp = new FilePart(path, chunkList.toList)
+            val fp = new FilePart(filenameToStore(), chunkList.toList)
             for (handler <- handlers) {
               handler.handle(fp)
             }
@@ -129,18 +158,18 @@ class FileProcessor(file: JavaFile,
         session.close() { chunk =>
           chunkList.append(chunk)
         }
-        val f = new File(path, fileLength, t, chunkList.toList, label)
+        val f = new File(filenameToStore(), fileLength, t, chunkList.toList, label)
         for (handler <- handlers) {
           handler.handle(f)
         }
       }
-      val fileWithoutChunks = new File(path, fileLength, t, List(), label)
+      val fileWithoutChunks = new File(filenameToStore(), fileLength, t, List(), label)
       FileProcessor.progressHandler(fileWithoutChunks)
     } catch {
       case e: FileNotFoundException =>
         for ((chunker, handlers) <- FileProcessor.chunker) {
           for (handler <- handlers) {
-            handler.fileError(path, fileLength)
+            handler.fileError(filenameToStore(), fileLength)
           }
         }
         logger.debug("File %s".format(e.getMessage))

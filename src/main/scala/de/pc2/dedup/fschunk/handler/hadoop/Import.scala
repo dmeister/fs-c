@@ -30,6 +30,7 @@ import org.clapper.argot._
 import de.pc2.dedup.fschunk._
 import java.security.MessageDigest
 import java.util.concurrent.atomic._
+import java.io.FileInputStream
 
 class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Boolean) extends Log {
   val globPath = new Path(rootPath, suffix + "*")
@@ -41,6 +42,7 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
   }
 
   def files = ListBuffer[Writer]()
+  def streams = ListBuffer[OutputStream]()
   val uniqueId = new AtomicInteger(0);
   val threadLocalFile = 
     new ThreadLocal[Writer]() {
@@ -56,7 +58,8 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
         } else {
           fs.create(filePath)
         }
-        val writer = new BufferedWriter(new OutputStreamWriter(stream), 1024 * 1024)
+        streams += stream
+        val writer = new OutputStreamWriter(stream)
         files += writer
         return writer
       }
@@ -74,7 +77,12 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
 
   def quit() {
     for (file <- files) {
+      file.flush()
       file.close()
+    }
+    for (stream <- streams) {
+      stream.flush()
+      stream.close()
     }
   }
 }
@@ -175,8 +183,6 @@ class ImportHandler(filesystemName: String,
   }
   class FileRunnable(f: File) extends Runnable {
     override def run() {
-
-
       logger.debug("Write file %s, chunks %s".format(f.filename, f.chunks.size))
 
       val fileWriter = fileDataManager.localOutputWriter
@@ -257,6 +263,7 @@ class ImportHandler(filesystemName: String,
   override def quit() {
     if (executor != null) {
       executor.shutdown()
+      executor.awaitTermination(600L, TimeUnit.SECONDS)
     }
 
     fileDataManager.quit()
@@ -278,7 +285,7 @@ object Import {
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progress reports in seconds (Default: 1 minute, 0 = no report)")
     val optionOutput = parser.option[String](List("o", "output"), "output", "HDFS directory for output")
-    val optionWithFileFingerprint = parser.flag[Boolean](List("with-file-fingerprint"), "Import file fingerprint only")
+    val optionWithFileFingerprint = parser.flag[Boolean](List("with-file-fingerprint"), "Import with file fingerprint")
     val optionCompress = parser.flag[Boolean](List("c", "compress"), "Compress output")
     val optionThreads = parser.option[Int](List("t", "threads"), "threads", "number of concurrent threads")
 
@@ -307,7 +314,15 @@ object Import {
     }
     for (filename <- optionFilenames.value) {
       val importHandler = new ImportHandler(output, output, threadCount, compress, withFingerprint)
-      val reader = Format(format).createReader(filename, importHandler)
+      val stream = if (filename.startsWith("hdfs://")) {
+          val conf = new Configuration()
+          val fs = FileSystem.get(new URI(filename), conf)
+          val path = new Path(filename)
+          fs.open(path)
+        } else {
+          new FileInputStream(filename)
+        }
+      val reader = Format(format).createReader(stream, importHandler)
       val reporter = new Reporter(importHandler, reportInterval).start()
       reader.parse()
 

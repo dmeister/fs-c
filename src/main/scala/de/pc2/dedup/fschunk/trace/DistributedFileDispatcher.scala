@@ -22,15 +22,17 @@ class DistributedFileDispatcher(
   chunker: Seq[(Chunker, List[FileDataHandler])],
   useDefaultIgnores: Boolean,
   followSymlinks: Boolean,
+  useRelativePaths: Boolean,
+  useJavaDirectoryListing: Boolean,
   progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends FileDispatcher with Log {
   val startTime = System.currentTimeMillis()
   var lock: AnyRef = new Object()
   var finished: Boolean = false
-  
+
   val activeAllCount = Hazelcast.getAtomicNumber("all count")
   val activeDirCount = Hazelcast.getAtomicNumber("dir count")
   val activeFileCount = Hazelcast.getAtomicNumber("file count")
-  
+
   /**
    * id of the instance. Is used for determining a initial leader
    */
@@ -58,8 +60,8 @@ class DistributedFileDispatcher(
   val fileexecutor = Hazelcast.getExecutorService("file")
   val direxecutor = Hazelcast.getExecutorService("dir")
 
-  FileProcessor.init(chunker, progressHandler)
-  DirectoryProcessor.init(this)
+  FileProcessor.init(chunker, progressHandler, useRelativePaths)
+  DirectoryProcessor.init(this, useJavaDirectoryListing)
 
   /**
    * Human readable member id aka hostname
@@ -73,16 +75,16 @@ class DistributedFileDispatcher(
   /**
    * Dispatch the given file to the correct executor service
    */
-  def dispatch(f: File, path: String, isDir: Boolean, label: Option[String]) {
-      logger.debug("Dispatch %s".format(f))
+  def dispatch(f: File, path: String, isDir: Boolean, source: Option[String], label: Option[String]) {
+    logger.debug("Dispatch %s".format(f))
 
     activeAllCount.incrementAndGet()
     val runnable = if (isDir) {
       activeDirCount.incrementAndGet()
-      new DirectoryProcessor(f, label, useDefaultIgnores, followSymlinks)
+      new DirectoryProcessor(f, source, label, useDefaultIgnores, followSymlinks)
     } else {
       activeFileCount.incrementAndGet()
-      new FileProcessor(f, path, label)
+      new FileProcessor(f, path, source, label)
     }
     // the task type id is a) necessary for the executor callback and b) is used to determine the 
     // correct operations in the executor callback

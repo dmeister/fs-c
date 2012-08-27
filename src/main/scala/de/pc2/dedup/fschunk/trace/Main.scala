@@ -39,6 +39,10 @@ object Main extends Log {
       val optionProgressFile = parser.option[String]("progress-file", "progressFile", "File containing all processed filenames")
       val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
       val optionDistributed = parser.flag[Boolean]("cluster", false, "Distributed mode")
+      val optionRelativePaths = parser.flag[Boolean]("store-relative-path", false, "Stores only relative path names (hashes only the relative pathes if privacy mode is used")
+      val optionUseJavaDirectoryListing = parser.flag[Boolean]("use-java-directory-listing", false, "Uses Java buildin directory listing instead of the default method (expert)")
+      val optionMemoryReporting = parser.flag[Boolean]("report-memory-usage", false, "Report memory usage (expert)")
+            
       parser.parse(args)
 
       if (optionFilenames.value.size == 0) {
@@ -82,6 +86,18 @@ object Main extends Log {
         case None => true
       }
       val logChunkHashes = optionChunkHashes.value match {
+        case Some(b) => b
+        case None => false
+      }
+      val useRelativePaths = optionRelativePaths.value match {
+        case Some(b) => b
+        case None => false
+      }
+      val useJavaDirectoryListing = optionUseJavaDirectoryListing.value match {
+        case Some(b) => b
+        case None => false
+      }
+      val reportMemoryUsage = optionMemoryReporting.value match {
         case Some(b) => b
         case None => false
       }
@@ -165,11 +181,24 @@ object Main extends Log {
       val chunking = new FileSystemChunking(
         fileListing,
         chunker,
-        threadCount, useIgnoreList, followSymlinks, distributedMode,
+        threadCount, useIgnoreList, followSymlinks, useRelativePaths, useJavaDirectoryListing, distributedMode,
         progressHandler)
       val reporter = new Reporter(chunking, reportInterval).start()
+      
+      val memoryUsageReporter = if (reportMemoryUsage) {
+        Some(new Reporter(new GCReporting(), reportInterval * 10).start())
+      } else {
+        None
+      }
+      
       chunking.start()
       reporter ! Quit
+      
+      memoryUsageReporter match {
+        case Some(r) => r ! Quit
+        case None => //pass
+      }
+      
       chunking.report()
       chunking.quit()
     } catch {
