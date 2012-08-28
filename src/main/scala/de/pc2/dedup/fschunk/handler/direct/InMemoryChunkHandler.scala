@@ -41,8 +41,7 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
       }
       msg.append("%nChunks: %d".format(totalChunkCount))
       if (totalChunkCount > 0) {
-        msg.append(" (%s/Chunk)".format(totalChunkCount,
-          StorageUnit(totalFileSize / totalChunkCount)))
+        msg.append(" (%s/Chunk)".format( StorageUnit(totalFileSize / totalChunkCount)))
       }
       msg.append("%nTime: %ds%n".format(seconds))
       if (seconds > 0) {
