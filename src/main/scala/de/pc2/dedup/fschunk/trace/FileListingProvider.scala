@@ -10,7 +10,7 @@ case class FilenameLabel(val filename: String, val source: Option[String], val l
  */
 object FileListingProvider {
   // we always try to follow initial symlinks
-  def g(filename: String, source: Option[String], label: Option[String], f: (FilenameLabel) => Unit): Unit = {
+  private def g(filename: String, source: Option[String], label: Option[String], f: (FilenameLabel) => Unit): Unit = {
     try {
       val fl = FilenameLabel(new File(filename).getCanonicalPath(), source, label)
       f(fl)

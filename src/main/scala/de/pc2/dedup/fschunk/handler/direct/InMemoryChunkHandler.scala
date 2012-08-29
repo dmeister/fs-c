@@ -11,6 +11,9 @@ import de.pc2.dedup.util.Log
 import scala.collection.mutable.Map
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
+/**
+ * Handler to do a in-memory analysis of the trace.
+ */
 class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
   var totalFileSize = 0L
   var totalChunkSize = 0L
@@ -19,7 +22,7 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
   var lock: AnyRef = new Object()
   val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
   val startTime = System.currentTimeMillis()
-  
+
   override def quit() {
     report()
   }
@@ -41,7 +44,7 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
       }
       msg.append("%nChunks: %d".format(totalChunkCount))
       if (totalChunkCount > 0) {
-        msg.append(" (%s/Chunk)".format( StorageUnit(totalFileSize / totalChunkCount)))
+        msg.append(" (%s/Chunk)".format(StorageUnit(totalFileSize / totalChunkCount)))
       }
       msg.append("%nTime: %ds%n".format(seconds))
       if (seconds > 0) {
@@ -55,12 +58,14 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
 
   def handle(fp: FilePart) {
     lock.synchronized {
-      if (!filePartialMap.contains(fp.filename)) {
-        filePartialMap += (fp.filename -> new ListBuffer[Chunk]())
+      val fileMapBuffer = filePartialMap.get(fp.filename) match {
+        case Some(l) => l
+        case None =>
+          val l = new ListBuffer[Chunk]()
+          filePartialMap += (fp.filename -> l)
+          l
       }
-      for (chunk <- fp.chunks) {
-        filePartialMap(fp.filename).append(chunk)
-      }
+      fp.chunks.foreach(chunk => fileMapBuffer.append(chunk))
     }
   }
 
@@ -69,14 +74,7 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
       var chunkCount = 0L
       var chunkFileSize = 0L
       var chunkSize = 0L
-
-      val allFileChunks: List[Chunk] = if (filePartialMap.contains(f.filename)) {
-        val partialChunks = filePartialMap(f.filename)
-        filePartialMap -= f.filename
-        List.concat(partialChunks.toList, f.chunks)
-      } else {
-        f.chunks
-      }
+      val allFileChunks = gatherAllFileChunks(f)
       for (chunk <- allFileChunks) {
         chunkCount += 1
         chunkFileSize += chunk.size
@@ -90,30 +88,47 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
       totalFileSize += f.fileSize
       totalChunkSize += chunkSize
 
-      val redundancy = f.fileSize - chunkSize
-      val patchSize = f.fileSize - redundancy
-      val illegalFile = patchSize < 0 || redundancy < 0 || f.fileSize != chunkFileSize
-
-      val msg = new StringBuffer("%s - %s".format(f.filename, chunkerName))
-      if (!silent || illegalFile) {
-        msg.append("\nSize: %s (%d Byte)%n".format(
-          StorageUnit(f.fileSize), f.fileSize))
-        if (illegalFile) {
-          msg.append("\nChunks size: %s (%d Byte)%n".format(
-            StorageUnit(chunkFileSize), chunkFileSize))
-        }
-        msg.append("Redundancy: %s  (%d Byte)".format(StorageUnit(redundancy), redundancy))
-        if (chunkFileSize > 0) {
-          msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
-        }
-        msg.append("%nPatch Size: %s (%d Byte)".format(
-          StorageUnit(chunkFileSize - redundancy), chunkFileSize - redundancy))
-      }
-      if (illegalFile) {
-        throw new Exception("Illegel file: %s".format(msg))
-      } else {
-        logger.info(msg)
-      }
+      formatOutput(f, chunkFileSize, chunkSize)
     }
+  }
+
+  private def formatOutput(f: de.pc2.dedup.chunker.File, chunkFileSize: Long, chunkSize: Long) {
+
+    val redundancy = f.fileSize - chunkSize
+    val patchSize = f.fileSize - redundancy
+    val illegalFile = patchSize < 0 || redundancy < 0 || f.fileSize != chunkFileSize
+
+    val msg = new StringBuffer("%s - %s".format(f.filename, chunkerName))
+    if (!silent || illegalFile) {
+      msg.append("\nSize: %s (%d Byte)%n".format(
+        StorageUnit(f.fileSize), f.fileSize))
+      if (illegalFile) {
+        msg.append("\nChunks size: %s (%d Byte)%n".format(
+          StorageUnit(chunkFileSize), chunkFileSize))
+      }
+      msg.append("Redundancy: %s  (%d Byte)".format(StorageUnit(redundancy), redundancy))
+      if (chunkFileSize > 0) {
+        msg.append(" (%.2f%%)".format(100.0 * redundancy / chunkFileSize))
+      }
+      msg.append("%nPatch Size: %s (%d Byte)".format(
+        StorageUnit(chunkFileSize - redundancy), chunkFileSize - redundancy))
+    }
+    if (illegalFile) {
+      throw new Exception("Illegel file: %s".format(msg))
+    } else {
+      logger.info(msg)
+    }
+  }
+
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+
+    val allFileChunks: List[Chunk] = if (filePartialMap.contains(f.filename)) {
+      val partialChunks = filePartialMap(f.filename)
+      filePartialMap -= f.filename
+      List.concat(partialChunks.toList, f.chunks)
+    } else {
+      f.chunks
+    }
+    allFileChunks
   }
 }

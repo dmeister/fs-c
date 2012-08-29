@@ -6,43 +6,43 @@ import org.apache.commons.logging._
  * I like Scala
  */
 class LoggerProxy(val logger: org.apache.commons.logging.Log) {
-    def debug(msg: => Object) {
-        if (logger.isDebugEnabled()) {
-            logger.debug(msg);
-        }
+  def debug(msg: => Object) {
+    if (logger.isDebugEnabled()) {
+      logger.debug(msg);
     }
-    
-    def info(msg: => Object) {
-        if (logger.isInfoEnabled()) {
-            logger.info(msg);
-        }
+  }
+
+  def info(msg: => Object) {
+    if (logger.isInfoEnabled()) {
+      logger.info(msg);
     }
-    
-    def warn(msg: => Object) {
-        if (logger.isWarnEnabled()) {
-            logger.warn(msg);
-        }
+  }
+
+  def warn(msg: => Object) {
+    if (logger.isWarnEnabled()) {
+      logger.warn(msg);
     }
-    
-    def error(msg: => Object) {
-        if (logger.isErrorEnabled()) {
-            logger.error(msg);
-        }
+  }
+
+  def error(msg: => Object) {
+    if (logger.isErrorEnabled()) {
+      logger.error(msg);
     }
-    
-    def error(msg: => Object, t: java.lang.Throwable) {
-        if (logger.isErrorEnabled()) {
-            logger.error(msg, t);
-        }
+  }
+
+  def error(msg: => Object, t: java.lang.Throwable) {
+    if (logger.isErrorEnabled()) {
+      logger.error(msg, t);
     }
-    
-    def fatal(msg: Object) {
-        logger.fatal(msg);
-    }
-    
-    def fatal(msg: Object, t: java.lang.Throwable) {
-        logger.fatal(msg, t);
-    }
+  }
+
+  def fatal(msg: Object) {
+    logger.fatal(msg);
+  }
+
+  def fatal(msg: Object, t: java.lang.Throwable) {
+    logger.fatal(msg, t);
+  }
 }
 
 /**

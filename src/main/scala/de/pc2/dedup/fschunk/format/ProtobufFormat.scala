@@ -24,16 +24,16 @@ import java.util.concurrent.atomic._
  * Reader of the protobuf format files
  */
 class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends Reader with Log {
-  private var faultyTestPartFoundCount : Long = 0
+  private var faultyTestPartFoundCount: Long = 0
 
-  private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk) : Chunk = {
+  private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk): Chunk = {
     if (chunkData.hasChunkHash) {
       Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), Some(chunkData.getChunkHash))
     } else {
       Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), None)
     }
   }
-    
+
   private def parseChunkEntry(stream: InputStream): Chunk = {
     val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
     convertChunkData(chunkData)
@@ -45,39 +45,39 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
     if (fileData == null) {
       return
     }
-    val chunkList : List[Chunk] = if (fileData.getFilename().size == 0) {
-        // Pseudo fallback mode
-        stream.reset()
+    val chunkList: List[Chunk] = if (fileData.getFilename().size == 0) {
+      // Pseudo fallback mode
+      stream.reset()
 
-        if (faultyTestPartFoundCount == 0) {
-            logger.warn("Found faulty test part data. Falling back mode active")
-        }
-        val chunk = parseChunkEntry(stream) // try again as chunk entry
-        // use dummy file data
-        fileData = de.pc2.dedup.fschunk.Protocol.File.newBuilder().
-            setFilename("").
-            setSize(chunk.size).
-            setType("FALLBACK").
-            setFilename("FALLBACK %s".format(faultyTestPartFoundCount)).
-            setChunkCount(1).build()
-        faultyTestPartFoundCount += 1
-        List(chunk)
+      if (faultyTestPartFoundCount == 0) {
+        logger.warn("Found faulty test part data. Falling back mode active")
+      }
+      val chunk = parseChunkEntry(stream) // try again as chunk entry
+      // use dummy file data
+      fileData = de.pc2.dedup.fschunk.Protocol.File.newBuilder().
+        setFilename("").
+        setSize(chunk.size).
+        setType("FALLBACK").
+        setFilename("FALLBACK %s".format(faultyTestPartFoundCount)).
+        setChunkCount(1).build()
+      faultyTestPartFoundCount += 1
+      List(chunk)
     } else {
-        // normal mode
-        val chunkList = for (i <- 0 until fileData.getChunkCount())
-            yield(parseChunkEntry(stream))
-        List[Chunk]() ++ chunkList
+      // normal mode
+      val chunkList = for (i <- 0 until fileData.getChunkCount())
+        yield (parseChunkEntry(stream))
+      List[Chunk]() ++ chunkList
     }
-    
+
     if (fileData.getPartial()) {
       receiver.handle(FilePart(fileData.getFilename(), chunkList))
     } else {
-        val l: Option[String] = if (fileData.hasLabel()) {
-            Some(fileData.getLabel())
-        } else {
-            None
-        }
-        receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList, l))
+      val l: Option[String] = if (fileData.hasLabel()) {
+        Some(fileData.getLabel())
+      } else {
+        None
+      }
+      receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList, l))
     }
     parseFileEntry(stream)
   }
@@ -212,7 +212,7 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
     val chunkBuilder = de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
     chunkBuilder.setFp(ByteString.copyFrom(c.fp.digest)).setSize(c.size)
     c.chunkHash match {
-      case None => 
+      case None =>
       case Some(chunkHash) => chunkBuilder.setChunkHash(chunkHash)
     }
     chunkBuilder.build()

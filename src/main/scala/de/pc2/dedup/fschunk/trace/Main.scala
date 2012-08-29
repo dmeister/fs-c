@@ -42,7 +42,7 @@ object Main extends Log {
       val optionRelativePaths = parser.flag[Boolean]("store-relative-path", false, "Stores only relative path names (hashes only the relative pathes if privacy mode is used")
       val optionUseJavaDirectoryListing = parser.flag[Boolean]("use-java-directory-listing", false, "Uses Java buildin directory listing instead of the default method (expert)")
       val optionMemoryReporting = parser.flag[Boolean]("report-memory-usage", false, "Report memory usage (expert)")
-            
+
       parser.parse(args)
 
       if (optionFilenames.value.size == 0) {
@@ -105,20 +105,20 @@ object Main extends Log {
         val handler = optionOutput.value match {
           case None =>
             optionCustomHandler.value match {
-                case Some(className) => 
-                    try {
-                        val customHandler = Class.forName(className).newInstance.asInstanceOf[FileDataHandler]
-                        customHandler :: Nil
-                    } catch {
-                        case e: Exception => throw new Exception("Failed to instanciate custom chunk handler %s: %s".format(className, e))
-                    }
-                case None => 
-                    new InMemoryChunkHandler(silent, new ChunkIndex, chunkerName) :: Nil
+              case Some(className) =>
+                try {
+                  val customHandler = Class.forName(className).newInstance.asInstanceOf[FileDataHandler]
+                  customHandler :: Nil
+                } catch {
+                  case e: Exception => throw new Exception("Failed to instanciate custom chunk handler %s: %s".format(className, e))
+                }
+              case None =>
+                new InMemoryChunkHandler(silent, new ChunkIndex, chunkerName) :: Nil
             }
           case Some(o) =>
             optionCustomHandler.value match {
-                case Some(className) => throw new Exception("Cannot use custom chunk handler with output option")
-                case None => // ook
+              case Some(className) => throw new Exception("Cannot use custom chunk handler with output option")
+              case None => // ook
             }
             val outputFilename = if (distributedMode) {
               val memberId = Hazelcast.getCluster().getLocalMember().getInetSocketAddress().getHostName()
@@ -184,21 +184,21 @@ object Main extends Log {
         threadCount, useIgnoreList, followSymlinks, useRelativePaths, useJavaDirectoryListing, distributedMode,
         progressHandler)
       val reporter = new Reporter(chunking, reportInterval).start()
-      
+
       val memoryUsageReporter = if (reportMemoryUsage) {
         Some(new Reporter(new GCReporting(), reportInterval * 10).start())
       } else {
         None
       }
-      
+
       chunking.start()
       reporter ! Quit
-      
+
       memoryUsageReporter match {
         case Some(r) => r ! Quit
         case None => //pass
       }
-      
+
       chunking.report()
       chunking.quit()
     } catch {

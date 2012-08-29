@@ -71,7 +71,7 @@ class FileSystemChunking(listing: FileListingProvider,
     }
   }
 
-  def getFile(filename: String): File = {
+  private def getFile(filename: String): File = {
     if (filename.equals(".")) {
       try {
         new File(filename).getCanonicalFile()

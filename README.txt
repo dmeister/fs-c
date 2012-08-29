@@ -36,9 +36,14 @@ The parse mode is started with fs-c parse and accepts the following parameters:
               - "ir" calculation deduplication ratios for each file type and file size categories,
               - "tr" calculating the temporal redundancy between two traces to simulate a 
                      backup scenario
+              - "harniks" uses Harnik's estimation method to estimate the deduplication ratios.
+                     All estimates have at most an error of 1% (or NaN is printed out).
+                     Note that harniks and ir use a different method to assign chunks to file types/file
+                     sizes. To that values between ir and harniks may differ. The hadoop scripts use the same
+                     calculation method as harniks.
               - any fully qualified Scala class name implementing the FileDataHandler trait.
-                The class path can be extended by user defined classed via the FSC_EXTRA_CLASSPATH environment
-                variable. 
+                     The class path can be extended by user defined classed via the FSC_EXTRA_CLASSPATH environment
+                     variable. 
 -o   --output    Run name
 -f   --filename  Trace filename
 

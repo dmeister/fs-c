@@ -35,7 +35,7 @@ class GCReporting extends Reporting with Log {
   }
 
   def report() {
-      doReport();
+    doReport();
   }
 }
 

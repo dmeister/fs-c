@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.apache.commons.math3.random.RandomDataImpl
 import org.apache.commons.math3.random.MersenneTwister
 
-case class HarnikReserviorEntry(val chunkId: Long, val digest: Digest, val chunkSize: Int, val baseSampleCount: Int, val scanCount: Int) {
+case class HarnikReserviorEntry(val digest: Digest, val chunkSize: Int, val baseSampleCount: Int, val scanCount: Int) {
 
 }
 
@@ -23,94 +23,82 @@ case class HarnikReserviorEntry(val chunkId: Long, val digest: Digest, val chunk
  * Handler implementing the sampling phase of Harnik's deduplication estimation appraoch using
  * Reseviour sampling
  */
-class HarnikEstimationSamplingHandler(val sampleSize: Int, val chunkerName: String) extends FileDataHandler with Log {
+class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], output: Option[String], val chunkerName: String) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val startTime = System.currentTimeMillis()
+  
+  val sampleSize = configuredSampleSize match {
+    case Some(i) => i
+    case None => output match {
+      case None => 
+          445570; // good enough for an estimation with 1% error in 1:3 compression, but not enough for file types (usually)
+            case Some(s) =>
+        4 * 1237938 // much more! Needed so that at least the major file types/size categories get enough samples
+    }
+  }
 
-  val reserviorSampleSize = sampleSize * 4
-  val reserviorBuffer = new ArrayBuffer[HarnikReserviorEntry](reserviorSampleSize)
+  val reserviorBuffer = new ArrayBuffer[HarnikReserviorEntry](sampleSize)
   val rng = new RandomDataImpl(new MersenneTwister())
+
   var processedChunkCount: Long = 0
-  var processedChunkPartCount: Long = 0
+  var processedDataCount: Long = 0
 
   override def quit() {
     report()
   }
 
-  def getEstimationSample(): HarnikEstimationSample = {
+  lazy val estimationSample = getEstimationSample()
+  
+  private def getEstimationSample(): HarnikEstimationSample = {
 
     logger.debug("Finish sampling")
 
-    var acceptedSampleCount: Long = 0
-    val chunkIdSet = Set.empty[Long]
     val entryMap = Map.empty[Digest, HarnikSamplingEntry]
     for (entry <- reserviorBuffer) {
-      if (chunkIdSet.contains(entry.chunkId)) {
-        // This exact chunk is already in the sample, do not add it twice
+      if (entryMap.contains(entry.digest)) {
+        val existingEntry = entryMap(entry.digest)
+        entryMap.update(entry.digest, HarnikSamplingEntry(existingEntry.baseSampleCount + 1, existingEntry.chunkSize))
       } else {
-
-        logger.debug("Process reservior entry %s".format(entry))
-
-        if (entryMap.contains(entry.digest)) {
-          val existingEntry = entryMap(entry.digest)
-          entryMap.update(entry.digest, HarnikSamplingEntry(existingEntry.baseSampleCount + 1))
-        } else {
-          entryMap += (entry.digest -> HarnikSamplingEntry(1))
-        }
-
-        acceptedSampleCount += 1
-        chunkIdSet += entry.chunkId
+        entryMap += (entry.digest -> HarnikSamplingEntry(1, entry.chunkSize))
       }
     }
-
-    if (acceptedSampleCount < sampleSize) {
-      logger.warn("Insufficient sample reservior: accepted samples %s, sample size %s".format(acceptedSampleCount, sampleSize))
-    }
+    reserviorBuffer.clear()
     return new HarnikEstimationSample(entryMap.toMap)
   }
 
   override def report() {
+    lock.synchronized {
+      val stop = System.currentTimeMillis()
+      val seconds = (stop - startTime) / 1000
+
+      val tp = if (seconds > 0) {
+        "%s/s".format(StorageUnit(processedDataCount / seconds))
+      } else {
+        "N/A"
+      }
+      logger.info("Sampling: Data size %sB (%s), chunks %s".format(StorageUnit(processedDataCount),
+        tp,
+        StorageUnit(processedChunkCount)))
+    }
   }
 
-  def handleChunkPart(chunk: Chunk) {
-    if (reserviorBuffer.size < reserviorSampleSize) {
+  def handleChunk(chunk: Chunk) {
+    if (reserviorBuffer.size < sampleSize) {
       // still filling up the reservior
 
-      val entry = HarnikReserviorEntry(processedChunkCount, chunk.fp, chunk.size, 1, 0)
-      logger.debug("Filling up reserviour %s (%s/%s)".format(entry, reserviorBuffer.size, reserviorSampleSize))
-
+      val entry = HarnikReserviorEntry(chunk.fp, chunk.size, 1, 0)
       reserviorBuffer.append(entry)
-      processedChunkPartCount += 1
     } else {
 
-      val r = rng.nextLong(0, processedChunkPartCount) // endpoints included
-      if (r < reserviorSampleSize) {
+      val r = rng.nextLong(0, processedChunkCount) // endpoints included
+      if (r < sampleSize) {
         val index = r.asInstanceOf[Int]
-
-        val entry = HarnikReserviorEntry(processedChunkCount, chunk.fp, chunk.size, 1, 0)
-        logger.debug("Replace reserviour %s (%s)".format(entry, index))
+        val entry = HarnikReserviorEntry(chunk.fp, chunk.size, 1, 0)
         reserviorBuffer.update(index, entry)
       }
-      processedChunkPartCount += 1
-    }
-  }
-
-  def getTossesPerChunk(chunk: Chunk) : Int = {
-	  val a = chunk.size / 1024
-	  val b = chunk.size % 1024
-	  
-	  if (b == 0) {
-	    a
-	  } else {
-	    a + 1
-	  }
-  }
-  
-  def handleChunk(chunk: Chunk) {
-    for (i <- 0 to getTossesPerChunk(chunk)) {
-      handleChunkPart(chunk)
     }
     processedChunkCount += 1
+    processedDataCount += chunk.size
   }
 
   def handle(fp: FilePart) {

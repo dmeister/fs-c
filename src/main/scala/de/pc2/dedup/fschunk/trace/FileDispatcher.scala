@@ -47,7 +47,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,
   val activeDirCount = new AtomicLong()
   val activeFileCount = new AtomicLong()
 
-  def shouldShutdown(): Boolean = {
+  private def shouldShutdown(): Boolean = {
     return activeAllCount.get() == 0
   }
 
@@ -120,7 +120,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,
     }
   }
 
-  def executorFinished() {
+  private def executorFinished() {
     logger.info("Dispatching finished")
 
     direxecutor.shutdown()

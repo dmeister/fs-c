@@ -13,27 +13,32 @@ import de.pc2.dedup.util.Log
 import scala.math.Ordering
 import java.nio.ByteBuffer
 import de.pc2.dedup.chunker.rabin._
-
+/**
+ * Handler to search for the zero-chunk in the trace
+ */
 class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val zeroIndex = Set.empty[Digest]
 
-  def getFullChunkDigest(v: Byte, maxSize: Int, digestSize: Int) : Digest = {
+  /**
+   * Helper method to calculate the SHA-1 of the zero chunk
+   */
+  def getFullChunkDigest(v: Byte, maxSize: Int, digestSize: Int): Digest = {
     val bb = ByteBuffer.allocate(maxSize * 2)
-    while (bb.remaining > 0) { 
+    while (bb.remaining > 0) {
       bb.put(v)
     }
     bb.rewind()
-    var chunk : Chunk = null
+    var chunk: Chunk = null
     val rc = new RabinChunker(2 * 1024, 8 * 1024, maxSize, false, new DigestFactory("SHA-1", digestSize), "c8")
     val rcs = rc.createSession()
-    rcs.chunk(bb) {c: Chunk => 
+    rcs.chunk(bb) { c: Chunk =>
       if (chunk == null) {
         chunk = c
       }
     }
     if (chunk == null) {
-      rcs.close() {c: Chunk => 
+      rcs.close() { c: Chunk =>
         if (chunk == null) {
           chunk = c
         }
@@ -45,7 +50,7 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
   zeroIndex += getFullChunkDigest(0, 8 * 1024, 20)
   zeroIndex += getFullChunkDigest(0, 16 * 1024, 20)
   zeroIndex += getFullChunkDigest(0, 32 * 1024, 20)
-  zeroIndex += getFullChunkDigest(0, 8 * 1024, 10) 
+  zeroIndex += getFullChunkDigest(0, 8 * 1024, 10)
   zeroIndex += getFullChunkDigest(0, 16 * 1024, 10)
   zeroIndex += getFullChunkDigest(0, 32 * 1024, 10)
 
@@ -56,7 +61,7 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
 
   def handle(fp: FilePart) {
     lock.synchronized {
-      
+
       for (chunk <- fp.chunks) {
         totalSize += chunk.size
         chunkCount += 1
@@ -74,7 +79,7 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
     lock.synchronized {
       logger.debug("Handle file %s".format(f.filename))
 
-     for (chunk <- f.chunks) {
+      for (chunk <- f.chunks) {
         totalSize += chunk.size
         chunkCount += 1
 
@@ -93,27 +98,27 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
   override def quit() {
     outputMapToConsole()
   }
- 
-  def outputMapToConsole() {
-        lock.synchronized {
-      def storageUnitIfPossible(k: Long) : String = {
-      try {
-        return StorageUnit(k).toString() + "B"
-      } catch {
-        case _ =>
+
+  private def outputMapToConsole() {
+    lock.synchronized {
+      def storageUnitIfPossible(k: Long): String = {
+        try {
+          return StorageUnit(k).toString() + "B"
+        } catch {
+          case _ =>
           // pass
+        }
+        return k.toString()
       }
-      return k.toString()
-    }
 
-    val ratio = 1.0 * redundantSize / totalSize
+      val ratio = 1.0 * redundantSize / totalSize
 
-    println("Total size: %s, %s".format(storageUnitIfPossible(totalSize), totalSize))
-    println("Redundant size: %s, %s".format(storageUnitIfPossible(redundantSize), redundantSize))
-    println("Deduplication Ratio: %s ".format(ratio * 100.0))
-    println()
-    println("Total chunk count: %s".format(chunkCount))
-    println("Zero chunk count: %s".format(zeroChunkCount))
+      println("Total size: %s, %s".format(storageUnitIfPossible(totalSize), totalSize))
+      println("Redundant size: %s, %s".format(storageUnitIfPossible(redundantSize), redundantSize))
+      println("Deduplication Ratio: %s ".format(ratio * 100.0))
+      println()
+      println("Total chunk count: %s".format(chunkCount))
+      println("Zero chunk count: %s".format(zeroChunkCount))
     }
   }
 }

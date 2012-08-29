@@ -32,7 +32,7 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic._
 import java.io.FileInputStream
 
-class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Boolean) extends Log {
+class FileManager(fs: FileSystem, rootPath: Path, suffix: String, compress: Boolean) extends Log {
   val globPath = new Path(rootPath, suffix + "*")
   for (fileStatus <- fs.globStatus(globPath)) {
     if (fs.exists(fileStatus.getPath())) {
@@ -44,14 +44,14 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
   def files = ListBuffer[Writer]()
   def streams = ListBuffer[OutputStream]()
   val uniqueId = new AtomicInteger(0);
-  val threadLocalFile = 
+  val threadLocalFile =
     new ThreadLocal[Writer]() {
-      override def initialValue() : Writer = {
+      override def initialValue(): Writer = {
         val id = uniqueId.getAndIncrement()
         val filePath = if (compress) {
           new Path(rootPath, suffix + id + ".bz2")
         } else {
-          new Path(rootPath, suffix  + id )
+          new Path(rootPath, suffix + id)
         }
         val stream = if (compress) {
           createCompressedStream(fs, filePath)
@@ -71,7 +71,7 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
     codec.createOutputStream(rawStream)
   }
 
-  def localOutputWriter : Writer = {
+  def localOutputWriter: Writer = {
     return threadLocalFile.get()
   }
 
@@ -90,20 +90,20 @@ class FileManager(fs: FileSystem, rootPath: Path, suffix :String, compress: Bool
 /**
  * Handler to import a file into hadoop
  */
-class ImportHandler(filesystemName: String, 
-    filename: String, 
-    threadCount: Int,
-    compress: Boolean,
-    withFingerprint: Boolean) extends Reporting with FileDataHandler with Log {
+class ImportHandler(filesystemName: String,
+  filename: String,
+  threadCount: Int,
+  compress: Boolean,
+  withFingerprint: Boolean) extends Reporting with FileDataHandler with Log {
   val conf = new Configuration()
   val fs = FileSystem.get(new URI(filesystemName), conf)
   val rootPath = new Path(filesystemName, filename)
   val fileDataManager = new FileManager(fs, rootPath, "files", compress)
 
-  val fileFingerprintDataManager =   if (withFingerprint) {
+  val fileFingerprintDataManager = if (withFingerprint) {
     new FileManager(fs, rootPath, "file-fingerprint", compress)
   } else {
-      null
+    null
   }
   val chunkDataManager = new FileManager(fs, rootPath, "chunks", compress)
 
@@ -125,10 +125,10 @@ class ImportHandler(filesystemName: String,
     new ThreadPoolExecutor.CallerRunsPolicy()) {
   }
   val executor = if (threadCount > 0) {
-      new ImportThreadPoolExecutor()
-    } else {
-      null
-    }
+    new ImportThreadPoolExecutor()
+  } else {
+    null
+  }
 
   class FilePartRunnable(fp: FilePart) extends Runnable {
     override def run() {
@@ -138,7 +138,7 @@ class ImportHandler(filesystemName: String,
 
       for (chunk <- fp.chunks) {
         if (withFingerprint) {
-          openFileMap synchronized { 
+          openFileMap synchronized {
             getFileDigestBuilder(fp.filename).update(chunk.fp.digest)
           }
         }
@@ -151,9 +151,9 @@ class ImportHandler(filesystemName: String,
     }
   }
 
-  def getChunkLine(filename: String, chunk: Chunk) : String = {
+  def getChunkLine(filename: String, chunk: Chunk): String = {
     val base64 = new Base64()
-    val fp : String = base64.encodeToString(chunk.fp.digest)
+    val fp: String = base64.encodeToString(chunk.fp.digest)
     val sb = new StringBuilder()
     sb.append(filename)
     sb.append('\t')
@@ -164,7 +164,7 @@ class ImportHandler(filesystemName: String,
     return sb.toString()
   }
 
-  def getFileLine(f: File) : String = {
+  def getFileLine(f: File): String = {
     val l = f.label match {
       case Some(s) => s
       case None => "-"
@@ -187,7 +187,7 @@ class ImportHandler(filesystemName: String,
 
       val fileWriter = fileDataManager.localOutputWriter
       fileWriter.write(getFileLine(f))
-    
+
       for (chunk <- f.chunks) {
         if (withFingerprint) {
           openFileMap synchronized {
@@ -202,12 +202,12 @@ class ImportHandler(filesystemName: String,
       if (withFingerprint) {
         openFileMap synchronized {
           val base64 = new Base64()
-          val fileFingerprint : String = base64.encodeToString(getFileDigestBuilder(f.filename).digest())
+          val fileFingerprint: String = base64.encodeToString(getFileDigestBuilder(f.filename).digest())
           val fileFingerprintLine = "%s\t%s%n".format(f.filename, fileFingerprint)
 
-        val fileFingerpintWriter = fileFingerprintDataManager.localOutputWriter
-        fileFingerpintWriter.write(fileFingerprintLine)
-        openFileMap -= f.filename
+          val fileFingerpintWriter = fileFingerprintDataManager.localOutputWriter
+          fileFingerpintWriter.write(fileFingerprintLine)
+          openFileMap -= f.filename
         }
       }
       totalFileSize.addAndGet(f.fileSize)
@@ -240,8 +240,7 @@ class ImportHandler(filesystemName: String,
     }
   }
 
-
-  def getFileDigestBuilder(filename: String) : MessageDigest = {
+  def getFileDigestBuilder(filename: String): MessageDigest = {
     if (openFileMap.contains(filename)) {
       openFileMap(filename)
     } else {
@@ -315,13 +314,13 @@ object Import {
     for (filename <- optionFilenames.value) {
       val importHandler = new ImportHandler(output, output, threadCount, compress, withFingerprint)
       val stream = if (filename.startsWith("hdfs://")) {
-          val conf = new Configuration()
-          val fs = FileSystem.get(new URI(filename), conf)
-          val path = new Path(filename)
-          fs.open(path)
-        } else {
-          new FileInputStream(filename)
-        }
+        val conf = new Configuration()
+        val fs = FileSystem.get(new URI(filename), conf)
+        val path = new Path(filename)
+        fs.open(path)
+      } else {
+        new FileInputStream(filename)
+      }
       val reader = Format(format).createReader(stream, importHandler)
       val reporter = new Reporter(importHandler, reportInterval).start()
       reader.parse()

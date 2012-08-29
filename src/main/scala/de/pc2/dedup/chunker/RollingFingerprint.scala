@@ -16,6 +16,7 @@ trait RollingFingerprint {
    * be called from a single thread.
    */
   trait Session {
+
     /**
      * Returns the current fingerprint of the session
      */

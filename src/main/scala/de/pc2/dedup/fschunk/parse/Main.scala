@@ -89,13 +89,8 @@ object Main {
           for { handler <- handlerList } {
             handler.quit()
           }
-        case "harnik" =>
-          val defaultSampleSize = 44557; // good enought for an estimation with 1% error in 1:5 compression
-          val samplesize = optionHarnikSampleCount.value match {
-            case None => defaultSampleSize
-            case Some(i) => i
-          }
-          val handlerList1 = for { c <- chunkerNames } yield new HarnikEstimationSamplingHandler(defaultSampleSize, c)
+        case "harniks" =>
+          val handlerList1 = for { c <- chunkerNames } yield new HarnikEstimationSamplingHandler(optionHarnikSampleCount.value, output, c)
 
           for (filename <- filenames) {
             val p1 = new Parser(filename, format, handlerList1)
@@ -104,7 +99,7 @@ object Main {
             reporter1 ! Quit
           }
 
-          val handlerList3 = for { h <- handlerList1 } yield new HarnikEstimationScanHandler(h.getEstimationSample(), output, h.chunkerName)
+          val handlerList3 = for { h <- handlerList1 } yield new HarnikEstimationScanHandler(h.estimationSample, output, h.chunkerName)
 
           for (filename <- filenames) {
             val p2 = new Parser(filename, format, handlerList3)

@@ -43,6 +43,9 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
       return this
     }
 
+    /**
+     * Append new bytes from a bytebuffer to the current digest builder
+     */
     def append(buf: ByteBuffer): DigestBuilder = {
       md.update(buf)
       return this
@@ -73,6 +76,7 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
     return new DigestBuilder()
   }
 }
+
 /**
  * Fingerprint of a chunk or a file.
  * The reason not to use a byte array directly is that hashCode and equals has

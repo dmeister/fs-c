@@ -30,12 +30,14 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
 
   def handle(fp: FilePart) {
     lock.synchronized {
-      if (!filePartialMap.contains(fp.filename)) {
-        filePartialMap += (fp.filename -> new ListBuffer[Chunk]())
+      val fileMapBuffer = filePartialMap.get(fp.filename) match {
+        case Some(l) => l
+        case None =>
+          val l = new ListBuffer[Chunk]()
+          filePartialMap += (fp.filename -> l)
+          l
       }
-      for (chunk <- fp.chunks) {
-        filePartialMap(fp.filename).append(chunk)
-      }
+      fp.chunks.foreach(chunk => fileMapBuffer.append(chunk))
     }
   }
 
@@ -45,13 +47,7 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
       val sizeCategory = getSizeCategory(f.fileSize)
       var currentRealSize = 0
       var currentFileSize = 0
-      val allFileChunks = if (filePartialMap.contains(f.filename)) {
-        val partialChunks = filePartialMap(f.filename)
-        filePartialMap -= f.filename
-        List.concat(partialChunks.toList, f.chunks)
-      } else {
-        f.chunks
-      }
+      val allFileChunks = gatherAllFileChunks(f)
       for (chunk <- allFileChunks) {
         if (!d.check(chunk.fp)) {
           d.update(chunk.fp)
@@ -59,6 +55,7 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
         }
         currentFileSize += chunk.size
       }
+      
       if (!typeMap.contains(f.fileType)) {
         typeMap += (f.fileType -> (0L, 0L))
       }
@@ -85,38 +82,38 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
         outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName), orderingForSizeCategories)
     }
   }
-  
-  def orderingForTypes( value : (String, (Long, Long)) ) : (Long, String) = {
+
+  private def orderingForTypes(value: (String, (Long, Long))): (Long, String) = {
     if (value._1 == "ALL") {
       return (1L, value._1)
     }
     return (0L, value._1)
   }
 
-  def orderingForSizeCategories( value : (String, (Long, Long)) ) : (Long, String) = {
+  private def orderingForSizeCategories(value: (String, (Long, Long))): (Long, String) = {
     if (value._1 == "ALL") {
       return (java.lang.Long.MAX_VALUE, value._1)
     }
     return (StorageUnit.fromString(value._1), value._1)
   }
-  
-  def outputMapToConsole(m: Map[String, (Long, Long)], title: String, ord: ((String, (Long, Long))) => (Long, String)) {
-    def storageUnitIfPossible(k: String) : String = {
+
+  private def outputMapToConsole(m: Map[String, (Long, Long)], title: String, ord: ((String, (Long, Long))) => (Long, String)) {
+    def storageUnitIfPossible(k: String): String = {
       try {
         return StorageUnit(k.toLong).toString() + "B"
       } catch {
         case _ =>
-          // pass
+        // pass
       }
       return k
     }
     println(title)
     println()
-    println("%-20s %14s %14s %-8s".format("","Real Size", "Total Size", "Dedup Ratio"))
-    
+    println("%-20s %14s %14s %-8s".format("", "Real Size", "Total Size", "Dedup Ratio"))
+
     //  {_._1}
-    val valueList = m.toList sortBy(ord)
-    for ( (k, v) <- valueList) {
+    val valueList = m.toList sortBy (ord)
+    for ((k, v) <- valueList) {
       val (realSize, totalSize) = v
       val dedupRatio = if (totalSize > 0) {
         100.0 * (1.0 - (1.0 * realSize / totalSize))
@@ -131,15 +128,26 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     }
   }
 
-  def writeMapToFile(m: Map[String, (Long, Long)], f: String, ord: ((String, (Long, Long))) => (Long, String)) {
+  private def writeMapToFile(m: Map[String, (Long, Long)], f: String, ord: ((String, (Long, Long))) => (Long, String)) {
     val w = new BufferedWriter(new FileWriter(new java.io.File(f)))
     val valueList = m.toList sortBy ord
-    for ( (k, v) <- valueList) {
+    for ((k, v) <- valueList) {
       val (realSize, totalSize) = v
       w.write("\"" + k + "\";" + realSize + ";" + totalSize)
       w.newLine()
     }
     w.flush()
     w.close()
+  }
+
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+    val allFileChunks = if (filePartialMap.contains(f.filename)) {
+      val partialChunks = filePartialMap(f.filename)
+      filePartialMap -= f.filename
+      List.concat(partialChunks.toList, f.chunks)
+    } else {
+      f.chunks
+    }
+    allFileChunks
   }
 }

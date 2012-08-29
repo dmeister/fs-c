@@ -41,14 +41,14 @@ class DistributedFileDispatcher(
   /**
    * true iff the executor service should be shut down.
    */
-  def shouldShutdown: Boolean = {
+  private def shouldShutdown: Boolean = {
     return activeAllCount.get() == 0
   }
 
   /**
    * Adapts the Hazelcast configuration
    */
-  def adaptExecutorConfiguration() {
+  private def adaptExecutorConfiguration() {
     val config = Hazelcast.getConfig()
     config.getExecutorConfig("file").setCorePoolSize(processorNum)
     config.getExecutorConfig("file").setMaxPoolSize(processorNum)
@@ -139,7 +139,7 @@ class DistributedFileDispatcher(
     fileexecutor.shutdown()
   }
 
-  def executorFinished() {
+  private def executorFinished() {
     lock.synchronized {
       logger.debug("Finished")
 

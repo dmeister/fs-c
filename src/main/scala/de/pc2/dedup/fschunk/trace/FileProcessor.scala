@@ -64,7 +64,7 @@ class FileProcessor(file: JavaFile,
     case Some(s) => Some(new JavaFile(s).getCanonicalPath())
   }
 
-  def readIntoBuffer(c: FileChannel, buffer: ByteBuffer, offset: Long): Int = {
+  private def readIntoBuffer(c: FileChannel, buffer: ByteBuffer, offset: Long): Int = {
     logger.debug("File: Read %s, offset %s".format(file, StorageUnit(offset)))
     val r = c.read(buffer)
     logger.debug("File: Read %s finished, offset %s, data size %s".format(file, StorageUnit(offset), StorageUnit(r)))
@@ -72,7 +72,7 @@ class FileProcessor(file: JavaFile,
     return r
   }
 
-  def allocateBuffer(fileLength: Long): ByteBuffer = {
+  private def allocateBuffer(fileLength: Long): ByteBuffer = {
     val buffer = if (fileLength > FileProcessor.directBufferThreshold) {
       ByteBuffer.allocateDirect(FileProcessor.defaultBufferSize.toInt)
     } else if (fileLength > FileProcessor.defaultBufferSize) {
@@ -83,7 +83,7 @@ class FileProcessor(file: JavaFile,
     buffer
   }
 
-  def filenameToStore(): String = {
+  private def filenameToStore(): String = {
     logger.debug("%s %s %s".format(source, sourcePath, path))
     if (FileProcessor.useRelativePaths == false) {
       path

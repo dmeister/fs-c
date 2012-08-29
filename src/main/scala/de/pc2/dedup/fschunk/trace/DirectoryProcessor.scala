@@ -55,7 +55,7 @@ object DirectoryProcessor extends Log {
    * Portable, but slow for very large directories directory listener.
    * Calls the handler for every file
    */
-  def listDirectoryPortable(directory: File, handler: (File) => Unit): Long = {
+  private def listDirectoryPortable(directory: File, handler: (File) => Unit): Long = {
     val files = directory.listFiles()
     if (files == null) {
       throw new Exception(directory + " is invalid or IO error occured")
@@ -64,7 +64,7 @@ object DirectoryProcessor extends Log {
     files.length
   }
 
-  def listDirectoryJava7(directory: File, handler: (File) => Unit): Long = {
+  private def listDirectoryJava7(directory: File, handler: (File) => Unit): Long = {
     val dirstream = java.nio.file.Files.newDirectoryStream(directory.toPath)
     var filecount = 0
     for (path <- dirstream) {
@@ -77,7 +77,7 @@ object DirectoryProcessor extends Log {
   /**
    * Linux specific directory listener
    */
-  def listDirectoryLinux(directory: File, handler: (File) => Unit): Long = {
+  private def listDirectoryLinux(directory: File, handler: (File) => Unit): Long = {
     var p: Process = null
     var count = 0L
 
@@ -107,7 +107,7 @@ object DirectoryProcessor extends Log {
     count
   }
 
-  var directoryLister : ((File, (File) => Unit) => Long) = null;
+  var directoryLister: ((File, (File) => Unit) => Long) = null;
 
   /**
    * returns the best matching directory listener
@@ -153,18 +153,18 @@ class DirectoryProcessor(directory: File,
   /**
    * Checks if the file is a symlink
    */
-  def mightBeSymlink(f: File): Boolean = {
+  private def mightBeSymlink(f: File): Boolean = {
     return f.getCanonicalPath() != f.getAbsolutePath()
   }
   val ignoreSet = Set("/dev", "/proc/")
-  def isDefaultIgnoreDirectory(filePath: String): Boolean = {
+  private def isDefaultIgnoreDirectory(filePath: String): Boolean = {
     ignoreSet.contains(filePath)
   }
 
   /**
    * Process the file
    */
-  def processFile(file: File) {
+  private def processFile(file: File) {
     val cp = file.getCanonicalPath()
     val ap = file.getAbsolutePath()
     if (!followSymlinks && cp != ap) {
