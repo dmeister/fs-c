@@ -20,7 +20,7 @@ object Main extends Log {
     try {
       import ArgotConverters._
 
-      val parser = new ArgotParser("fs-c trace", preUsage = Some("Version 0.3.12"))
+      val parser = new ArgotParser("fs-c trace", preUsage = Some("Version 0.3.13"))
 
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
       val optionChunkerNames = parser.multiOption[String](List("c", "chunker"), "chunker", "Chunker to use")

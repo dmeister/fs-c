@@ -68,6 +68,8 @@ class DistributedFileDispatcher(
    */
   val memberId = Hazelcast.getCluster().getLocalMember().getInetSocketAddress().getHostName()
 
+  logger.info("%s: cluster id %s, leader %s".format(memberId, id, isLeader()))
+          
   override def isLeader(): Boolean = {
     return (id == 1)
   }
@@ -98,6 +100,8 @@ class DistributedFileDispatcher(
     val task = new DistributedTask[Int](runnable, taskTypeId);
     task.setExecutionCallback(new ExecutionCallback[Int]() {
       def done(future: Future[Int]): Unit = {
+        logger.debug("Task finished")
+        
         val taskTypeId = future.get()
         if (taskTypeId == 1) {
           activeDirCount.decrementAndGet()
@@ -111,6 +115,7 @@ class DistributedFileDispatcher(
       }
     });
 
+    logger.debug("Task sent to executor: %s".format(f))
     if (isDir) {
       direxecutor.execute(task)
     } else {

@@ -13,6 +13,7 @@ import de.pc2.dedup.util.Log
 import scala.math.Ordering
 import java.nio.ByteBuffer
 import de.pc2.dedup.chunker.rabin._
+
 /**
  * Handler to search for the zero-chunk in the trace
  */

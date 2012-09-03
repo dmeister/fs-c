@@ -27,4 +27,5 @@ class FSCProject(info: ProjectInfo) extends DefaultProject(info)
     
   val argot = "org.clapper" %% "argot" % "0.3.1"
   val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
+  val guava = "com.google.guava" % "guava" % "13.0.1"
 }
