@@ -28,7 +28,7 @@ class FileStatisticsHandler(val chunkerName: String) extends FileDataHandler wit
     // I really do not care about file parts here
   }
 
-  def ensureFileSizeListCapacity() {
+  private def ensureFileSizeListCapacity() {
     fileSizeList = Longs.ensureCapacity(fileSizeList, fileCount + 16, fileCount)
 
   }

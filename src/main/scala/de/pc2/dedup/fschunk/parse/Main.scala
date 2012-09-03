@@ -35,7 +35,7 @@ object Main {
       import ArgotConverters._
 
       val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.13"))
-      val optionType = parser.option[String](List("t", "type"), "type", "Handler Type (simple, ir, tr, harnik, file-stats, a custom class")
+      val optionType = parser.option[String](List("t", "type"), "type", "Handler Type (simple, ir, tr, harnik, file-stats, file-details, a custom class")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
       val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
@@ -91,6 +91,19 @@ object Main {
           }
         case "file-stats" =>
           val handlerList = for { c <- chunkerNames } yield new FileStatisticsHandler(c)
+
+          for (filename <- filenames) {
+            val p = new Parser(filename, format, handlerList)
+            val reporter = new Reporter(p, reportInterval).start()
+            p.parse()
+            reporter ! Quit
+          }
+
+          for { handler <- handlerList } {
+            handler.quit()
+          }
+        case "file-details" =>
+          val handlerList = for { c <- chunkerNames } yield new FileDetailsHandler(c)
 
           for (filename <- filenames) {
             val p = new Parser(filename, format, handlerList)
