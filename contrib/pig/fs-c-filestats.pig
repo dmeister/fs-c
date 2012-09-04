@@ -1,7 +1,7 @@
 /*
  * a bit heuristical because it provides outdated file sizes if data is written to the file concurrently
  */
-REGISTER fs-c-0.3.12.jar
+REGISTER fs-c-0.3.13.jar
 FILES = LOAD '$RUN/files' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
 
 A = FOREACH FILES GENERATE filetype, filelength, 1 as filecount;

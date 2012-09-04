@@ -1,4 +1,4 @@
-REGISTER fs-c-0.3.12.jar
+REGISTER fs-c-0.3.13.jar
 
 FILEFINGERPRINTS = LOAD '$RUN/file-fingerprint' USING PigStorage() as (filename:chararray, fingerprint:chararray);
 FILES = LOAD '$RUN/files' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray, label:chararray);
