@@ -5,7 +5,7 @@ import java.util.Arrays
 import de.pc2.dedup.util._
 
 /**
-
+ *
  * A rolling fingerprint variant of Rabin's Fingerprinting Method.
  * It used a "invert table" to speed up the processing.
  *
@@ -32,9 +32,9 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
     val it = for (i <- 0 until 256) yield PolynomUtil.modmult(i, shift, rabin.polynom)
     it.toArray
   }
-  
+
   def printInvertTable() = {
-    for(i <- 0 until 256) {
+    for (i <- 0 until 256) {
       println("%s => %s".format(i, invertTable(i)))
     }
   }
@@ -57,7 +57,7 @@ class RabinWindow(rabin: Rabin, windowSize: Int) extends RollingFingerprint {
 
     def append(data: Int) {
       windowPos = windowPos + 1
-      
+
       if (windowPos == window.length) {
         windowPos = 0
       }

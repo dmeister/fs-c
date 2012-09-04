@@ -8,11 +8,19 @@ public final class Protocol {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
+  public interface ChunkRunOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+    
+    // required string start_date = 1;
+    boolean hasStartDate();
+    String getStartDate();
+  }
   public static final class ChunkRun extends
-      com.google.protobuf.GeneratedMessage {
+      com.google.protobuf.GeneratedMessage
+      implements ChunkRunOrBuilder {
     // Use ChunkRun.newBuilder() to construct.
-    private ChunkRun() {
-      initFields();
+    private ChunkRun(Builder builder) {
+      super(builder);
     }
     private ChunkRun(boolean noInit) {}
     
@@ -35,25 +43,60 @@ public final class Protocol {
       return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_ChunkRun_fieldAccessorTable;
     }
     
+    private int bitField0_;
     // required string start_date = 1;
     public static final int START_DATE_FIELD_NUMBER = 1;
-    private boolean hasStartDate;
-    private java.lang.String startDate_ = "";
-    public boolean hasStartDate() { return hasStartDate; }
-    public java.lang.String getStartDate() { return startDate_; }
+    private java.lang.Object startDate_;
+    public boolean hasStartDate() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    public String getStartDate() {
+      java.lang.Object ref = startDate_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          startDate_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getStartDateBytes() {
+      java.lang.Object ref = startDate_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        startDate_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
     
     private void initFields() {
+      startDate_ = "";
     }
+    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
-      if (!hasStartDate) return false;
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+      
+      if (!hasStartDate()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
       return true;
     }
     
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (hasStartDate()) {
-        output.writeString(1, getStartDate());
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getStartDateBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -64,13 +107,20 @@ public final class Protocol {
       if (size != -1) return size;
     
       size = 0;
-      if (hasStartDate()) {
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(1, getStartDate());
+          .computeBytesSize(1, getStartDateBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
+    }
+    
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
     }
     
     public static de.pc2.dedup.fschunk.Protocol.ChunkRun parseFrom(
@@ -147,34 +197,51 @@ public final class Protocol {
     }
     public Builder toBuilder() { return newBuilder(this); }
     
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> {
-      private de.pc2.dedup.fschunk.Protocol.ChunkRun result;
-      
-      // Construct using de.pc2.dedup.fschunk.Protocol.ChunkRun.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new de.pc2.dedup.fschunk.Protocol.ChunkRun();
-        return builder;
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements de.pc2.dedup.fschunk.Protocol.ChunkRunOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_ChunkRun_descriptor;
       }
       
-      protected de.pc2.dedup.fschunk.Protocol.ChunkRun internalGetResult() {
-        return result;
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_ChunkRun_fieldAccessorTable;
+      }
+      
+      // Construct using de.pc2.dedup.fschunk.Protocol.ChunkRun.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+      
+      private Builder(BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
       }
       
       public Builder clear() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new de.pc2.dedup.fschunk.Protocol.ChunkRun();
+        super.clear();
+        startDate_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
       
       public Builder clone() {
-        return create().mergeFrom(result);
+        return create().mergeFrom(buildPartial());
       }
       
       public com.google.protobuf.Descriptors.Descriptor
@@ -186,33 +253,35 @@ public final class Protocol {
         return de.pc2.dedup.fschunk.Protocol.ChunkRun.getDefaultInstance();
       }
       
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
       public de.pc2.dedup.fschunk.Protocol.ChunkRun build() {
-        if (result != null && !isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.ChunkRun result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
-        return buildPartial();
+        return result;
       }
       
       private de.pc2.dedup.fschunk.Protocol.ChunkRun buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        if (!isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.ChunkRun result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
         }
-        return buildPartial();
+        return result;
       }
       
       public de.pc2.dedup.fschunk.Protocol.ChunkRun buildPartial() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "build() has already been called on this Builder.");
+        de.pc2.dedup.fschunk.Protocol.ChunkRun result = new de.pc2.dedup.fschunk.Protocol.ChunkRun(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
         }
-        de.pc2.dedup.fschunk.Protocol.ChunkRun returnMe = result;
-        result = null;
-        return returnMe;
+        result.startDate_ = startDate_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
@@ -233,6 +302,14 @@ public final class Protocol {
         return this;
       }
       
+      public final boolean isInitialized() {
+        if (!hasStartDate()) {
+          
+          return false;
+        }
+        return true;
+      }
+      
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -245,43 +322,62 @@ public final class Protocol {
           switch (tag) {
             case 0:
               this.setUnknownFields(unknownFields.build());
+              onChanged();
               return this;
             default: {
               if (!parseUnknownField(input, unknownFields,
                                      extensionRegistry, tag)) {
                 this.setUnknownFields(unknownFields.build());
+                onChanged();
                 return this;
               }
               break;
             }
             case 10: {
-              setStartDate(input.readString());
+              bitField0_ |= 0x00000001;
+              startDate_ = input.readBytes();
               break;
             }
           }
         }
       }
       
+      private int bitField0_;
       
       // required string start_date = 1;
+      private java.lang.Object startDate_ = "";
       public boolean hasStartDate() {
-        return result.hasStartDate();
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public java.lang.String getStartDate() {
-        return result.getStartDate();
+      public String getStartDate() {
+        java.lang.Object ref = startDate_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          startDate_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
       }
-      public Builder setStartDate(java.lang.String value) {
+      public Builder setStartDate(String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  result.hasStartDate = true;
-        result.startDate_ = value;
+  bitField0_ |= 0x00000001;
+        startDate_ = value;
+        onChanged();
         return this;
       }
       public Builder clearStartDate() {
-        result.hasStartDate = false;
-        result.startDate_ = getDefaultInstance().getStartDate();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        startDate_ = getDefaultInstance().getStartDate();
+        onChanged();
         return this;
+      }
+      void setStartDate(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000001;
+        startDate_ = value;
+        onChanged();
       }
       
       // @@protoc_insertion_point(builder_scope:de.pc2.dedup.fschunk.ChunkRun)
@@ -289,18 +385,45 @@ public final class Protocol {
     
     static {
       defaultInstance = new ChunkRun(true);
-      de.pc2.dedup.fschunk.Protocol.internalForceInit();
       defaultInstance.initFields();
     }
     
     // @@protoc_insertion_point(class_scope:de.pc2.dedup.fschunk.ChunkRun)
   }
   
+  public interface FileOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+    
+    // optional string filename = 1;
+    boolean hasFilename();
+    String getFilename();
+    
+    // optional uint64 size = 2;
+    boolean hasSize();
+    long getSize();
+    
+    // optional string type = 3;
+    boolean hasType();
+    String getType();
+    
+    // optional uint32 chunkCount = 4;
+    boolean hasChunkCount();
+    int getChunkCount();
+    
+    // optional string label = 5;
+    boolean hasLabel();
+    String getLabel();
+    
+    // optional bool partial = 6 [default = false];
+    boolean hasPartial();
+    boolean getPartial();
+  }
   public static final class File extends
-      com.google.protobuf.GeneratedMessage {
+      com.google.protobuf.GeneratedMessage
+      implements FileOrBuilder {
     // Use File.newBuilder() to construct.
-    private File() {
-      initFields();
+    private File(Builder builder) {
+      super(builder);
     }
     private File(boolean noInit) {}
     
@@ -323,74 +446,170 @@ public final class Protocol {
       return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_File_fieldAccessorTable;
     }
     
+    private int bitField0_;
     // optional string filename = 1;
     public static final int FILENAME_FIELD_NUMBER = 1;
-    private boolean hasFilename;
-    private java.lang.String filename_ = "";
-    public boolean hasFilename() { return hasFilename; }
-    public java.lang.String getFilename() { return filename_; }
+    private java.lang.Object filename_;
+    public boolean hasFilename() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    public String getFilename() {
+      java.lang.Object ref = filename_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          filename_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getFilenameBytes() {
+      java.lang.Object ref = filename_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        filename_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
     
     // optional uint64 size = 2;
     public static final int SIZE_FIELD_NUMBER = 2;
-    private boolean hasSize;
-    private long size_ = 0L;
-    public boolean hasSize() { return hasSize; }
-    public long getSize() { return size_; }
+    private long size_;
+    public boolean hasSize() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    public long getSize() {
+      return size_;
+    }
     
     // optional string type = 3;
     public static final int TYPE_FIELD_NUMBER = 3;
-    private boolean hasType;
-    private java.lang.String type_ = "";
-    public boolean hasType() { return hasType; }
-    public java.lang.String getType() { return type_; }
+    private java.lang.Object type_;
+    public boolean hasType() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    public String getType() {
+      java.lang.Object ref = type_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          type_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getTypeBytes() {
+      java.lang.Object ref = type_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        type_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
     
     // optional uint32 chunkCount = 4;
     public static final int CHUNKCOUNT_FIELD_NUMBER = 4;
-    private boolean hasChunkCount;
-    private int chunkCount_ = 0;
-    public boolean hasChunkCount() { return hasChunkCount; }
-    public int getChunkCount() { return chunkCount_; }
+    private int chunkCount_;
+    public boolean hasChunkCount() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    public int getChunkCount() {
+      return chunkCount_;
+    }
     
     // optional string label = 5;
     public static final int LABEL_FIELD_NUMBER = 5;
-    private boolean hasLabel;
-    private java.lang.String label_ = "";
-    public boolean hasLabel() { return hasLabel; }
-    public java.lang.String getLabel() { return label_; }
+    private java.lang.Object label_;
+    public boolean hasLabel() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    public String getLabel() {
+      java.lang.Object ref = label_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          label_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getLabelBytes() {
+      java.lang.Object ref = label_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        label_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
     
     // optional bool partial = 6 [default = false];
     public static final int PARTIAL_FIELD_NUMBER = 6;
-    private boolean hasPartial;
-    private boolean partial_ = false;
-    public boolean hasPartial() { return hasPartial; }
-    public boolean getPartial() { return partial_; }
+    private boolean partial_;
+    public boolean hasPartial() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    public boolean getPartial() {
+      return partial_;
+    }
     
     private void initFields() {
+      filename_ = "";
+      size_ = 0L;
+      type_ = "";
+      chunkCount_ = 0;
+      label_ = "";
+      partial_ = false;
     }
+    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+      
+      memoizedIsInitialized = 1;
       return true;
     }
     
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (hasFilename()) {
-        output.writeString(1, getFilename());
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getFilenameBytes());
       }
-      if (hasSize()) {
-        output.writeUInt64(2, getSize());
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeUInt64(2, size_);
       }
-      if (hasType()) {
-        output.writeString(3, getType());
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, getTypeBytes());
       }
-      if (hasChunkCount()) {
-        output.writeUInt32(4, getChunkCount());
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeUInt32(4, chunkCount_);
       }
-      if (hasLabel()) {
-        output.writeString(5, getLabel());
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeBytes(5, getLabelBytes());
       }
-      if (hasPartial()) {
-        output.writeBool(6, getPartial());
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeBool(6, partial_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -401,33 +620,40 @@ public final class Protocol {
       if (size != -1) return size;
     
       size = 0;
-      if (hasFilename()) {
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(1, getFilename());
+          .computeBytesSize(1, getFilenameBytes());
       }
-      if (hasSize()) {
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(2, getSize());
+          .computeUInt64Size(2, size_);
       }
-      if (hasType()) {
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(3, getType());
+          .computeBytesSize(3, getTypeBytes());
       }
-      if (hasChunkCount()) {
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(4, getChunkCount());
+          .computeUInt32Size(4, chunkCount_);
       }
-      if (hasLabel()) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeStringSize(5, getLabel());
+          .computeBytesSize(5, getLabelBytes());
       }
-      if (hasPartial()) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(6, getPartial());
+          .computeBoolSize(6, partial_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
+    }
+    
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
     }
     
     public static de.pc2.dedup.fschunk.Protocol.File parseFrom(
@@ -504,34 +730,61 @@ public final class Protocol {
     }
     public Builder toBuilder() { return newBuilder(this); }
     
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> {
-      private de.pc2.dedup.fschunk.Protocol.File result;
-      
-      // Construct using de.pc2.dedup.fschunk.Protocol.File.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new de.pc2.dedup.fschunk.Protocol.File();
-        return builder;
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements de.pc2.dedup.fschunk.Protocol.FileOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_File_descriptor;
       }
       
-      protected de.pc2.dedup.fschunk.Protocol.File internalGetResult() {
-        return result;
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_File_fieldAccessorTable;
+      }
+      
+      // Construct using de.pc2.dedup.fschunk.Protocol.File.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+      
+      private Builder(BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
       }
       
       public Builder clear() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new de.pc2.dedup.fschunk.Protocol.File();
+        super.clear();
+        filename_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
+        size_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        type_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
+        chunkCount_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        label_ = "";
+        bitField0_ = (bitField0_ & ~0x00000010);
+        partial_ = false;
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
       
       public Builder clone() {
-        return create().mergeFrom(result);
+        return create().mergeFrom(buildPartial());
       }
       
       public com.google.protobuf.Descriptors.Descriptor
@@ -543,33 +796,55 @@ public final class Protocol {
         return de.pc2.dedup.fschunk.Protocol.File.getDefaultInstance();
       }
       
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
       public de.pc2.dedup.fschunk.Protocol.File build() {
-        if (result != null && !isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.File result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
-        return buildPartial();
+        return result;
       }
       
       private de.pc2.dedup.fschunk.Protocol.File buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        if (!isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.File result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
         }
-        return buildPartial();
+        return result;
       }
       
       public de.pc2.dedup.fschunk.Protocol.File buildPartial() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "build() has already been called on this Builder.");
+        de.pc2.dedup.fschunk.Protocol.File result = new de.pc2.dedup.fschunk.Protocol.File(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
         }
-        de.pc2.dedup.fschunk.Protocol.File returnMe = result;
-        result = null;
-        return returnMe;
+        result.filename_ = filename_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.size_ = size_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.type_ = type_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.chunkCount_ = chunkCount_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.label_ = label_;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        result.partial_ = partial_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
@@ -605,6 +880,10 @@ public final class Protocol {
         return this;
       }
       
+      public final boolean isInitialized() {
+        return true;
+      }
+      
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -617,158 +896,221 @@ public final class Protocol {
           switch (tag) {
             case 0:
               this.setUnknownFields(unknownFields.build());
+              onChanged();
               return this;
             default: {
               if (!parseUnknownField(input, unknownFields,
                                      extensionRegistry, tag)) {
                 this.setUnknownFields(unknownFields.build());
+                onChanged();
                 return this;
               }
               break;
             }
             case 10: {
-              setFilename(input.readString());
+              bitField0_ |= 0x00000001;
+              filename_ = input.readBytes();
               break;
             }
             case 16: {
-              setSize(input.readUInt64());
+              bitField0_ |= 0x00000002;
+              size_ = input.readUInt64();
               break;
             }
             case 26: {
-              setType(input.readString());
+              bitField0_ |= 0x00000004;
+              type_ = input.readBytes();
               break;
             }
             case 32: {
-              setChunkCount(input.readUInt32());
+              bitField0_ |= 0x00000008;
+              chunkCount_ = input.readUInt32();
               break;
             }
             case 42: {
-              setLabel(input.readString());
+              bitField0_ |= 0x00000010;
+              label_ = input.readBytes();
               break;
             }
             case 48: {
-              setPartial(input.readBool());
+              bitField0_ |= 0x00000020;
+              partial_ = input.readBool();
               break;
             }
           }
         }
       }
       
+      private int bitField0_;
       
       // optional string filename = 1;
+      private java.lang.Object filename_ = "";
       public boolean hasFilename() {
-        return result.hasFilename();
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public java.lang.String getFilename() {
-        return result.getFilename();
+      public String getFilename() {
+        java.lang.Object ref = filename_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          filename_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
       }
-      public Builder setFilename(java.lang.String value) {
+      public Builder setFilename(String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  result.hasFilename = true;
-        result.filename_ = value;
+  bitField0_ |= 0x00000001;
+        filename_ = value;
+        onChanged();
         return this;
       }
       public Builder clearFilename() {
-        result.hasFilename = false;
-        result.filename_ = getDefaultInstance().getFilename();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        filename_ = getDefaultInstance().getFilename();
+        onChanged();
         return this;
+      }
+      void setFilename(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000001;
+        filename_ = value;
+        onChanged();
       }
       
       // optional uint64 size = 2;
+      private long size_ ;
       public boolean hasSize() {
-        return result.hasSize();
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       public long getSize() {
-        return result.getSize();
+        return size_;
       }
       public Builder setSize(long value) {
-        result.hasSize = true;
-        result.size_ = value;
+        bitField0_ |= 0x00000002;
+        size_ = value;
+        onChanged();
         return this;
       }
       public Builder clearSize() {
-        result.hasSize = false;
-        result.size_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        size_ = 0L;
+        onChanged();
         return this;
       }
       
       // optional string type = 3;
+      private java.lang.Object type_ = "";
       public boolean hasType() {
-        return result.hasType();
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
-      public java.lang.String getType() {
-        return result.getType();
+      public String getType() {
+        java.lang.Object ref = type_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          type_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
       }
-      public Builder setType(java.lang.String value) {
+      public Builder setType(String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  result.hasType = true;
-        result.type_ = value;
+  bitField0_ |= 0x00000004;
+        type_ = value;
+        onChanged();
         return this;
       }
       public Builder clearType() {
-        result.hasType = false;
-        result.type_ = getDefaultInstance().getType();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        type_ = getDefaultInstance().getType();
+        onChanged();
         return this;
+      }
+      void setType(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000004;
+        type_ = value;
+        onChanged();
       }
       
       // optional uint32 chunkCount = 4;
+      private int chunkCount_ ;
       public boolean hasChunkCount() {
-        return result.hasChunkCount();
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       public int getChunkCount() {
-        return result.getChunkCount();
+        return chunkCount_;
       }
       public Builder setChunkCount(int value) {
-        result.hasChunkCount = true;
-        result.chunkCount_ = value;
+        bitField0_ |= 0x00000008;
+        chunkCount_ = value;
+        onChanged();
         return this;
       }
       public Builder clearChunkCount() {
-        result.hasChunkCount = false;
-        result.chunkCount_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        chunkCount_ = 0;
+        onChanged();
         return this;
       }
       
       // optional string label = 5;
+      private java.lang.Object label_ = "";
       public boolean hasLabel() {
-        return result.hasLabel();
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
-      public java.lang.String getLabel() {
-        return result.getLabel();
+      public String getLabel() {
+        java.lang.Object ref = label_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          label_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
       }
-      public Builder setLabel(java.lang.String value) {
+      public Builder setLabel(String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  result.hasLabel = true;
-        result.label_ = value;
+  bitField0_ |= 0x00000010;
+        label_ = value;
+        onChanged();
         return this;
       }
       public Builder clearLabel() {
-        result.hasLabel = false;
-        result.label_ = getDefaultInstance().getLabel();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        label_ = getDefaultInstance().getLabel();
+        onChanged();
         return this;
+      }
+      void setLabel(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000010;
+        label_ = value;
+        onChanged();
       }
       
       // optional bool partial = 6 [default = false];
+      private boolean partial_ ;
       public boolean hasPartial() {
-        return result.hasPartial();
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       public boolean getPartial() {
-        return result.getPartial();
+        return partial_;
       }
       public Builder setPartial(boolean value) {
-        result.hasPartial = true;
-        result.partial_ = value;
+        bitField0_ |= 0x00000020;
+        partial_ = value;
+        onChanged();
         return this;
       }
       public Builder clearPartial() {
-        result.hasPartial = false;
-        result.partial_ = false;
+        bitField0_ = (bitField0_ & ~0x00000020);
+        partial_ = false;
+        onChanged();
         return this;
       }
       
@@ -777,18 +1119,33 @@ public final class Protocol {
     
     static {
       defaultInstance = new File(true);
-      de.pc2.dedup.fschunk.Protocol.internalForceInit();
       defaultInstance.initFields();
     }
     
     // @@protoc_insertion_point(class_scope:de.pc2.dedup.fschunk.File)
   }
   
+  public interface ChunkOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+    
+    // optional bytes fp = 2;
+    boolean hasFp();
+    com.google.protobuf.ByteString getFp();
+    
+    // optional uint32 size = 3;
+    boolean hasSize();
+    int getSize();
+    
+    // optional int64 chunkHash = 4;
+    boolean hasChunkHash();
+    long getChunkHash();
+  }
   public static final class Chunk extends
-      com.google.protobuf.GeneratedMessage {
+      com.google.protobuf.GeneratedMessage
+      implements ChunkOrBuilder {
     // Use Chunk.newBuilder() to construct.
-    private Chunk() {
-      initFields();
+    private Chunk(Builder builder) {
+      super(builder);
     }
     private Chunk(boolean noInit) {}
     
@@ -811,44 +1168,62 @@ public final class Protocol {
       return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_Chunk_fieldAccessorTable;
     }
     
+    private int bitField0_;
     // optional bytes fp = 2;
     public static final int FP_FIELD_NUMBER = 2;
-    private boolean hasFp;
-    private com.google.protobuf.ByteString fp_ = com.google.protobuf.ByteString.EMPTY;
-    public boolean hasFp() { return hasFp; }
-    public com.google.protobuf.ByteString getFp() { return fp_; }
+    private com.google.protobuf.ByteString fp_;
+    public boolean hasFp() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    public com.google.protobuf.ByteString getFp() {
+      return fp_;
+    }
     
     // optional uint32 size = 3;
     public static final int SIZE_FIELD_NUMBER = 3;
-    private boolean hasSize;
-    private int size_ = 0;
-    public boolean hasSize() { return hasSize; }
-    public int getSize() { return size_; }
+    private int size_;
+    public boolean hasSize() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    public int getSize() {
+      return size_;
+    }
     
     // optional int64 chunkHash = 4;
     public static final int CHUNKHASH_FIELD_NUMBER = 4;
-    private boolean hasChunkHash;
-    private long chunkHash_ = 0L;
-    public boolean hasChunkHash() { return hasChunkHash; }
-    public long getChunkHash() { return chunkHash_; }
+    private long chunkHash_;
+    public boolean hasChunkHash() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    public long getChunkHash() {
+      return chunkHash_;
+    }
     
     private void initFields() {
+      fp_ = com.google.protobuf.ByteString.EMPTY;
+      size_ = 0;
+      chunkHash_ = 0L;
     }
+    private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+      
+      memoizedIsInitialized = 1;
       return true;
     }
     
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (hasFp()) {
-        output.writeBytes(2, getFp());
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(2, fp_);
       }
-      if (hasSize()) {
-        output.writeUInt32(3, getSize());
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeUInt32(3, size_);
       }
-      if (hasChunkHash()) {
-        output.writeInt64(4, getChunkHash());
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeInt64(4, chunkHash_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -859,21 +1234,28 @@ public final class Protocol {
       if (size != -1) return size;
     
       size = 0;
-      if (hasFp()) {
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getFp());
+          .computeBytesSize(2, fp_);
       }
-      if (hasSize()) {
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(3, getSize());
+          .computeUInt32Size(3, size_);
       }
-      if (hasChunkHash()) {
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, getChunkHash());
+          .computeInt64Size(4, chunkHash_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
+    }
+    
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
     }
     
     public static de.pc2.dedup.fschunk.Protocol.Chunk parseFrom(
@@ -950,34 +1332,55 @@ public final class Protocol {
     }
     public Builder toBuilder() { return newBuilder(this); }
     
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> {
-      private de.pc2.dedup.fschunk.Protocol.Chunk result;
-      
-      // Construct using de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new de.pc2.dedup.fschunk.Protocol.Chunk();
-        return builder;
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements de.pc2.dedup.fschunk.Protocol.ChunkOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_Chunk_descriptor;
       }
       
-      protected de.pc2.dedup.fschunk.Protocol.Chunk internalGetResult() {
-        return result;
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.pc2.dedup.fschunk.Protocol.internal_static_de_pc2_dedup_fschunk_Chunk_fieldAccessorTable;
+      }
+      
+      // Construct using de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+      
+      private Builder(BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
       }
       
       public Builder clear() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new de.pc2.dedup.fschunk.Protocol.Chunk();
+        super.clear();
+        fp_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        size_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        chunkHash_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
       
       public Builder clone() {
-        return create().mergeFrom(result);
+        return create().mergeFrom(buildPartial());
       }
       
       public com.google.protobuf.Descriptors.Descriptor
@@ -989,33 +1392,43 @@ public final class Protocol {
         return de.pc2.dedup.fschunk.Protocol.Chunk.getDefaultInstance();
       }
       
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
       public de.pc2.dedup.fschunk.Protocol.Chunk build() {
-        if (result != null && !isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.Chunk result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
-        return buildPartial();
+        return result;
       }
       
       private de.pc2.dedup.fschunk.Protocol.Chunk buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        if (!isInitialized()) {
+        de.pc2.dedup.fschunk.Protocol.Chunk result = buildPartial();
+        if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
         }
-        return buildPartial();
+        return result;
       }
       
       public de.pc2.dedup.fschunk.Protocol.Chunk buildPartial() {
-        if (result == null) {
-          throw new IllegalStateException(
-            "build() has already been called on this Builder.");
+        de.pc2.dedup.fschunk.Protocol.Chunk result = new de.pc2.dedup.fschunk.Protocol.Chunk(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
         }
-        de.pc2.dedup.fschunk.Protocol.Chunk returnMe = result;
-        result = null;
-        return returnMe;
+        result.fp_ = fp_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.size_ = size_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.chunkHash_ = chunkHash_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
@@ -1042,6 +1455,10 @@ public final class Protocol {
         return this;
       }
       
+      public final boolean isInitialized() {
+        return true;
+      }
+      
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1054,86 +1471,101 @@ public final class Protocol {
           switch (tag) {
             case 0:
               this.setUnknownFields(unknownFields.build());
+              onChanged();
               return this;
             default: {
               if (!parseUnknownField(input, unknownFields,
                                      extensionRegistry, tag)) {
                 this.setUnknownFields(unknownFields.build());
+                onChanged();
                 return this;
               }
               break;
             }
             case 18: {
-              setFp(input.readBytes());
+              bitField0_ |= 0x00000001;
+              fp_ = input.readBytes();
               break;
             }
             case 24: {
-              setSize(input.readUInt32());
+              bitField0_ |= 0x00000002;
+              size_ = input.readUInt32();
               break;
             }
             case 32: {
-              setChunkHash(input.readInt64());
+              bitField0_ |= 0x00000004;
+              chunkHash_ = input.readInt64();
               break;
             }
           }
         }
       }
       
+      private int bitField0_;
       
       // optional bytes fp = 2;
+      private com.google.protobuf.ByteString fp_ = com.google.protobuf.ByteString.EMPTY;
       public boolean hasFp() {
-        return result.hasFp();
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       public com.google.protobuf.ByteString getFp() {
-        return result.getFp();
+        return fp_;
       }
       public Builder setFp(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  result.hasFp = true;
-        result.fp_ = value;
+  bitField0_ |= 0x00000001;
+        fp_ = value;
+        onChanged();
         return this;
       }
       public Builder clearFp() {
-        result.hasFp = false;
-        result.fp_ = getDefaultInstance().getFp();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        fp_ = getDefaultInstance().getFp();
+        onChanged();
         return this;
       }
       
       // optional uint32 size = 3;
+      private int size_ ;
       public boolean hasSize() {
-        return result.hasSize();
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       public int getSize() {
-        return result.getSize();
+        return size_;
       }
       public Builder setSize(int value) {
-        result.hasSize = true;
-        result.size_ = value;
+        bitField0_ |= 0x00000002;
+        size_ = value;
+        onChanged();
         return this;
       }
       public Builder clearSize() {
-        result.hasSize = false;
-        result.size_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        size_ = 0;
+        onChanged();
         return this;
       }
       
       // optional int64 chunkHash = 4;
+      private long chunkHash_ ;
       public boolean hasChunkHash() {
-        return result.hasChunkHash();
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       public long getChunkHash() {
-        return result.getChunkHash();
+        return chunkHash_;
       }
       public Builder setChunkHash(long value) {
-        result.hasChunkHash = true;
-        result.chunkHash_ = value;
+        bitField0_ |= 0x00000004;
+        chunkHash_ = value;
+        onChanged();
         return this;
       }
       public Builder clearChunkHash() {
-        result.hasChunkHash = false;
-        result.chunkHash_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        chunkHash_ = 0L;
+        onChanged();
         return this;
       }
       
@@ -1142,7 +1574,6 @@ public final class Protocol {
     
     static {
       defaultInstance = new Chunk(true);
-      de.pc2.dedup.fschunk.Protocol.internalForceInit();
       defaultInstance.initFields();
     }
     
@@ -1218,8 +1649,6 @@ public final class Protocol {
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
   }
-  
-  public static void internalForceInit() {}
   
   // @@protoc_insertion_point(outer_class_scope)
 }

@@ -17,7 +17,7 @@ import com.hazelcast.core.ExecutionCallback
  * file dispatching trait
  */
 trait FileDispatcher extends Reporting {
-  def dispatch(f: File, path: String, isDir: Boolean, label: Option[String])
+  def dispatch(f: File, path: String, isDir: Boolean, source: Option[String], label: Option[String])
 
   def waitUntilFinished()
 
@@ -36,6 +36,8 @@ class ThreadPoolFileDispatcher(processorNum: Int,
   chunker: Seq[(Chunker, List[FileDataHandler])],
   useDefaultIgnores: Boolean,
   followSymlinks: Boolean,
+  useRelativePaths: Boolean,
+  useJavaDirectoryListing: Boolean,
   progressHandler: (de.pc2.dedup.chunker.File) => Unit) extends FileDispatcher with Log {
   var lock: AnyRef = new Object()
   var finished: Boolean = false
@@ -45,14 +47,14 @@ class ThreadPoolFileDispatcher(processorNum: Int,
   val activeDirCount = new AtomicLong()
   val activeFileCount = new AtomicLong()
 
-  def shouldShutdown(): Boolean = {
+  private def shouldShutdown(): Boolean = {
     return activeAllCount.get() == 0
   }
 
   class DirectoryDispatcherThreadPoolExecutor(dispatcher: ThreadPoolFileDispatcher) extends ThreadPoolExecutor(2, 2, 30, TimeUnit.SECONDS,
     new ArrayBlockingQueue[Runnable](processorNum * 2),
     new ThreadPoolExecutor.CallerRunsPolicy()) {
-    logger.debug("Created directory threadpool with at most %d threads".format(4))
+    logger.debug("Created directory threadpool with at most %d threads".format(2))
     override def afterExecute(r: Runnable, t: Throwable) {
       if (shouldShutdown) {
         dispatcher.executorFinished()
@@ -93,20 +95,20 @@ class ThreadPoolFileDispatcher(processorNum: Int,
     }
   }
 
-  FileProcessor.init(chunker, progressHandler)
-  DirectoryProcessor.init(this)
+  FileProcessor.init(chunker, progressHandler, useRelativePaths)
+  DirectoryProcessor.init(this, useJavaDirectoryListing)
   val fileexecutor = new FileDispatcherThreadPoolExecutor(this)
   val direxecutor = new DirectoryDispatcherThreadPoolExecutor(this)
 
-  def dispatch(f: File, path: String, isDir: Boolean, label: Option[String]) {
+  def dispatch(f: File, path: String, isDir: Boolean, source: Option[String], label: Option[String]) {
     val activeCount = activeAllCount.incrementAndGet()
     if (isDir) {
       activeDirCount.incrementAndGet()
       direxecutor.execute(
-        new DirectoryParentRunnable(new DirectoryProcessor(f, label, useDefaultIgnores, followSymlinks)))
+        new DirectoryParentRunnable(new DirectoryProcessor(f, source, label, useDefaultIgnores, followSymlinks)))
     } else {
       activeFileCount.incrementAndGet()
-      fileexecutor.execute(new FileParentRunnable(new FileProcessor(f, path, label)))
+      fileexecutor.execute(new FileParentRunnable(new FileProcessor(f, path, source, label)))
     }
   }
 
@@ -118,7 +120,9 @@ class ThreadPoolFileDispatcher(processorNum: Int,
     }
   }
 
-  def executorFinished() {
+  private def executorFinished() {
+    logger.info("Dispatching finished")
+
     direxecutor.shutdown()
     fileexecutor.shutdown()
 

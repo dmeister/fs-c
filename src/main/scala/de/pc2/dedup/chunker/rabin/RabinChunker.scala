@@ -52,7 +52,7 @@ class RabinChunker(minimalSize: Int,
      * closed due to size limitations
      */
     def acceptChunk(h: (Chunk => Unit), nonChunkedData: ByteBuffer) {
-      def getChunkHash() : Option[Long] = {
+      def getChunkHash(): Option[Long] = {
         if (logChunkHashes) {
           Some(this.rabinSession.fingerprint)
         } else {

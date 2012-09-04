@@ -42,9 +42,12 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
       }
       return this
     }
-    
+
+    /**
+     * Append new bytes from a bytebuffer to the current digest builder
+     */
     def append(buf: ByteBuffer): DigestBuilder = {
-    	md.update(buf)
+      md.update(buf)
       return this
     }
 
@@ -73,6 +76,7 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
     return new DigestBuilder()
   }
 }
+
 /**
  * Fingerprint of a chunk or a file.
  * The reason not to use a byte array directly is that hashCode and equals has
@@ -93,14 +97,14 @@ case class Digest(digest: Array[Byte]) {
       case _ => false
     }
   }
-  
-  override def toString() : String = {
-      val bi = new BigInteger(1, digest)
-      val result = bi.toString(16)
-      if (result.length() % 2 != 0) {
-          "0" + result
-      } else {
-          result
-      }
+
+  override def toString(): String = {
+    val bi = new BigInteger(1, digest)
+    val result = bi.toString(16)
+    if (result.length() % 2 != 0) {
+      "0" + result
+    } else {
+      result
+    }
   }
 }

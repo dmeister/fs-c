@@ -14,17 +14,17 @@ import collection.JavaConversions._
 case class Directory(f: File)
 
 object JavaVersionDetector extends Log {
-    var detected: Boolean = false
-    var runsOnJava7Cached: Boolean = false
+  var detected: Boolean = false
+  var runsOnJava7Cached: Boolean = false
 
-    def runsOnJava7(): Boolean = {
-      if (!detected) {
-        logger.debug("Java version %s".format(System.getProperty("java.version")))
-        runsOnJava7Cached = System.getProperty("java.version").contains("7")
-        detected = true
-      }
-      return runsOnJava7Cached
-    }    
+  def runsOnJava7(): Boolean = {
+    if (!detected) {
+      logger.debug("Java version %s".format(System.getProperty("java.version")))
+      runsOnJava7Cached = System.getProperty("java.version").contains("7")
+      detected = true
+    }
+    return runsOnJava7Cached
+  }
 }
 
 /**
@@ -55,29 +55,29 @@ object DirectoryProcessor extends Log {
    * Portable, but slow for very large directories directory listener.
    * Calls the handler for every file
    */
-  def listDirectoryPortable(directory: File, handler: (File) => Unit) : Long = {
+  private def listDirectoryPortable(directory: File, handler: (File) => Unit): Long = {
     val files = directory.listFiles()
     if (files == null) {
-        throw new Exception(directory + " is invalid or IO error occured")
+      throw new Exception(directory + " is invalid or IO error occured")
     }
     files.foreach(handler)
     files.length
   }
-  
-  def listDirectoryJava7(directory: File, handler: (File) => Unit) : Long = {
-        val dirstream = java.nio.file.Files.newDirectoryStream(directory.toPath)
-        var filecount = 0
-        for (path <- dirstream) {
-            handler(path.toFile)
-            filecount += 1
-        }
-        filecount
+
+  private def listDirectoryJava7(directory: File, handler: (File) => Unit): Long = {
+    val dirstream = java.nio.file.Files.newDirectoryStream(directory.toPath)
+    var filecount = 0
+    for (path <- dirstream) {
+      handler(path.toFile)
+      filecount += 1
+    }
+    filecount
   }
 
   /**
    * Linux specific directory listener
    */
-  def listDirectoryLinux(directory: File, handler: (File) => Unit) : Long = {
+  private def listDirectoryLinux(directory: File, handler: (File) => Unit): Long = {
     var p: Process = null
     var count = 0L
 
@@ -107,21 +107,21 @@ object DirectoryProcessor extends Log {
     count
   }
 
-  lazy val directoryLister = getDirectoryLister()
-  
+  var directoryLister: ((File, (File) => Unit) => Long) = null;
+
   /**
    * returns the best matching directory listener
    */
-  def getDirectoryLister(): ((File, (File) => Unit) => Long) = {
+  def getDirectoryLister(useJavaDirectoryListing: Boolean): ((File, (File) => Unit) => Long) = {
     if (JavaVersionDetector.runsOnJava7()) {
       logger.debug("Using Java 7 directory listing")
       listDirectoryJava7
     } else {
-        if (OSDetector.runsOnWindows()) {
+      if (OSDetector.runsOnWindows() || useJavaDirectoryListing) {
         listDirectoryPortable
       } else {
         listDirectoryLinux
-        }
+      }
     }
   }
 
@@ -130,8 +130,9 @@ object DirectoryProcessor extends Log {
   /**
    * Inits the object
    */
-  def init(d: FileDispatcher) {
+  def init(d: FileDispatcher, useJavaDirectoryListing: Boolean) {
     synchronized {
+      directoryLister = getDirectoryLister(useJavaDirectoryListing)
       dispatcher = d
       this.notifyAll()
     }
@@ -144,39 +145,40 @@ object DirectoryProcessor extends Log {
  * to the dispatcher for chunking
  */
 class DirectoryProcessor(directory: File,
+  source: Option[String],
   label: Option[String],
   useDefaultIgnores: Boolean,
   followSymlinks: Boolean) extends Runnable with Log with Serializable {
-  
+
   /**
    * Checks if the file is a symlink
    */
-  def mightBeSymlink(f: File): Boolean = {
+  private def mightBeSymlink(f: File): Boolean = {
     return f.getCanonicalPath() != f.getAbsolutePath()
   }
   val ignoreSet = Set("/dev", "/proc/")
-  def isDefaultIgnoreDirectory(filePath: String): Boolean = {
+  private def isDefaultIgnoreDirectory(filePath: String): Boolean = {
     ignoreSet.contains(filePath)
   }
 
   /**
    * Process the file
    */
-  def processFile(file: File) {
+  private def processFile(file: File) {
     val cp = file.getCanonicalPath()
     val ap = file.getAbsolutePath()
     if (!followSymlinks && cp != ap) {
       DirectoryProcessor.skipCount.incrementAndGet()
-    logger.debug("Skip symlink file %s".format(file))
+      logger.debug("Skip symlink file %s".format(file))
     } else if (!file.canRead()) {
       DirectoryProcessor.skipCount.incrementAndGet()
       logger.debug("Skip unreadable file %s".format(file))
     } else {
       if (!file.isDirectory) {
-        DirectoryProcessor.dispatcher.dispatch(file, cp, false, label)
+        DirectoryProcessor.dispatcher.dispatch(file, cp, false, source, label)
       } else {
         if (!useDefaultIgnores || !isDefaultIgnoreDirectory(cp)) {
-          DirectoryProcessor.dispatcher.dispatch(file, cp, true, label)
+          DirectoryProcessor.dispatcher.dispatch(file, cp, true, source, label)
         }
       }
     }

@@ -15,9 +15,7 @@ object FileDigest {
    * May be used for a full file deduplication analysis
    */
   def createFromChunkHashes(hashes: List[Digest]): Digest = {
-    for (d <- hashes) {
-      md.update(d.digest)
-    }
+    hashes.foreach(d => md.update(d.digest))
     new Digest(md.digest())
   }
 }

@@ -5,12 +5,38 @@ import scala.actors.Actor._
 import scala.actors._
 import scala.actors.Exit
 import de.pc2.dedup.util._
+import java.text.NumberFormat
 
 /**
  * Trait of objects that support reporting.
  */
 trait Reporting {
   def report()
+}
+
+class GCReporting extends Reporting with Log {
+  def doReport() {
+    val runtime = Runtime.getRuntime();
+
+    val format = NumberFormat.getInstance();
+
+    val sb = new StringBuilder();
+    val maxMemory = runtime.maxMemory();
+    val allocatedMemory = runtime.totalMemory();
+    val freeMemory = runtime.freeMemory();
+
+    sb.append("Memory: free: " + format.format(freeMemory / 1024));
+    sb.append(" MB , allocated: " + format.format(allocatedMemory / 1024));
+    sb.append(" MB , max: " + format.format(maxMemory / 1024));
+    sb.append(" MB , total free: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024));
+    sb.append(" MB")
+
+    logger.info(sb)
+  }
+
+  def report() {
+    doReport();
+  }
 }
 
 /**

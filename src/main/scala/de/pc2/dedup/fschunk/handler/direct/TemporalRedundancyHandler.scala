@@ -23,7 +23,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
 
   val filePartialMap = Map.empty[String, ListBuffer[Chunk]]
 
-  def getSizeCategory(fileSize: Long): String = {
+  private def getSizeCategory(fileSize: Long): String = {
     return FileSizeCategory.getCategory(fileSize).toString()
   }
 
@@ -48,13 +48,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
       var sizeCategory = getSizeCategory(f.fileSize)
       var currentRealSize = 0
       var currentFileSize = 0
-      val allFileChunks = if (filePartialMap.contains(f.filename)) {
-        val partialChunks = filePartialMap(f.filename)
-        filePartialMap -= f.filename
-        List.concat(partialChunks.toList, f.chunks)
-      } else {
-        f.chunks
-      }
+      val allFileChunks = gatherAllFileChunks(f)
       for (chunk <- allFileChunks) {
         if (!d.check(chunk.fp)) {
           d.update(chunk.fp)
@@ -87,7 +81,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     }
   }
 
-  def outputMapToConsole(m: Map[String, (Long, Long)], title: String) {
+  private def outputMapToConsole(m: Map[String, (Long, Long)], title: String) {
     val msg = new StringBuffer(title);
     msg.append("\t\tReal Size\tTotal Size\tPatch Ratio\n")
     for (k <- m.keySet) {
@@ -106,7 +100,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     logger.info(msg)
   }
 
-  def writeMapToFile(m: Map[String, (Long, Long)], f: String) {
+  private def writeMapToFile(m: Map[String, (Long, Long)], f: String) {
     val w = new BufferedWriter(new FileWriter(new java.io.File(f)))
     for (k <- m.keySet) {
       val (realSize, totalSize) = m(k)
@@ -115,5 +109,16 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     }
     w.flush()
     w.close()
+  }
+
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+    val allFileChunks = if (filePartialMap.contains(f.filename)) {
+      val partialChunks = filePartialMap(f.filename)
+      filePartialMap -= f.filename
+      List.concat(partialChunks.toList, f.chunks)
+    } else {
+      f.chunks
+    }
+    allFileChunks
   }
 }

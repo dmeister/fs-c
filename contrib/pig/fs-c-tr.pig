@@ -1,8 +1,8 @@
 REGISTER fs-c-0.3.12.jar
-CHUNKS1 = LOAD '$RUN1/chunks' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
+CHUNKS1 = LOAD '$RUN1/chunks*' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
 
-CHUNKS2 = LOAD '$RUN2/chunks' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
-FILES2 = LOAD '$RUN2/files' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
+CHUNKS2 = LOAD '$RUN2/chunks*' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
+FILES2 = LOAD '$RUN2/files*' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
 
 FILES2_A = FOREACH FILES2 GENERATE filename, de.pc2.dedup.util.udf.FileSizeCategory(filelength) as filelength, filetype;
 FC2 = JOIN FILES2_A by filename, CHUNKS2 by filename;

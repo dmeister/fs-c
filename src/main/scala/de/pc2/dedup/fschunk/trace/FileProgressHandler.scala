@@ -28,7 +28,7 @@ class FileProgressHandler(progressFilename: String) {
     }
   }
 
-  def openNextFile(): Unit = {
+  private def openNextFile(): Unit = {
     if (fileLock != null) {
       fileLock.release()
       fileLock = null

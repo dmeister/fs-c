@@ -49,11 +49,11 @@ class ViewHandler() extends Reporting with FileDataHandler with Log {
     logger.debug("View file %s, chunks %s".format(f.filename, f.chunks.size))
 
     val allFileChunks: List[Chunk] = if (filePartialMap.contains(f.filename)) {
-        val partialChunks = filePartialMap(f.filename)
-        filePartialMap -= f.filename
-        List.concat(partialChunks.toList, f.chunks)
+      val partialChunks = filePartialMap(f.filename)
+      filePartialMap -= f.filename
+      List.concat(partialChunks.toList, f.chunks)
     } else {
-        f.chunks
+      f.chunks
     }
 
     val msg = f.label match {

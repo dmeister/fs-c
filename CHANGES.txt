@@ -1,3 +1,21 @@
+Version 0.3.12
+
+	- Implement Harnik's estimation method (-t harniks). 
+	  It differs from the original approach by using reservoir sampling because "n" is not known before the first pass.
+	  Provides an good (error usually < 1%) estimation of the deduplication ratio without the need to do 
+	  a full (often Hadoop-based) analysis.
+	- Updated pig scripts.
+	  The Hadoop-based analysis is now faster and intermediate results are stored to avoid duplicate
+	  calculations
+	- fs-c/import is now multi-threaded for higher import throughput
+	- Update to Protobuf 2.4.1 from 2.3.0, gives performance improvement from up to 20% during the parsing.
+
+Version 0.3.10
+
+	- Fix a file descriptor leak under Linux
+	- Option to import a full file fingerprint during fs-c/import runs
+	- Uses Java 7 directory walker (if available, Java 5/6 is still supported as target platform)
+
 Version 0.3.8
 
     - Fix a bug in fs-c import

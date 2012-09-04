@@ -23,17 +23,17 @@ import java.util.concurrent.atomic._
 /**
  * Reader of the protobuf format files
  */
-class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends Reader with Log {
-  private var faultyTestPartFoundCount : Long = 0
+class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends Reader with Log {
+  private var faultyTestPartFoundCount: Long = 0
 
-  private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk) : Chunk = {
+  private def convertChunkData(chunkData: de.pc2.dedup.fschunk.Protocol.Chunk): Chunk = {
     if (chunkData.hasChunkHash) {
       Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), Some(chunkData.getChunkHash))
     } else {
       Chunk(chunkData.getSize, Digest(chunkData.getFp.toByteArray), None)
     }
   }
-    
+
   private def parseChunkEntry(stream: InputStream): Chunk = {
     val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
     convertChunkData(chunkData)
@@ -45,39 +45,39 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
     if (fileData == null) {
       return
     }
-    val chunkList : List[Chunk] = if (fileData.getFilename().size == 0) {
-        // Pseudo fallback mode
-        stream.reset()
+    val chunkList: List[Chunk] = if (fileData.getFilename().size == 0) {
+      // Pseudo fallback mode
+      stream.reset()
 
-        if (faultyTestPartFoundCount == 0) {
-            logger.warn("Found faulty test part data. Falling back mode active")
-        }
-        val chunk = parseChunkEntry(stream) // try again as chunk entry
-        // use dummy file data
-        fileData = de.pc2.dedup.fschunk.Protocol.File.newBuilder().
-            setFilename("").
-            setSize(chunk.size).
-            setType("FALLBACK").
-            setFilename("FALLBACK %s".format(faultyTestPartFoundCount)).
-            setChunkCount(1).build()
-        faultyTestPartFoundCount += 1
-        List(chunk)
+      if (faultyTestPartFoundCount == 0) {
+        logger.warn("Found faulty test part data. Falling back mode active")
+      }
+      val chunk = parseChunkEntry(stream) // try again as chunk entry
+      // use dummy file data
+      fileData = de.pc2.dedup.fschunk.Protocol.File.newBuilder().
+        setFilename("").
+        setSize(chunk.size).
+        setType("FALLBACK").
+        setFilename("FALLBACK %s".format(faultyTestPartFoundCount)).
+        setChunkCount(1).build()
+      faultyTestPartFoundCount += 1
+      List(chunk)
     } else {
-        // normal mode
-        val chunkList = for (i <- 0 until fileData.getChunkCount())
-            yield(parseChunkEntry(stream))
-        List[Chunk]() ++ chunkList
+      // normal mode
+      val chunkList = for (i <- 0 until fileData.getChunkCount())
+        yield (parseChunkEntry(stream))
+      List[Chunk]() ++ chunkList
     }
-    
+
     if (fileData.getPartial()) {
       receiver.handle(FilePart(fileData.getFilename(), chunkList))
     } else {
-        val l: Option[String] = if (fileData.hasLabel()) {
-            Some(fileData.getLabel())
-        } else {
-            None
-        }
-        receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList, l))
+      val l: Option[String] = if (fileData.hasLabel()) {
+        Some(fileData.getLabel())
+      } else {
+        None
+      }
+      receiver.handle(File(fileData.getFilename, fileData.getSize, fileData.getType, chunkList, l))
     }
     parseFileEntry(stream)
   }
@@ -87,7 +87,7 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
    */
   def parse() {
     try {
-      val stream = new BufferedInputStream(new FileInputStream(filename));
+      val stream = new BufferedInputStream(file);
       try {
         parseFileEntry(stream)
       } catch {
@@ -100,7 +100,7 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
       }
     } catch {
       case e: IOException =>
-        logger.fatal("Cannot read trace file " + filename, e)
+        logger.fatal("Cannot read trace file", e)
     }
     logger.debug("Exit")
   }
@@ -111,8 +111,8 @@ class ProtobufFormatReader(filename: String, receiver: FileDataHandler) extends 
  * is non-sense) in a file (named filename) using the protocol buffers format specified in the
  * file fs-c.proto
  */
-class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataHandler with Log {
-  val filestream: OutputStream = new BufferedOutputStream(new FileOutputStream(filename), 4 * 1024 * 1024)
+class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDataHandler with Log {
+  val filestream: OutputStream = new BufferedOutputStream(file, 4 * 1024 * 1024)
   var fileCount = 0L
   var chunkCount = 0L
   var totalFileSize = 0L
@@ -126,8 +126,7 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
     if (secs > 0) {
       val mbs = totalFileSize / secs
       val fps = fileCount / secs
-      logger.info("%s: file count: %d (%d f/s), file size: %s (%s/s), chunk count: %d, error count: %d".format(
-        filename,
+      logger.info("File count: %d (%d f/s), file size: %s (%s/s), chunk count: %d, error count: %d".format(
         fileCount,
         fps,
         StorageUnit(totalFileSize),
@@ -213,7 +212,7 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
     val chunkBuilder = de.pc2.dedup.fschunk.Protocol.Chunk.newBuilder()
     chunkBuilder.setFp(ByteString.copyFrom(c.fp.digest)).setSize(c.size)
     c.chunkHash match {
-      case None => 
+      case None =>
       case Some(chunkHash) => chunkBuilder.setChunkHash(chunkHash)
     }
     chunkBuilder.build()
@@ -221,6 +220,6 @@ class ProtobufFormatWriter(filename: String, privacy: Boolean) extends FileDataH
 }
 
 object ProtobufFormat extends Format {
-  def createReader(filename: String, receiver: FileDataHandler) = new ProtobufFormatReader(filename, receiver)
-  def createWriter(filename: String, privacyMode: Boolean) = new ProtobufFormatWriter(filename, privacyMode)
+  def createReader(file: InputStream, receiver: FileDataHandler) = new ProtobufFormatReader(file, receiver)
+  def createWriter(file: OutputStream, privacyMode: Boolean) = new ProtobufFormatWriter(file, privacyMode)
 }

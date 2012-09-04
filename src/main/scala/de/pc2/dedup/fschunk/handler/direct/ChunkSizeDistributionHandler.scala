@@ -13,6 +13,9 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.udf.CountingMap
 import collection.JavaConversions._
 
+/**
+ * A file data handler used to build statistics about the chunk size distribtuion
+ */
 class ChunkSizeDistributionHandler() extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val chunkSizeMap = new CountingMap[Int]()
@@ -25,41 +28,42 @@ class ChunkSizeDistributionHandler() extends FileDataHandler with Log {
   }
 
   def handle(fp: FilePart) {
-    lock.synchronized {
-      for (chunk <- fp.chunks) {
-        chunkSizeMap.add(chunk.size)
+    def addChunkToMap(c: Chunk) {
+      chunkSizeMap.add(c.size)
+      largeFileChunkSizeMap.add(c.size)
+    }
 
-        // By defintiion, a file part from a large file
-        largeFileChunkSizeMap.add(chunk.size)
-      }
+    lock.synchronized {
+      fp.chunks.foreach(addChunkToMap)
     }
   }
 
   def handle(f: File) {
-    lock.synchronized {
-      for (chunk <- f.chunks) {
-        chunkSizeMap.add(chunk.size)
+    def addChunkToMap(c: Chunk) {
+      chunkSizeMap.add(c.size)
 
-        if (f.fileSize > mb) {
-          largeFileChunkSizeMap.add(chunk.size)
-        }
+      if (f.fileSize > mb) {
+        largeFileChunkSizeMap.add(c.size)
       }
+    }
+    lock.synchronized {
+      f.chunks.foreach(addChunkToMap)
     }
   }
 
   override def quit() {
     outputMapToConsole(chunkSizeMap, orderingBySize)
   }
-  
-  def orderingBySize( value : (Int, java.lang.Long) ) : (Int) = {
+
+  def orderingBySize(value: (Int, java.lang.Long)): (Int) = {
     return value._1
   }
-  
+
   def outputMapToConsole(m: Map[Int, java.lang.Long], ord: ((Int, java.lang.Long)) => (Int)) {
     println()
     //  {_._1}
-    val valueList = m.toList sortBy(ord)
-    for ( (chunkSize, count) <- valueList) {
+    val valueList = m.toList sortBy (ord)
+    for ((chunkSize, count) <- valueList) {
       println("%d\t%d\t%d".format(
         chunkSize,
         count,
