@@ -1,18 +1,17 @@
 package de.pc2.dedup.fschunk.trace
 
-import com.hazelcast.core.Hazelcast
 import java.io.File
-import scala.actors.Actor
-import scala.actors.Actor._
-import de.pc2.dedup.chunker._
-import scala.actors.Exit
-import java.util.concurrent._
-import de.pc2.dedup.util._
-import java.util.concurrent.atomic.AtomicLong
-import de.pc2.dedup.fschunk.handler.FileDataHandler
+import java.lang.{Integer => Int}
+import java.util.concurrent.Future
+
 import com.hazelcast.core.DistributedTask
 import com.hazelcast.core.ExecutionCallback
-import java.lang.{ Integer => Int }
+import com.hazelcast.core.Hazelcast
+
+import de.pc2.dedup.chunker.Chunker
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 /**
  * Cluster version of a file dispatcher

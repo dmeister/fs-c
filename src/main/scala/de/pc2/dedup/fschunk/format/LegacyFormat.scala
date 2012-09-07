@@ -1,29 +1,20 @@
 package de.pc2.dedup.fschunk.format
 
-import java.io.FileInputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.BufferedOutputStream
-import java.io.FileOutputStream
 import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.URI
-import java.net.URISyntaxException
-import java.nio.charset.Charset
-import java.util.ArrayList
 import java.io.IOException
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.util.FileType
-import scala.collection.mutable.ListBuffer
-import scala.actors.Actor
-import scala.actors.Actor._
-import scala.actors._
-import de.pc2.dedup.util._
-import java.nio._
-import de.pc2.dedup.fschunk._
-import de.pc2.dedup.fschunk.handler.FileDataHandler
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.OutputStream
+import java.nio.charset.Charset
+
+import scala.collection.mutable.ListBuffer
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.Digest
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
 
 /**
  * Helper object for int conversion

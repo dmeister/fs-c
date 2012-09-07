@@ -1,23 +1,12 @@
 package de.pc2.dedup.fschunk.trace
 
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.util.Log
-import de.pc2.dedup.fschunk.handler.FileDataHandler
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileReader
 import java.io.IOException
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
-import java.lang.reflect.InvocationTargetException
+
+import de.pc2.dedup.chunker.Chunker
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.Reporting
-import scala.actors.Actor
-import scala.actors.Actor._
-import scala.actors.Exit
-import com.hazelcast.core.Hazelcast
+import de.pc2.dedup.util.Log
 
 /**
  * Main tracing class

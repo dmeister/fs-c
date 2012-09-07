@@ -1,27 +1,24 @@
 package de.pc2.dedup.fschunk.trace
 
 import java.io.Closeable
-import java.io.{ File => JavaFile }
+import java.io.{File => JavaFile}
 import java.io.FileInputStream
-import java.io.IOException
-import java.io.InputStream
 import java.io.FileNotFoundException
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicLong
 
-import de.pc2.dedup.chunker._
+import scala.collection.mutable.ListBuffer
+
+import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.Chunker
 import de.pc2.dedup.chunker.File
-import de.pc2.dedup.util._
-import scala.actors.Actor
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.Map
-import scala.actors.Actor._
-import de.pc2.dedup.util.StorageUnit
-import java.util.concurrent.atomic._
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
+import de.pc2.dedup.util.FileType
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 object FileProcessor extends Log {
   val activeCount = new AtomicLong(0L)

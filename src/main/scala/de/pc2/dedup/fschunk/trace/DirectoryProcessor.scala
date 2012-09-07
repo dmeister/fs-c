@@ -1,15 +1,14 @@
 package de.pc2.dedup.fschunk.trace
 
-import scala.actors.Actor
-import scala.actors.Actor._
-import java.io.File
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.util.Log
-import java.util.concurrent.atomic._
 import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.File
 import java.io.IOException
-import collection.JavaConversions._
+import java.io.InputStreamReader
+import java.util.concurrent.atomic.AtomicLong
+
+import scala.collection.JavaConversions.iterableAsScalaIterable
+
+import de.pc2.dedup.util.Log
 
 case class Directory(f: File)
 

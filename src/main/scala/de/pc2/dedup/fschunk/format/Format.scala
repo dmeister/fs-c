@@ -1,12 +1,13 @@
 package de.pc2.dedup.fschunk.format
 
-import scala.actors._
-import scala.collection.mutable.Map
-import de.pc2.dedup.fschunk.handler.FileDataHandler
-import java.io.InputStream
-import java.io.OutputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+
+import scala.collection.mutable.Map
+
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 
 /**
  * Format objected. Used to manage the different format instances.

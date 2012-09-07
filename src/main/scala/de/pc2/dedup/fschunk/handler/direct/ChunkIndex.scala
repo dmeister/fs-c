@@ -1,7 +1,8 @@
 package de.pc2.dedup.fschunk.handler.direct
 
-import de.pc2.dedup.chunker.Digest
 import scala.collection.mutable.Set
+
+import de.pc2.dedup.chunker.Digest
 
 /**
  * Simulation of a chunk index used for data deduplication

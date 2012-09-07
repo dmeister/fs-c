@@ -1,17 +1,16 @@
 package de.pc2.dedup.fschunk.trace
 
 import java.io.File
-import scala.actors.Actor
-import scala.actors.Actor._
-import de.pc2.dedup.chunker._
-import scala.actors.Exit
-import java.util.concurrent._
-import de.pc2.dedup.util._
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
+import de.pc2.dedup.chunker.Chunker
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.Reporting
-import com.hazelcast.core.DistributedTask
-import com.hazelcast.core.ExecutionCallback
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 /**
  * file dispatching trait

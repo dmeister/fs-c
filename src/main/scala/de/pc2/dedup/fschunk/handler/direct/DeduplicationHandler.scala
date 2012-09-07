@@ -1,9 +1,5 @@
 package de.pc2.dedup.fschunk.handler.direct
 
-import de.pc2.dedup.chunker.Chunk
-import de.pc2.dedup.chunker.Digest
-import scala.actors.Actor
-import scala.actors.Actor._
 import de.pc2.dedup.chunker.File
 import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler

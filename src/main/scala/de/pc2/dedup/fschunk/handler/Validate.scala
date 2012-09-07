@@ -1,25 +1,15 @@
 package de.pc2.dedup.fschunk.handler
 
-import scala.collection.mutable._
-import de.pc2.dedup.util.FileSizeCategory
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.fschunk.parse._
-import java.io.BufferedWriter
-import java.io.FileWriter
-import scala.actors.Actor
-import de.pc2.dedup.util.StorageUnit
-import de.pc2.dedup.util.SystemExitException
-import org.apache.hadoop.fs._
-import org.apache.hadoop.io._
-import org.apache.hadoop.conf.Configuration
-import java.net.URI
-import org.apache.commons.codec.binary.Base64
-import de.pc2.dedup.util.Log
+import org.clapper.argot.ArgotParser
+import org.clapper.argot.ArgotConverters
+
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.format.Format
-import java.io.OutputStream
-import org.apache.hadoop.io.compress.BZip2Codec
-import org.clapper.argot._
-import de.pc2.dedup.fschunk._
+import de.pc2.dedup.fschunk.Reporter
+import de.pc2.dedup.fschunk.Reporting
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 /**
  * Handler to validate a trace file

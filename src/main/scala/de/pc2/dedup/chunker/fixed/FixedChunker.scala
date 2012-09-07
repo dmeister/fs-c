@@ -1,11 +1,11 @@
 package de.pc2.dedup.chunker.fixed
 
-import de.pc2.dedup.chunker.Chunker
-import de.pc2.dedup.chunker.Chunk
-import scala.collection.mutable._
-import de.pc2.dedup.chunker.DigestFactory
-import de.pc2.dedup.chunker.ChunkerSession
 import java.nio.ByteBuffer
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.Chunker
+import de.pc2.dedup.chunker.ChunkerSession
+import de.pc2.dedup.chunker.DigestFactory
 
 /**
  * Chunker for Static (or Fixed)-size chunking

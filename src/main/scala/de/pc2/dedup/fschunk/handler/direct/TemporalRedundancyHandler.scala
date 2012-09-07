@@ -1,15 +1,18 @@
 package de.pc2.dedup.fschunk.handler.direct
 
-import scala.collection.mutable._
 import java.io.BufferedWriter
 import java.io.FileWriter
-import de.pc2.dedup.util.FileSizeCategory
-import de.pc2.dedup.chunker._
-import scala.actors.Actor
-import scala.actors.Actor._
-import de.pc2.dedup.util.StorageUnit
-import de.pc2.dedup.util.Log
+
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Map
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.FileSizeCategory
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()

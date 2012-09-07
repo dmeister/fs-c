@@ -2,7 +2,6 @@ package de.pc2.dedup.fschunk.handler
 
 import de.pc2.dedup.chunker.File
 import de.pc2.dedup.chunker.FilePart
-import scala.actors._
 import de.pc2.dedup.fschunk.Reporting
 
 /**

@@ -1,27 +1,20 @@
 package de.pc2.dedup.fschunk.handler.gp
 
-import scala.collection.mutable._
 import java.io.BufferedWriter
 import java.io.FileWriter
-import java.io.Writer
-import java.io.BufferedWriter
-import java.io.OutputStreamWriter
-import java.util.concurrent._
-import java.util.concurrent.atomic._
-import java.io.OutputStream
-import org.clapper.argot._
-import de.pc2.dedup.fschunk._
-import java.util.concurrent.atomic._
-import java.io.FileInputStream
-import de.pc2.dedup.fschunk.handler.direct.StandardReportingHandler
-import de.pc2.dedup.chunker.FilePart
-import de.pc2.dedup.fschunk.handler.FileDataHandler
+
+import org.apache.commons.codec.binary.Base64
+import org.clapper.argot.ArgotParser
+import org.clapper.argot.ArgotConverters
+
+import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
+import de.pc2.dedup.fschunk.handler.direct.StandardReportingHandler
+import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.parse.Parser
 import de.pc2.dedup.fschunk.Reporter
 import de.pc2.dedup.util.Log
-import de.pc2.dedup.chunker.Chunk
-import org.apache.commons.codec.binary.Base64
 
 /**
  * Handler to import a file into a Greenplum database

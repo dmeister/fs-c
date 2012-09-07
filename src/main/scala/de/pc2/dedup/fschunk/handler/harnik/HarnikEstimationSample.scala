@@ -1,8 +1,9 @@
 package de.pc2.dedup.fschunk.handler.harnik
 
-import de.pc2.dedup.chunker.Digest
+import scala.collection.mutable.{Map => MutableMap}
 import scala.collection.Map
-import scala.collection.mutable.{ Map => MutableMap }
+
+import de.pc2.dedup.chunker.Digest
 import de.pc2.dedup.util.Log
 
 case class HarnikSamplingEntry(val baseSampleCount: Int, val chunkSize: Int) {

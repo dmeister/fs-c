@@ -1,21 +1,18 @@
 package de.pc2.dedup.fschunk.handler.direct
 
-import scala.collection.mutable._
-import de.pc2.dedup.util.FileSizeCategory
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.fschunk.parse._
-import java.io.BufferedWriter
-import java.io.FileWriter
-import scala.actors.Actor
-import de.pc2.dedup.util.StorageUnit
-import de.pc2.dedup.fschunk.handler.FileDataHandler
-import de.pc2.dedup.util.Log
-import scala.math.Ordering
-import java.nio.ByteBuffer
-import de.pc2.dedup.chunker.rabin._
-import com.google.common.primitives.Longs
 import java.util.Arrays
+
+import scala.collection.mutable.Map
+
 import com.google.common.base.Preconditions
+import com.google.common.primitives.Longs
+
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.FileSizeCategory
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 class FileDetail {
   var fileSizeList = new Array[Long](3)

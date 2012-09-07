@@ -1,24 +1,21 @@
 package de.pc2.dedup.fschunk.format
 
-import java.io.FileInputStream
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.BufferedOutputStream
-import java.io.BufferedInputStream
-import java.io.FileOutputStream
-import java.net.URI
-import java.net.URISyntaxException
-import java.nio.charset.Charset
-import java.util.ArrayList
-import java.io.IOException
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.util.FileType
-import scala.actors.Actor
-import scala.collection.mutable.ListBuffer
-import de.pc2.dedup.util._
+
+import com.google.protobuf.ByteString
+import com.google.protobuf.InvalidProtocolBufferException
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.Digest
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
-import com.google.protobuf._
-import java.util.concurrent.atomic._
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 /**
  * Reader of the protobuf format files

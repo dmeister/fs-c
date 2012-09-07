@@ -1,6 +1,5 @@
 package de.pc2.dedup.chunker
 
-import java.io._
 import java.security.MessageDigest
 
 /**

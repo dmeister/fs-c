@@ -1,17 +1,26 @@
 package de.pc2.dedup.fschunk.parse
 
-import de.pc2.dedup.fschunk.handler.direct._
-import java.io.File
-import de.pc2.dedup.fschunk._
-import de.pc2.dedup.util.SystemExitException
-import de.pc2.dedup.fschunk.format.Format
-import org.clapper.argot._
-import de.pc2.dedup.fschunk.Reporter
-import de.pc2.dedup.fschunk.handler.FileDataHandler
+import scala.collection.mutable.ListBuffer
+
+import org.clapper.argot.ArgotParser
+import org.clapper.argot.ArgotConverters
+
+import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
+import de.pc2.dedup.fschunk.handler.direct.ChunkSizeDistributionHandler
+import de.pc2.dedup.fschunk.handler.direct.DeduplicationHandler
+import de.pc2.dedup.fschunk.handler.direct.FileDetailsHandler
+import de.pc2.dedup.fschunk.handler.direct.FileStatisticsHandler
+import de.pc2.dedup.fschunk.handler.direct.InMemoryChunkHandler
+import de.pc2.dedup.fschunk.handler.direct.InternalRedundancyHandler
+import de.pc2.dedup.fschunk.handler.direct.StandardReportingHandler
+import de.pc2.dedup.fschunk.handler.direct.TemporalRedundancyHandler
+import de.pc2.dedup.fschunk.handler.direct.ZeroChunkDeduplicationHandler
+import de.pc2.dedup.fschunk.handler.harnik.HarnikEstimationSample
 import de.pc2.dedup.fschunk.handler.harnik.HarnikEstimationSamplingHandler
 import de.pc2.dedup.fschunk.handler.harnik.HarnikEstimationScanHandler
-import scala.collection.mutable.ListBuffer
-import de.pc2.dedup.fschunk.handler.harnik.HarnikEstimationSample
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.fschunk.Reporter
+import de.pc2.dedup.util.SystemExitException
 
 /**
  * Main object for the parser.
@@ -62,7 +71,6 @@ object Main {
       if (!handlerTypeList.contains("tr")) {
         val handlerList = gatherHandlerList(handlerTypeList, optionHarnikSampleCount.value, output)
         executeParsing(handlerList, format, reportInterval, filenames)
-        handlerList.foreach(_.quit())
 
         if (handlerTypeList.contains("harniks")) {
           // we need a second run
@@ -70,7 +78,11 @@ object Main {
 
           val handlerList2 = List(new HarnikEstimationScanHandler(estimationSample, output))
           executeParsing(handlerList2, format, reportInterval, filenames)
+          
+          handlerList.foreach(_.quit())
           handlerList2.foreach(_.quit())
+        } else {
+          handlerList.foreach(_.quit())
         }
       } else {
         if (handlerTypeList.size > 1) {

@@ -1,6 +1,10 @@
 package de.pc2.dedup.fschunk.trace
 
-import java.io._
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.io.IOException
+
 import scala.collection.mutable.ListBuffer
 
 case class FilenameLabel(val filename: String, val source: Option[String], val label: Option[String])

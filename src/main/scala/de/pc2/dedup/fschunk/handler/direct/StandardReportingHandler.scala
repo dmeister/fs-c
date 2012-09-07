@@ -1,16 +1,10 @@
 package de.pc2.dedup.fschunk.handler.direct
 
-import de.pc2.dedup.chunker._
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.ConcurrentHashMap
-import scala.collection.mutable.ListBuffer
-import de.pc2.dedup.util.StorageUnit
-import scala.actors.Actor
-import scala.actors.Actor._
-import de.pc2.dedup.util.Log
-import scala.collection.mutable.Map
-import scala.collection.mutable.Set
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.StorageUnit
 
 class StandardReportingHandler() extends FileDataHandler with Log {
   var lock: AnyRef = new Object()

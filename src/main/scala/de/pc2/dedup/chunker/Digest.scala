@@ -1,10 +1,10 @@
 package de.pc2.dedup.chunker;
 
-import java.util.Arrays
+import java.math.BigInteger
+import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.nio.ByteBuffer
-import java.math.BigInteger
+import java.util.Arrays
 
 /**
  * Compation object to create fingerprints of a chunk or a file

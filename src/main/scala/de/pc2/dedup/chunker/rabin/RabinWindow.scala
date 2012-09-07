@@ -1,8 +1,9 @@
 package de.pc2.dedup.chunker.rabin
 
-import de.pc2.dedup.chunker.RollingFingerprint
 import java.util.Arrays
-import de.pc2.dedup.util._
+
+import de.pc2.dedup.chunker.RollingFingerprint
+import de.pc2.dedup.util.Log
 
 /**
  *

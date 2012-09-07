@@ -1,9 +1,10 @@
 package de.pc2.dedup.fschunk
 
-import de.pc2.dedup.util._
 import java.text.NumberFormat
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
+import de.pc2.dedup.util.Log
 
 /**
  * Trait of objects that support reporting.

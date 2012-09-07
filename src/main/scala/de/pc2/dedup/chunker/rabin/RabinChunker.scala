@@ -1,15 +1,15 @@
 package de.pc2.dedup.chunker.rabin
 
 import java.math.BigInteger
-import de.pc2.dedup.chunker.Chunker
-import scala.collection.mutable._
-import scala.math.pow;
-import de.pc2.dedup.util._
-import de.pc2.dedup.chunker.DigestFactory
-import de.pc2.dedup.chunker.ChunkerSession
-import de.pc2.dedup.chunker.Chunk
-import de.pc2.dedup.util._
 import java.nio.ByteBuffer
+
+import scala.math.pow
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.Chunker
+import de.pc2.dedup.chunker.ChunkerSession
+import de.pc2.dedup.chunker.DigestFactory
+import de.pc2.dedup.util.Log
 
 /**
  * Rabin Chunking

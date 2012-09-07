@@ -2,9 +2,9 @@ package de.pc2.dedup.fschunk.trace
 
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
-import java.util.concurrent.locks.ReentrantLock
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * File progress handler specially developed for BSC to track all processed files

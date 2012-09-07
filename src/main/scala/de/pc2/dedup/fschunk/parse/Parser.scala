@@ -1,25 +1,10 @@
 package de.pc2.dedup.fschunk.parse
 
-import java.io.FileInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.net.URI
-import java.net.URISyntaxException
-import java.nio.charset.Charset
-import java.util.ArrayList
-
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.util.FileType
-import com.google.protobuf.CodedInputStream
-import scala.actors.Actor
-import scala.collection.mutable.ListBuffer
-import scala.actors.Actor
-import scala.actors.Actor._
-import scala.actors._
-import de.pc2.dedup.util._
-import com.google.protobuf.InvalidProtocolBufferException
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.format.Format
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
 
 /**
  * Parses a file and calls all handler for each file and file part

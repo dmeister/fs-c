@@ -1,19 +1,17 @@
 package de.pc2.dedup.fschunk.handler.harnik
 
-import de.pc2.dedup.chunker._
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.ConcurrentHashMap
-import scala.collection.mutable.ListBuffer
-import de.pc2.dedup.util.StorageUnit
-import scala.actors.Actor
-import scala.actors.Actor._
-import de.pc2.dedup.util.Log
-import scala.collection.mutable.Map
-import scala.collection.mutable.Set
-import de.pc2.dedup.fschunk.handler.FileDataHandler
 import scala.collection.mutable.ArrayBuffer
-import org.apache.commons.math3.random.RandomDataImpl
+import scala.collection.mutable.Map
+
 import org.apache.commons.math3.random.MersenneTwister
+import org.apache.commons.math3.random.RandomDataImpl
+
+import de.pc2.dedup.chunker.Chunk
+import de.pc2.dedup.chunker.Digest
+import de.pc2.dedup.chunker.File
+import de.pc2.dedup.chunker.FilePart
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.util.Log
 
 case class HarnikReserviorEntry(val digest: Digest, val chunkSize: Int, val baseSampleCount: Int, val scanCount: Int) {
 
@@ -41,10 +39,6 @@ class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], out
 
   var processedChunkCount: Long = 0
   var processedDataCount: Long = 0
-
-  override def quit() {
-    report()
-  }
 
   lazy val estimationSample = getEstimationSample()
   

@@ -1,19 +1,21 @@
 package de.pc2.dedup.fschunk.trace
 
-import org.clapper.argot._
-import de.pc2.dedup.chunker._
-import de.pc2.dedup.chunker.rabin._
-import de.pc2.dedup.chunker.fixed._
-import de.pc2.dedup.util.SystemExitException
-import de.pc2.dedup.fschunk.handler.direct.InMemoryChunkHandler
-import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
-import de.pc2.dedup.fschunk.format.Format
-import de.pc2.dedup.fschunk.handler.hadoop._
-import de.pc2.dedup.fschunk.handler.FileDataHandler
-import de.pc2.dedup.util.Log
-import de.pc2.dedup.fschunk._
-import scala.actors.Actor
+import org.clapper.argot.ArgotParser
+import org.clapper.argot.ArgotConverters
 import com.hazelcast.core.Hazelcast
+
+import de.pc2.dedup.chunker.fixed.FixedChunker
+import de.pc2.dedup.chunker.rabin.RabinChunker
+import de.pc2.dedup.chunker.Chunker
+import de.pc2.dedup.chunker.DigestFactory
+import de.pc2.dedup.fschunk.format.Format
+import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
+import de.pc2.dedup.fschunk.handler.direct.InMemoryChunkHandler
+import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.fschunk.GCReporting
+import de.pc2.dedup.fschunk.Reporter
+import de.pc2.dedup.util.Log
+import de.pc2.dedup.util.SystemExitException
 
 object Main extends Log {
   def main(args: Array[String]): Unit = {

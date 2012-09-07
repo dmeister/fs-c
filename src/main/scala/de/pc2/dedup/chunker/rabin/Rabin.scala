@@ -1,6 +1,7 @@
 package de.pc2.dedup.chunker.rabin
 
 import java.math.BigInteger
+
 /**
  * Rabin Fingerprint implementation using a lookup table.
  * After construction the object is immutable and can savely used in multiple threads.
