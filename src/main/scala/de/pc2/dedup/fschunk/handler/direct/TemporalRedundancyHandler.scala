@@ -11,7 +11,7 @@ import de.pc2.dedup.util.StorageUnit
 import de.pc2.dedup.util.Log
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 
-class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
+class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
@@ -74,10 +74,13 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
   override def quit() {
     output match {
       case Some(runName) =>
-        writeMapToFile(typeMap, runName + "-" + chunkerName + "-tr-type.csv")
-        writeMapToFile(sizeCategoryMap, runName + "-" + chunkerName + "-tr-size.csv")
+        writeMapToFile(typeMap, runName + "-tr-type.csv")
+        writeMapToFile(sizeCategoryMap, runName + "-tr-size.csv")
       case None =>
-        outputMapToConsole(sizeCategoryMap, "File Size Categories: %s".format(chunkerName))
+        println("Temporal Reduncancy Results")
+        outputMapToConsole(typeMap, "File Type Categories")
+        println()
+        outputMapToConsole(sizeCategoryMap, "File Size Categories")
     }
   }
 
@@ -97,7 +100,7 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
         StorageUnit(totalSize),
         patchRatio))
     }
-    logger.info(msg)
+    println(msg)
   }
 
   private def writeMapToFile(m: Map[String, (Long, Long)], f: String) {
@@ -111,11 +114,11 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     w.close()
   }
 
-  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): scala.collection.Seq[de.pc2.dedup.chunker.Chunk] = {
     val allFileChunks = if (filePartialMap.contains(f.filename)) {
       val partialChunks = filePartialMap(f.filename)
       filePartialMap -= f.filename
-      List.concat(partialChunks.toList, f.chunks)
+      List.concat(partialChunks, f.chunks)
     } else {
       f.chunks
     }

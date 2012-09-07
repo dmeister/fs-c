@@ -92,10 +92,6 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
     }
   }
 
-  override def report() {
-    outputMapToConsole()
-  }
-
   override def quit() {
     outputMapToConsole()
   }
@@ -113,7 +109,8 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
       }
 
       val ratio = 1.0 * redundantSize / totalSize
-
+      
+      println("Zero Chunk Duplication Results:\n")
       println("Total size: %s, %s".format(storageUnitIfPossible(totalSize), totalSize))
       println("Redundant size: %s, %s".format(storageUnitIfPossible(redundantSize), redundantSize))
       println("Deduplication Ratio: %s ".format(ratio * 100.0))

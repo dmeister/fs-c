@@ -9,7 +9,7 @@ package de.pc2.dedup.chunker
  * @param chunks list of chunks that form the file contents
  * @param  label an optional label for the file
  */
-case class File(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk], label: Option[String]) {
+case class File(filename: String, fileSize: Long, fileType: String, chunks: Seq[Chunk], label: Option[String]) {
   if (fileSize < 0) {
     throw new IllegalArgumentException("Illegal file size " + fileSize)
   }

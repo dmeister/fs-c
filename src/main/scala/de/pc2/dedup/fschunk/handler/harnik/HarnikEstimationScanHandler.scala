@@ -16,9 +16,8 @@ import de.pc2.dedup.util.FileSizeCategory
 import java.io.BufferedWriter
 import java.io.FileWriter
 
-class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Option[String], val chunkerName: String) extends FileDataHandler with Log {
+class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Option[String]) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
-  val startTime = System.currentTimeMillis()
 
   val recordDetailedInformation = output match {
     case Some(s) => true
@@ -44,7 +43,8 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
       val totalRedundancy = totalSize - totalChunkSize
       val msg = new StringBuffer()
       msg.append("\n")
-      msg.append("Chunker %s (based on %s samples)\n".format(chunkerName, sample.totalSampleCount))
+      msg.append("Harnik's Estimation Results:\n")
+      msg.append("Estimation (based on %s samples)\n".format(sample.totalSampleCount))
       msg.append("Total Size: " + StorageUnit(totalSize) + "\n")
       msg.append("Chunk Size: " + StorageUnit(totalChunkSize) + "\n")
       msg.append("Redundancy: " + StorageUnit(totalRedundancy))
@@ -53,7 +53,7 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
       }
       msg.append("\n\nNote: A NaN entry usually indicates that it was not possible to provide an estimate with a\n")
       msg.append("confidence higher than 99%. Consider increasing the sample size by using --harnik-sample-size\n")
-      logger.info(msg)
+      println(msg)
     }
 
     typeMap += ("ALL" -> estimator)
@@ -62,30 +62,14 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
     output match {
       case Some("--") =>
         println()
-        outputMapToConsole(typeMap, "File type categories: %s".format(chunkerName), orderingForTypes)
+        outputMapToConsole(typeMap, "File type categories:", orderingForTypes)
         println()
-        outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName), orderingForSizeCategories)
+        outputMapToConsole(sizeCategoryMap, "File size categories:", orderingForSizeCategories)
       case Some(runName) =>
-        writeMapToFile(typeMap, "%s-%s-ir-type.csv".format(runName, chunkerName), orderingForTypes)
-        writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName), orderingForSizeCategories)
+        writeMapToFile(typeMap, "%s-ir-type.csv".format(runName), orderingForTypes)
+        writeMapToFile(sizeCategoryMap, "%s-ir-size.csv".format(runName), orderingForSizeCategories)
       case None =>
       // pass
-    }
-  }
-
-  override def report() {
-    lock.synchronized {
-      val stop = System.currentTimeMillis()
-      val seconds = (stop - startTime) / 1000
-
-      val tp = if (seconds > 0) {
-        "%s/s".format(StorageUnit(estimator.totalChunkSize / seconds))
-      } else {
-        "N/A"
-      }
-      logger.info("Scanning: Data size %sB (%s), chunks %s".format(StorageUnit(estimator.totalChunkSize),
-        tp,
-        StorageUnit(totalChunkCount)))
     }
   }
 
@@ -111,11 +95,11 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
 
   }
 
-  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): scala.collection.Seq[Chunk] = {
     val allFileChunks = if (filePartialMap.contains(f.filename)) {
       val partialChunks = filePartialMap(f.filename)
       filePartialMap -= f.filename
-      List.concat(partialChunks.toList, f.chunks)
+      List.concat(partialChunks, f.chunks)
     } else {
       f.chunks
     }

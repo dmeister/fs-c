@@ -45,7 +45,7 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
     if (fileData == null) {
       return
     }
-    val chunkList: List[Chunk] = if (fileData.getFilename().size == 0) {
+    val chunkList: Seq[Chunk] = if (fileData.getFilename().size == 0) {
       // Pseudo fallback mode
       stream.reset()
 
@@ -66,7 +66,7 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
       // normal mode
       val chunkList = for (i <- 0 until fileData.getChunkCount())
         yield (parseChunkEntry(stream))
-      List[Chunk]() ++ chunkList
+      chunkList
     }
 
     if (fileData.getPartial()) {
@@ -189,7 +189,7 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
     errorCount += 1
   }
 
-  def createFilePartData(filename: String, chunks: List[Chunk]): de.pc2.dedup.fschunk.Protocol.File = {
+  def createFilePartData(filename: String, chunks: Seq[Chunk]): de.pc2.dedup.fschunk.Protocol.File = {
     val filePartBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder()
     filePartBuilder.setFilename(filename).setChunkCount(chunks.size).setPartial(true)
     filePartBuilder.build()
@@ -198,7 +198,7 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
   /**
    * Creates a protocol buffer "File" instance from the file data including the chunks as repeated field
    */
-  def createFileData(filename: String, fileSize: Long, fileType: String, chunks: List[Chunk], label: Option[String]): de.pc2.dedup.fschunk.Protocol.File = {
+  def createFileData(filename: String, fileSize: Long, fileType: String, chunks: Seq[Chunk], label: Option[String]): de.pc2.dedup.fschunk.Protocol.File = {
     val fileBuilder = de.pc2.dedup.fschunk.Protocol.File.newBuilder()
     fileBuilder.setFilename(filename).setSize(fileSize).setType(fileType).setChunkCount(chunks.size).setPartial(false)
     label match {

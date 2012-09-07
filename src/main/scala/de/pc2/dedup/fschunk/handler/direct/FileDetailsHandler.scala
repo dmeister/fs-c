@@ -85,9 +85,8 @@ object FileDetail {
   }
 }
 
-class FileDetailsHandler(val chunkerName: String) extends FileDataHandler with Log {
+class FileDetailsHandler() extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
-
   val fileTypeDetailMap = Map.empty[String, FileDetail]
   val fileSizeDetailMap = Map.empty[String, FileDetail]
 
@@ -128,18 +127,16 @@ class FileDetailsHandler(val chunkerName: String) extends FileDataHandler with L
   }
 
   override def quit() {
+    println("File Detail Results:\n")
+
     val typeDetails = fileTypeDetailMap.toList sortBy (FileDetail.orderingForTypes)
     for ((k, v) <- typeDetails) {
-      logger.info(v.output(k))
+      println(v.output(k))
     }
-
+    println()
     val sizeDetails = fileSizeDetailMap.toList sortBy (FileDetail.orderingForSizeCategories)
     for ((k, v) <- sizeDetails) {
-      logger.info(v.output(StorageUnit(k.toLong)))
+      println(v.output(StorageUnit(k.toLong)))
     }
-  }
-
-  override def report() {
-
   }
 }

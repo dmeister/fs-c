@@ -8,8 +8,6 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
-import scalax.io._
-import scalax.io.CommandLineParser
 import de.pc2.dedup.util.SystemExitException
 import org.apache.hadoop.fs._
 import org.apache.hadoop.io._
@@ -76,10 +74,7 @@ object Validate {
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
     parser.parse(args)
 
-    val reportInterval = optionReport.value match {
-      case None => 60 * 1000
-      case Some(i) => i * 1000
-    }
+    val reportInterval = optionReport.value
     val format = "protobuf"
 
     for (filename <- optionFilenames.value) {
@@ -88,7 +83,7 @@ object Validate {
       val reporter = new Reporter(validateHandler, reportInterval).start()
       reader.parse()
 
-      reporter ! Quit
+      reporter.quit()
       validateHandler.quit()
     }
   }

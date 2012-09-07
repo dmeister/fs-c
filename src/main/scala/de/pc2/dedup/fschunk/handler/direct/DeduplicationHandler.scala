@@ -12,7 +12,7 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
  * Handler that used and updates the given chunk index.
  * Usually used in combination with other handlers.
  */
-class DeduplicationHandler(val d: ChunkIndex, val chunkerName: String) extends FileDataHandler {
+class DeduplicationHandler(val d: ChunkIndex) extends FileDataHandler {
   var lock: AnyRef = new Object()
 
   def handle(fp: FilePart) {

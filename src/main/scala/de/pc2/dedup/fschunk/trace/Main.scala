@@ -60,10 +60,7 @@ object Main extends Log {
         case Some(t) => t
         case None => "SHA-1"
       }
-      val reportInterval = optionReport.value match {
-        case None => 60 * 1000
-        case Some(i) => i * 1000
-      }
+      val reportInterval = optionReport.value
       val silent = optionSilent.value match {
         case Some(b) => b
         case None => false
@@ -113,7 +110,7 @@ object Main extends Log {
                   case e: Exception => throw new Exception("Failed to instanciate custom chunk handler %s: %s".format(className, e))
                 }
               case None =>
-                new InMemoryChunkHandler(silent, new ChunkIndex, chunkerName) :: Nil
+                new InMemoryChunkHandler(silent, new ChunkIndex, Some(chunkerName)) :: Nil
             }
           case Some(o) =>
             optionCustomHandler.value match {
@@ -186,16 +183,16 @@ object Main extends Log {
       val reporter = new Reporter(chunking, reportInterval).start()
 
       val memoryUsageReporter = if (reportMemoryUsage) {
-        Some(new Reporter(new GCReporting(), reportInterval * 10).start())
+        Some(new Reporter(new GCReporting(), reportInterval).start())
       } else {
         None
       }
 
       chunking.start()
-      reporter ! Quit
+      reporter.quit()
 
       memoryUsageReporter match {
-        case Some(r) => r ! Quit
+        case Some(r) => r.quit()
         case None => //pass
       }
 

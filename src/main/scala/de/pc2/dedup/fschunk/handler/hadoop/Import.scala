@@ -8,13 +8,11 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
-import scalax.io._
 import java.io.Writer
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.util.concurrent._
 import java.util.concurrent.atomic._
-import scalax.io.CommandLineParser
 import de.pc2.dedup.util.SystemExitException
 import org.apache.hadoop.fs._
 import org.apache.hadoop.io._
@@ -290,10 +288,7 @@ object Import {
 
     parser.parse(args)
 
-    val reportInterval = optionReport.value match {
-      case None => 60 * 1000
-      case Some(i) => i * 1000
-    }
+    val reportInterval = optionReport.value
     val threadCount = optionThreads.value match {
       case Some(t) => t
       case None => 0
@@ -325,7 +320,7 @@ object Import {
       val reporter = new Reporter(importHandler, reportInterval).start()
       reader.parse()
 
-      reporter ! Quit
+      reporter.quit()
       importHandler.quit()
     }
   }

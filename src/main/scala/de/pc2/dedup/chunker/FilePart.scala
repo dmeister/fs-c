@@ -7,5 +7,5 @@ package de.pc2.dedup.chunker
  * @filename filename (or hash of a filename in privacy mode)
  * @chunks list of chunks that form the file contents
  */
-case class FilePart(filename: String, chunks: List[Chunk]) {
+case class FilePart(filename: String, chunks: Seq[Chunk]) {
 }

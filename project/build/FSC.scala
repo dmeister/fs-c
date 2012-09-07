@@ -25,7 +25,12 @@ class FSCProject(info: ProjectInfo) extends DefaultProject(info)
   override def mainSourceRoots = super.mainSourceRoots +++ ("src" / "main" / "gen")
   override def mainClass = Some("de.pc2.dedup.fschunk.trace.Main")
     
-  val argot = "org.clapper" %% "argot" % "0.3.1"
+  val commonslang = "commons-lang" % "commons-lang" % "2.6"
+  val commonscodec = "commons-codec" % "commons-codec" % "1.6"
+  val commonslogging = "commons-logging" % "commons-logging" % "1.1"
+  val hazelcast = "com.hazelcast" % "hazelcast" % "1.9.4.8"
+  val log4j = "log4j" % "log4j" % "1.2.17"
+  val argot = "org.clapper" %% "argot" % "0.4"
   val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
   val guava = "com.google.guava" % "guava" % "13.0.1"
 }

@@ -8,8 +8,6 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import scala.actors.Actor
 import de.pc2.dedup.util.StorageUnit
-import scalax.io._
-import scalax.io.CommandLineParser
 import de.pc2.dedup.util.SystemExitException
 import org.apache.hadoop.fs._
 import org.apache.hadoop.io._
@@ -48,7 +46,7 @@ class ViewHandler() extends Reporting with FileDataHandler with Log {
   def handle(f: File) {
     logger.debug("View file %s, chunks %s".format(f.filename, f.chunks.size))
 
-    val allFileChunks: List[Chunk] = if (filePartialMap.contains(f.filename)) {
+    val allFileChunks = if (filePartialMap.contains(f.filename)) {
       val partialChunks = filePartialMap(f.filename)
       filePartialMap -= f.filename
       List.concat(partialChunks.toList, f.chunks)

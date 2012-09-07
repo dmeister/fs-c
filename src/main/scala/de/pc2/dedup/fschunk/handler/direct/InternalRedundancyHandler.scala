@@ -11,8 +11,10 @@ import de.pc2.dedup.util.StorageUnit
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
 import scala.math.Ordering
+import scala.collection.immutable.Iterable
+import scala.collection.immutable.Seq
 
-class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
+class InternalRedundancyHandler(output: Option[String], d: ChunkIndex) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val typeMap = Map.empty[String, (Long, Long)]
   val sizeCategoryMap = Map.empty[String, (Long, Long)]
@@ -74,12 +76,13 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
   override def quit() {
     output match {
       case Some(runName) =>
-        writeMapToFile(typeMap, "%s-%s-ir-type.csv".format(runName, chunkerName), orderingForTypes)
-        writeMapToFile(sizeCategoryMap, "%s-%s-ir-size.csv".format(runName, chunkerName), orderingForSizeCategories)
+        writeMapToFile(typeMap, "%s-ir-type.csv".format(runName), orderingForTypes)
+        writeMapToFile(sizeCategoryMap, "%s-ir-size.csv".format(runName), orderingForSizeCategories)
       case None =>
-        outputMapToConsole(typeMap, "File type categories: %s".format(chunkerName), orderingForTypes)
+        println("Internal Reduncancy Results")
+        outputMapToConsole(typeMap, "File type categories:", orderingForTypes)
         println()
-        outputMapToConsole(sizeCategoryMap, "File size categories: %s".format(chunkerName), orderingForSizeCategories)
+        outputMapToConsole(sizeCategoryMap, "File size categories:", orderingForSizeCategories)
     }
   }
 
@@ -140,7 +143,7 @@ class InternalRedundancyHandler(output: Option[String], d: ChunkIndex, chunkerNa
     w.close()
   }
 
-  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): scala.collection.Seq[Chunk] = {
     val allFileChunks = if (filePartialMap.contains(f.filename)) {
       val partialChunks = filePartialMap(f.filename)
       filePartialMap -= f.filename

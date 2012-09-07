@@ -22,11 +22,6 @@ class ChunkSizeDistributionHandler() extends FileDataHandler with Log {
   val largeFileChunkSizeMap = new CountingMap[Int]()
   val mb = 1024 * 1024
 
-  override def report() {
-    lock.synchronized {
-    }
-  }
-
   def handle(fp: FilePart) {
     def addChunkToMap(c: Chunk) {
       chunkSizeMap.add(c.size)
@@ -52,6 +47,7 @@ class ChunkSizeDistributionHandler() extends FileDataHandler with Log {
   }
 
   override def quit() {
+    println("Chunk Size Distribution Results")
     outputMapToConsole(chunkSizeMap, orderingBySize)
   }
 

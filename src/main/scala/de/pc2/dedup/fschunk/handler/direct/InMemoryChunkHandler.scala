@@ -14,7 +14,7 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
 /**
  * Handler to do a in-memory analysis of the trace.
  */
-class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) extends FileDataHandler with Log {
+class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: Option[String]) extends FileDataHandler with Log {
   var totalFileSize = 0L
   var totalChunkSize = 0L
   var totalChunkCount = 0L
@@ -35,7 +35,9 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
       val totalRedundancy = totalFileSize - totalChunkSize
       val msg = new StringBuffer()
       msg.append("\n")
-      msg.append("Chunker " + chunkerName + "\n")
+      if (!chunkerName.isEmpty) {
+    	  msg.append("Chunker " + chunkerName + "\n")
+      }
       msg.append("Total Size: " + StorageUnit(totalFileSize) + "\n")
       msg.append("Chunk Size: " + StorageUnit(totalChunkSize) + "\n")
       msg.append("Redundancy: " + StorageUnit(totalRedundancy))
@@ -114,15 +116,15 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: String) 
         StorageUnit(chunkFileSize - redundancy), chunkFileSize - redundancy))
     }
     if (illegalFile) {
-      throw new Exception("Illegel file: %s".format(msg))
+      throw new Exception("Illegal file: %s".format(msg))
     } else {
       logger.info(msg)
     }
   }
 
-  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): List[de.pc2.dedup.chunker.Chunk] = {
+  private def gatherAllFileChunks(f: de.pc2.dedup.chunker.File): Seq[de.pc2.dedup.chunker.Chunk] = {
 
-    val allFileChunks: List[Chunk] = if (filePartialMap.contains(f.filename)) {
+    val allFileChunks: Seq[Chunk] = if (filePartialMap.contains(f.filename)) {
       val partialChunks = filePartialMap(f.filename)
       filePartialMap -= f.filename
       List.concat(partialChunks.toList, f.chunks)

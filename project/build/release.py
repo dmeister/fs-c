@@ -31,9 +31,7 @@ if __name__ == "__main__":
     release_tar.add("src/main/other/hosts", "fs-c-%s/conf/hosts" % version)
     release_tar.add("src/main/other/fs-c", "fs-c-%s/bin/fs-c" % version)
     release_tar.add("project/boot/scala-2.9.0/lib/scala-library.jar", "fs-c-%s/lib/scala-library.jar" % version)
-    release_tar.add("lib_managed/scala_2.9.0/compile/argot_2.9.0-0.3.1.jar", "fs-c-%s/lib/argot-0.3.1.jar" % version)
-    release_tar.add("lib_managed/scala_2.9.0/compile/grizzled-scala_2.9.0-1.0.6.jar", "fs-c-%s/lib/grizzled-1.0.6.jar" % version)
-    release_tar.add("lib_managed/scala_2.9.0/compile/guava-13.0.1.jar", "fs-c-%s/lib/guava-13.0.1.jar" % version)
+    release_tar.add("lib_managed/scala_2.9.0/compile/", "fs-c-%s/lib" % version)
     release_tar.add("target/scala_2.9.0/fs-c_2.9.0-%s.jar" % version, "fs-c-%s/fs-c-%s.jar" % (version, version))
     release_tar.close()
 

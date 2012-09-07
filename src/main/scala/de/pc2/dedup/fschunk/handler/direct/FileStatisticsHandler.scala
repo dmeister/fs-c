@@ -17,13 +17,13 @@ import com.google.common.primitives.Longs
 import java.util.Arrays
 import com.google.common.base.Preconditions
 
-class FileStatisticsHandler(val chunkerName: String) extends FileDataHandler with Log {
+class FileStatisticsHandler() extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
 
   var fileCount: Int = 0
   var totalFileCapacity: Long = 0
   var fileSizeList = new Array[Long](16)
-
+  
   def handle(fp: FilePart) {
     // I really do not care about file parts here
   }
@@ -73,7 +73,7 @@ class FileStatisticsHandler(val chunkerName: String) extends FileDataHandler wit
 
     val msg = new StringBuffer()
     msg.append("\n")
-    msg.append("Chunker " + chunkerName + "\n")
+    msg.append("File Statistics Results:\n")
     msg.append("File Count %s (%s)\n".format(StorageUnit(fileCount), fileCount))
     msg.append("File Capacity %sB (%s)\n".format(StorageUnit(totalFileCapacity), totalFileCapacity))
     msg.append("Mean File Size %sB (%s)\n".format(StorageUnit(totalFileCapacity / fileCount), totalFileCapacity / fileCount))
@@ -91,10 +91,6 @@ class FileStatisticsHandler(val chunkerName: String) extends FileDataHandler wit
     msg.append("50%% - %sB (%s)\n".format(StorageUnit(getPercentile(cummulatedFileSizeList, 50)), getPercentile(cummulatedFileSizeList, 50)))
     msg.append("75%% - %sB (%s)\n".format(StorageUnit(getPercentile(cummulatedFileSizeList, 75)), getPercentile(cummulatedFileSizeList, 75)))
     msg.append("90%% - %sB (%s)\n".format(StorageUnit(getPercentile(cummulatedFileSizeList, 90)), getPercentile(cummulatedFileSizeList, 90)))
-    logger.info(msg)
-  }
-
-  override def report() {
-
+    println(msg)
   }
 }

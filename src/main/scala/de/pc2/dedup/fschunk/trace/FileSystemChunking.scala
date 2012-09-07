@@ -64,7 +64,7 @@ class FileSystemChunking(listing: FileListingProvider,
 
   def start() {
     dispatcher.waitUntilFinished()
-    logger.debug("Finished waiting")
+    logger.info("Traching finished")
 
     for ((_, handlers) <- chunker) {
       handlers.foreach(h => h.quit())

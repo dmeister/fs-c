@@ -23,9 +23,8 @@ case class HarnikReserviorEntry(val digest: Digest, val chunkSize: Int, val base
  * Handler implementing the sampling phase of Harnik's deduplication estimation appraoch using
  * Reseviour sampling
  */
-class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], output: Option[String], val chunkerName: String) extends FileDataHandler with Log {
+class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], output: Option[String]) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
-  val startTime = System.currentTimeMillis()
   
   val sampleSize = configuredSampleSize match {
     case Some(i) => i
@@ -64,22 +63,6 @@ class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], out
     }
     reserviorBuffer.clear()
     return new HarnikEstimationSample(entryMap.toMap)
-  }
-
-  override def report() {
-    lock.synchronized {
-      val stop = System.currentTimeMillis()
-      val seconds = (stop - startTime) / 1000
-
-      val tp = if (seconds > 0) {
-        "%s/s".format(StorageUnit(processedDataCount / seconds))
-      } else {
-        "N/A"
-      }
-      logger.info("Sampling: Data size %sB (%s), chunks %s".format(StorageUnit(processedDataCount),
-        tp,
-        StorageUnit(processedChunkCount)))
-    }
   }
 
   def handleChunk(chunk: Chunk) {
