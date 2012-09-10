@@ -76,7 +76,7 @@ object Main {
           // we need a second run
           val estimationSample = getHarnikEstimationHandler(handlerList)
 
-          val handlerList2 = List(new HarnikEstimationScanHandler(estimationSample, output))
+          val handlerList2 = List(new HarnikEstimationScanHandler(estimationSample, output), new StandardReportingHandler())
           executeParsing(handlerList2, format, reportInterval, filenames)
           
           handlerList.foreach(_.quit())
@@ -149,16 +149,11 @@ object Main {
   }
 
   private def executeParsing(handlerList: List[FileDataHandler], format: String, reportInterval: Option[Int], filenames: Seq[String]) {
-
     for (filename <- filenames) {
       val p = new Parser(filename, format, handlerList)
       val reporter = new Reporter(p, reportInterval).start()
       p.parse()
       reporter.quit()
-    }
-
-    for { handler <- handlerList } {
-      handler.quit()
     }
   }
 }

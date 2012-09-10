@@ -5,12 +5,13 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-
 import de.pc2.dedup.chunker.Chunker
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.Reporting
 import de.pc2.dedup.util.Log
 import de.pc2.dedup.util.StorageUnit
+import de.pc2.dedup.util.BlockThenRunPolicy
+import java.util.concurrent.RejectedExecutionHandler
 
 /**
  * file dispatching trait
@@ -82,10 +83,18 @@ class ThreadPoolFileDispatcher(processorNum: Int,
       }
     }
   }
+  
+  def getRejectionPolicy(): RejectedExecutionHandler = {
+    if (processorNum == 1) {
+      new BlockThenRunPolicy()
+    } else {
+      new ThreadPoolExecutor.CallerRunsPolicy()
+    }
+  }
 
   class FileDispatcherThreadPoolExecutor(dispatcher: ThreadPoolFileDispatcher) extends ThreadPoolExecutor(processorNum, processorNum, 30, TimeUnit.SECONDS,
     new ArrayBlockingQueue[Runnable](processorNum * 1024),
-    new ThreadPoolExecutor.CallerRunsPolicy()) {
+    getRejectionPolicy()) {
     logger.debug("Created file threadpool with at most %d threads".format(processorNum))
     override def afterExecute(r: Runnable, t: Throwable) {
       if (shouldShutdown()) {
