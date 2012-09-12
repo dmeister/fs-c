@@ -70,6 +70,7 @@ object DirectoryProcessor extends Log {
       handler(path.toFile)
       filecount += 1
     }
+    dirstream.close()
     filecount
   }
 
@@ -173,12 +174,15 @@ class DirectoryProcessor(directory: File,
       DirectoryProcessor.skipCount.incrementAndGet()
       logger.debug("Skip unreadable file %s".format(file))
     } else {
-      if (!file.isDirectory) {
+      if (file.isFile()) {
         DirectoryProcessor.dispatcher.dispatch(file, cp, false, source, label)
-      } else {
+      } else if (file.isDirectory()) {
         if (!useDefaultIgnores || !isDefaultIgnoreDirectory(cp)) {
           DirectoryProcessor.dispatcher.dispatch(file, cp, true, source, label)
         }
+      } else {
+      DirectoryProcessor.skipCount.incrementAndGet()
+      logger.debug("Skip unsupported file type %s".format(file))  
       }
     }
   }
