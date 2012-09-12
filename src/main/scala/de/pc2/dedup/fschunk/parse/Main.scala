@@ -1,10 +1,8 @@
 package de.pc2.dedup.fschunk.parse
 
 import scala.collection.mutable.ListBuffer
-
 import org.clapper.argot.ArgotParser
 import org.clapper.argot.ArgotConverters
-
 import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
 import de.pc2.dedup.fschunk.handler.direct.ChunkSizeDistributionHandler
 import de.pc2.dedup.fschunk.handler.direct.DeduplicationHandler
@@ -21,6 +19,7 @@ import de.pc2.dedup.fschunk.handler.harnik.HarnikEstimationScanHandler
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.Reporter
 import de.pc2.dedup.util.SystemExitException
+import de.pc2.dedup.fschunk.GCReporting
 
 /**
  * Main object for the parser.
@@ -50,6 +49,7 @@ object Main {
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
       val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
       val optionHarnikSampleCount = parser.option[Int](List("harnik-sample-size"), "harnik sample size", "Number of sample in the harnik sample size (only harnik type)")
+      val optionMemoryReporting = parser.flag[Boolean]("report-memory-usage", false, "Report memory usage (expert)")
       parser.parse(args)
 
       val output: Option[String] = optionOutput.value match {
@@ -63,11 +63,22 @@ object Main {
         List("simple")
       }
       val reportInterval = optionReport.value
+      val reportMemoryUsage = optionMemoryReporting.value match {
+        case Some(b) => b
+        case None => false
+      }
       if (optionFilenames.value.size == 0) {
         throw new Exception("Provide at least one file via -f")
       }
+
       val filenames = for { f <- optionFilenames.value } yield f
 
+      val memoryUsageReporter = if (reportMemoryUsage) {
+        Some(new Reporter(new GCReporting(), reportInterval).start())
+      } else {
+        None
+      }
+      
       if (!handlerTypeList.contains("tr")) {
         val handlerList = gatherHandlerList(handlerTypeList, optionHarnikSampleCount.value, output)
         executeParsing(handlerList, format, reportInterval, filenames)
@@ -98,6 +109,11 @@ object Main {
         val handler2 = new TemporalRedundancyHandler(output, handler.d)
         executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
         handler2.quit()
+      }
+      
+      memoryUsageReporter match {
+        case Some(r) => r.quit()
+        case None => //pass
       }
     } catch {
       case e: SystemExitException => System.exit(1)
