@@ -17,6 +17,9 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
 import de.pc2.dedup.util.StorageUnit
 
+class ProtobufParseException extends Exception {
+}
+
 /**
  * Reader of the protobuf format files
  */
@@ -33,6 +36,9 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
 
   private def parseChunkEntry(stream: InputStream): Chunk = {
     val chunkData = de.pc2.dedup.fschunk.Protocol.Chunk.parseDelimitedFrom(stream)
+    if (chunkData == null) {
+      throw new ProtobufParseException()
+    }
     convertChunkData(chunkData)
   }
 
@@ -61,7 +67,7 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
       List(chunk)
     } else {
       // normal mode
-      val chunkList = for (i <- 0 until fileData.getChunkCount())
+      val chunkList = for (i <- 0 until fileData.getChunkCount()) 
         yield (parseChunkEntry(stream))
       chunkList
     }

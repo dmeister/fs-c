@@ -108,7 +108,7 @@ object Main {
     for (handler <- handlerList) {
       if (handler.isInstanceOf[HarnikEstimationSamplingHandler]) {
         val samplingHandler = handler.asInstanceOf[HarnikEstimationSamplingHandler]
-        samplingHandler.estimationSample
+        return samplingHandler.estimationSample
       }
     }
     throw new Exception("Failed to find estimation sample")
@@ -149,16 +149,11 @@ object Main {
   }
 
   private def executeParsing(handlerList: List[FileDataHandler], format: String, reportInterval: Option[Int], filenames: Seq[String]) {
-
     for (filename <- filenames) {
       val p = new Parser(filename, format, handlerList)
       val reporter = new Reporter(p, reportInterval).start()
       p.parse()
       reporter.quit()
-    }
-
-    for { handler <- handlerList } {
-      handler.quit()
     }
   }
 }
