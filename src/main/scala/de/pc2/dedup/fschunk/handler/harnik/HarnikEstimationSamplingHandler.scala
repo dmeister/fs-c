@@ -23,13 +23,13 @@ case class HarnikReserviorEntry(val digest: Digest, val chunkSize: Int, val base
  */
 class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], output: Option[String]) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
-  
+
   val sampleSize = configuredSampleSize match {
     case Some(i) => i
     case None => output match {
-      case None => 
-          445570; // good enough for an estimation with 1% error in 1:3 compression, but not enough for file types (usually)
-            case Some(s) =>
+      case None =>
+        445570; // good enough for an estimation with 1% error in 1:3 compression, but not enough for file types (usually)
+      case Some(s) =>
         4 * 1237938 // much more! Needed so that at least the major file types/size categories get enough samples
     }
   }
@@ -41,7 +41,7 @@ class HarnikEstimationSamplingHandler(val configuredSampleSize: Option[Int], out
   var processedDataCount: Long = 0
 
   lazy val estimationSample = getEstimationSample()
-  
+
   private def getEstimationSample(): HarnikEstimationSample = {
 
     logger.debug("Finish sampling")

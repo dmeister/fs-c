@@ -1,6 +1,7 @@
 package de.pc2.dedup.fschunk.handler.harnik
 
 import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.OpenHashMap
 import scala.collection.Map
 
 import de.pc2.dedup.chunker.Digest
@@ -41,7 +42,7 @@ class HarnikEstimationSample(val map: Map[Digest, HarnikSamplingEntry]) {
 }
 
 class HarnikEstimationSampleCounter(val sample: HarnikEstimationSample) extends Log {
-  val map = MutableMap.empty[Digest, Int]
+  val map = new OpenHashMap[Digest, Int](sample.totalSampleCount.toInt)
   var totalChunkSize: Long = 0
 
   def record(fp: Digest, size: Long): Boolean = {
@@ -112,6 +113,7 @@ class HarnikEstimationSampleCounter(val sample: HarnikEstimationSample) extends 
 
     val ratio = 1.0 - (sum / weightedSampleCount)
     if (sampleCount < necessaryNumberOfSamples(ratio)) {
+      logger.info("Not enought samples: estimated ratio %s, actual samples %s, necesary samples %s".format(ratio, sampleCount, necessaryNumberOfSamples(ratio)))
       logger.debug("Not enought samples: ratio %s, %s/%s, actual samples %s, necesary samples %s".format(ratio, sum, weightedSampleCount, sampleCount, necessaryNumberOfSamples(ratio)))
       Double.NaN
     } else {

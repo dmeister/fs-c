@@ -70,9 +70,13 @@ class FileStatisticsHandler() extends FileDataHandler with Log {
     msg.append("File Statistics Results:\n")
     msg.append("File Count %s (%s)\n".format(StorageUnit(fileCount), fileCount))
     msg.append("File Capacity %sB (%s)\n".format(StorageUnit(totalFileCapacity), totalFileCapacity))
-    msg.append("Mean File Size %sB (%s)\n".format(StorageUnit(totalFileCapacity / fileCount), totalFileCapacity / fileCount))
-    msg.append("Max File Size %sB (%s)\n".format(StorageUnit(fileSizeList(fileSizeList.length - 1)), fileSizeList(fileSizeList.length - 1)))
-
+    if (fileCount > 0) {
+    	msg.append("Mean File Size %sB (%s)\n".format(StorageUnit(totalFileCapacity / fileCount), totalFileCapacity / fileCount))
+    	msg.append("Max File Size %sB (%s)\n".format(StorageUnit(fileSizeList(fileSizeList.length - 1)), fileSizeList(fileSizeList.length - 1)))
+    } else {
+        msg.append("Mean File Size Nan\n")
+    	msg.append("Max File Size Nan\n")
+    }
     msg.append("\nFile Size Percentilies\n")
     msg.append("10%% - %sB (%s)\n".format(StorageUnit(getPercentile(fileSizeList, 10)), getPercentile(fileSizeList, 10)))
     msg.append("25%% - %sB (%s)\n".format(StorageUnit(getPercentile(fileSizeList, 25)), getPercentile(fileSizeList, 25)))

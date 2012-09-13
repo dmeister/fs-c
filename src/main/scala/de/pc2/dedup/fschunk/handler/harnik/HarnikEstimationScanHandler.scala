@@ -40,7 +40,7 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
       
       val msg = new StringBuffer()
       msg.append("\n")
-      msg.append("Harnik's Estimation Results:\n")
+      msg.append("Harnik's Estimation Results: (based on %s samples)\n".format(sample.totalSampleCount))
       if (deduplicationRatio.isNaN()) {
     	  msg.append("Total Size: " + StorageUnit(totalSize) + "\n")
     	  msg.append("Chunk Size: NaN\n")
@@ -48,11 +48,10 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
       } else {
     	  val totalChunkSize = ((1 - deduplicationRatio) * totalSize).toLong	  
     	  val totalRedundancy = totalSize - totalChunkSize
-    	  msg.append("Estimation (based on %s samples)\n".format(sample.totalSampleCount))
     	  msg.append("Total Size: " + StorageUnit(totalSize) + "\n")
     	  msg.append("Chunk Size: " + StorageUnit(totalChunkSize) + "\n")
     	  msg.append("Redundancy: " + StorageUnit(totalRedundancy))
-    	  msg.append(" (%.2f%%)".format(estimator.deduplicationRatio))
+    	  msg.append(" (%.2f%%)".format(100.0 * estimator.deduplicationRatio))
       }
       msg.append("\n\nNote: A NaN entry usually indicates that it was not possible to provide an estimate with a\n")
       msg.append("confidence higher than 99%. Consider increasing the sample size by using --harnik-sample-size\n")

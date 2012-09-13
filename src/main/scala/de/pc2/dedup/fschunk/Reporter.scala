@@ -25,9 +25,9 @@ class GCReporting extends Reporting with Log {
     val freeMemory = runtime.freeMemory();
 
     sb.append("Memory: free: " + format.format(freeMemory / 1024));
-    sb.append(" MB , allocated: " + format.format(allocatedMemory / 1024));
-    sb.append(" MB , max: " + format.format(maxMemory / 1024));
-    sb.append(" MB , total free: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024));
+    sb.append(" MB, allocated: " + format.format(allocatedMemory / 1024));
+    sb.append(" MB, max: " + format.format(maxMemory / 1024));
+    sb.append(" MB, total free: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024));
     sb.append(" MB")
 
     logger.info(sb)

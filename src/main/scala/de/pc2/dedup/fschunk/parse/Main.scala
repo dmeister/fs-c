@@ -20,12 +20,16 @@ import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.fschunk.Reporter
 import de.pc2.dedup.util.SystemExitException
 import de.pc2.dedup.fschunk.GCReporting
+import de.pc2.dedup.fschunk.format.Format
+import java.io.File
+import org.clapper.argot.ArgotUsageException
+import de.pc2.dedup.util.Log
 
 /**
  * Main object for the parser.
  * The parser is used to replay trace of chunking runs
  */
-object Main {
+object Main extends Log {
 
   def getCustomHandler(handlerName: String): FileDataHandler = {
     try {
@@ -46,17 +50,35 @@ object Main {
       val optionType = parser.multiOption[String](List("t", "type"), "type",
         "Handler Type (simple,\n\tir,\n\ttr,\n\tharnik,\n\tfile-stats,\n\tfile-details,\n\tchunk-size-stats,\n\tzero-chunk,\n\ta custom class")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")
-      val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
+      val optionFormat = parser.option[String](List("format"), "trace file format", "Trace file format (expert)")
+      val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse (deprecated)")
       val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")
       val optionHarnikSampleCount = parser.option[Int](List("harnik-sample-size"), "harnik sample size", "Number of sample in the harnik sample size (only harnik type)")
       val optionMemoryReporting = parser.flag[Boolean]("report-memory-usage", false, "Report memory usage (expert)")
+      val parameterFilenames = parser.multiParameter[String]("input filenames",
+                                        "Input trace files files to parse",
+                                        true)  {
+    	  	(s, opt) =>
+    	  		val file = new File(s)
+    	  		if (! file.exists) {
+    	  			parser.usage("Input file \"" + s + "\" does not exist.")
+      			}	
+      		s
+    		}
       parser.parse(args)
 
       val output: Option[String] = optionOutput.value match {
         case Some(o) => Some(o)
         case None => None
       }
-      val format = "protobuf"
+      val format = optionFormat.value match {
+        case Some(s) => 
+          if (!Format.isFormat(s)) {
+            parser.usage("Invalid fs-c file format")
+          }
+          s
+        case None => "protobuf"
+      }
       val handlerTypeList = if (optionType.value.size > 0) {
         for { t <- optionType.value } yield t
       } else {
@@ -67,11 +89,16 @@ object Main {
         case Some(b) => b
         case None => false
       }
-      if (optionFilenames.value.size == 0) {
-        throw new Exception("Provide at least one file via -f")
+      
+      val filenames = if (optionFilenames.value.isEmpty && parameterFilenames.value.isEmpty) {
+        parser.usage("Provide at least one trace file")
+      } else if (!optionFilenames.value.isEmpty && !parameterFilenames.value.isEmpty) {
+        parser.usage("Provide files by -f (deprecated) or by positional parameter, but not both")
+      } else if (!optionFilenames.value.isEmpty) {
+        optionFilenames.value.toList
+      } else {
+        parameterFilenames.value.toList
       }
-
-      val filenames = for { f <- optionFilenames.value } yield f
 
       val memoryUsageReporter = if (reportMemoryUsage) {
         Some(new Reporter(new GCReporting(), reportInterval).start())
@@ -97,10 +124,10 @@ object Main {
         }
       } else {
         if (handlerTypeList.size > 1) {
-          throw new Exception("Illegal type configuration: tr cannot only be used alone")
+          parser.usage("Illegal type configuration: tr cannot only be used alone")
         }
         if (filenames.size != 2) {
-          throw new Exception("tr type has to be started with two -f entries")
+          parser.usage("tr type has to be started with two -f entries")
         }
         val handler = new DeduplicationHandler(new ChunkIndex())
         executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
@@ -116,6 +143,7 @@ object Main {
         case None => //pass
       }
     } catch {
+      case e: ArgotUsageException => logger.error(e.message)
       case e: SystemExitException => System.exit(1)
     }
   }
