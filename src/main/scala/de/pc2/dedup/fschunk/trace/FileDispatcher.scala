@@ -51,9 +51,17 @@ class ThreadPoolFileDispatcher(processorNum: Int,
     return activeAllCount.get() == 0
   }
 
+  def getRejectionPolicy(): RejectedExecutionHandler = {
+    if (processorNum == 1)
+      new BlockThenRunPolicy()
+    else
+      new ThreadPoolExecutor.CallerRunsPolicy()
+  }
+
+  
   class DirectoryDispatcherThreadPoolExecutor(dispatcher: ThreadPoolFileDispatcher) extends ThreadPoolExecutor(2, 2, 30, TimeUnit.SECONDS,
-    new ArrayBlockingQueue[Runnable](processorNum * 2),
-    new ThreadPoolExecutor.CallerRunsPolicy()) {
+    new ArrayBlockingQueue[Runnable](1024),
+    getRejectionPolicy()) {
     logger.debug("Created directory threadpool with at most %d threads".format(2))
     override def afterExecute(r: Runnable, t: Throwable) {
       if (shouldShutdown) {
@@ -83,15 +91,7 @@ class ThreadPoolFileDispatcher(processorNum: Int,
       }
     }
   }
-  
-  def getRejectionPolicy(): RejectedExecutionHandler = {
-    if (processorNum == 1) {
-      new BlockThenRunPolicy()
-    } else {
-      new ThreadPoolExecutor.CallerRunsPolicy()
-    }
-  }
-
+ 
   class FileDispatcherThreadPoolExecutor(dispatcher: ThreadPoolFileDispatcher) extends ThreadPoolExecutor(processorNum, processorNum, 30, TimeUnit.SECONDS,
     new ArrayBlockingQueue[Runnable](processorNum * 1024),
     getRejectionPolicy()) {
