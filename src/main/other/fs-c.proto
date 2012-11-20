@@ -1,11 +1,6 @@
 package de.pc2.dedup.fschunk;
 option java_outer_classname = "Protocol";
 
-message ChunkRun {
-    required string start_date = 1;
-    optional string salt = 2;
-}
-
 message File {
     optional string filename = 1;
     optional uint64 size = 2;
