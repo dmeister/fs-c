@@ -3,6 +3,7 @@ option java_outer_classname = "Protocol";
 
 message ChunkRun {
     required string start_date = 1;
+    optional string salt = 2;
 }
 
 message File {

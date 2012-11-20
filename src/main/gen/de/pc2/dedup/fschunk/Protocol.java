@@ -14,6 +14,10 @@ public final class Protocol {
     // required string start_date = 1;
     boolean hasStartDate();
     String getStartDate();
+    
+    // optional string salt = 2;
+    boolean hasSalt();
+    String getSalt();
   }
   public static final class ChunkRun extends
       com.google.protobuf.GeneratedMessage
@@ -76,8 +80,41 @@ public final class Protocol {
       }
     }
     
+    // optional string salt = 2;
+    public static final int SALT_FIELD_NUMBER = 2;
+    private java.lang.Object salt_;
+    public boolean hasSalt() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    public String getSalt() {
+      java.lang.Object ref = salt_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          salt_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getSaltBytes() {
+      java.lang.Object ref = salt_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        salt_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    
     private void initFields() {
       startDate_ = "";
+      salt_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -98,6 +135,9 @@ public final class Protocol {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, getStartDateBytes());
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getSaltBytes());
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -110,6 +150,10 @@ public final class Protocol {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, getStartDateBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getSaltBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -237,6 +281,8 @@ public final class Protocol {
         super.clear();
         startDate_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
+        salt_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
       
@@ -279,6 +325,10 @@ public final class Protocol {
           to_bitField0_ |= 0x00000001;
         }
         result.startDate_ = startDate_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.salt_ = salt_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -297,6 +347,9 @@ public final class Protocol {
         if (other == de.pc2.dedup.fschunk.Protocol.ChunkRun.getDefaultInstance()) return this;
         if (other.hasStartDate()) {
           setStartDate(other.getStartDate());
+        }
+        if (other.hasSalt()) {
+          setSalt(other.getSalt());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -338,6 +391,11 @@ public final class Protocol {
               startDate_ = input.readBytes();
               break;
             }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              salt_ = input.readBytes();
+              break;
+            }
           }
         }
       }
@@ -377,6 +435,42 @@ public final class Protocol {
       void setStartDate(com.google.protobuf.ByteString value) {
         bitField0_ |= 0x00000001;
         startDate_ = value;
+        onChanged();
+      }
+      
+      // optional string salt = 2;
+      private java.lang.Object salt_ = "";
+      public boolean hasSalt() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      public String getSalt() {
+        java.lang.Object ref = salt_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          salt_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      public Builder setSalt(String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        salt_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearSalt() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        salt_ = getDefaultInstance().getSalt();
+        onChanged();
+        return this;
+      }
+      void setSalt(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000002;
+        salt_ = value;
         onChanged();
       }
       
@@ -1604,13 +1698,13 @@ public final class Protocol {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\nfs-c.proto\022\024de.pc2.dedup.fschunk\"\036\n\010Ch" +
-      "unkRun\022\022\n\nstart_date\030\001 \002(\t\"o\n\004File\022\020\n\010fi" +
-      "lename\030\001 \001(\t\022\014\n\004size\030\002 \001(\004\022\014\n\004type\030\003 \001(\t" +
-      "\022\022\n\nchunkCount\030\004 \001(\r\022\r\n\005label\030\005 \001(\t\022\026\n\007p" +
-      "artial\030\006 \001(\010:\005false\"4\n\005Chunk\022\n\n\002fp\030\002 \001(\014" +
-      "\022\014\n\004size\030\003 \001(\r\022\021\n\tchunkHash\030\004 \001(\003B\nB\010Pro" +
-      "tocol"
+      "\n\nfs-c.proto\022\024de.pc2.dedup.fschunk\",\n\010Ch" +
+      "unkRun\022\022\n\nstart_date\030\001 \002(\t\022\014\n\004salt\030\002 \001(\t" +
+      "\"o\n\004File\022\020\n\010filename\030\001 \001(\t\022\014\n\004size\030\002 \001(\004" +
+      "\022\014\n\004type\030\003 \001(\t\022\022\n\nchunkCount\030\004 \001(\r\022\r\n\005la" +
+      "bel\030\005 \001(\t\022\026\n\007partial\030\006 \001(\010:\005false\"4\n\005Chu" +
+      "nk\022\n\n\002fp\030\002 \001(\014\022\014\n\004size\030\003 \001(\r\022\021\n\tchunkHas" +
+      "h\030\004 \001(\003B\nB\010Protocol"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1622,7 +1716,7 @@ public final class Protocol {
           internal_static_de_pc2_dedup_fschunk_ChunkRun_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_de_pc2_dedup_fschunk_ChunkRun_descriptor,
-              new java.lang.String[] { "StartDate", },
+              new java.lang.String[] { "StartDate", "Salt", },
               de.pc2.dedup.fschunk.Protocol.ChunkRun.class,
               de.pc2.dedup.fschunk.Protocol.ChunkRun.Builder.class);
           internal_static_de_pc2_dedup_fschunk_File_descriptor =
