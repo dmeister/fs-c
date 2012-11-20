@@ -6,15 +6,14 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.nio.charset.Charset
-
 import scala.collection.mutable.ListBuffer
-
 import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.Digest
 import de.pc2.dedup.chunker.File
 import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
+import de.pc2.dedup.fschunk.trace.PrivacyMode
 
 /**
  * Helper object for int conversion
@@ -149,5 +148,5 @@ class LegacyFormatWriter extends FileDataHandler with Log {
 
 object LegacyFormat extends Format {
   def createReader(file: InputStream, receiver: FileDataHandler) = new LegacyFormatReader(file, receiver)
-  def createWriter(file: OutputStream, privacyMode: Boolean) = new LegacyFormatWriter()
+  def createWriter(file: OutputStream, privacyMode: PrivacyMode) = new LegacyFormatWriter()
 }

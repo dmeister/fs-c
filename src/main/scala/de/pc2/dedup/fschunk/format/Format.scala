@@ -4,10 +4,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
-
 import scala.collection.mutable.Map
-
 import de.pc2.dedup.fschunk.handler.FileDataHandler
+import de.pc2.dedup.fschunk.trace.PrivacyMode
 
 /**
  * Format objected. Used to manage the different format instances.
@@ -53,11 +52,11 @@ trait Format {
   def createReader(filename: String, receiver: FileDataHandler): Reader = {
     return createReader(new FileInputStream(filename), receiver)
   }
-  def createWriter(filename: String, privacyMode: Boolean) : FileDataHandler=
+  def createWriter(filename: String, privacyMode: PrivacyMode) : FileDataHandler=
     createWriter(new FileOutputStream(filename), privacyMode)
   
   def createWriter(file: OutputStream) : FileDataHandler= 
-    createWriter(file, true)
+    createWriter(file, PrivacyMode.NoPrivacy)
     
   def createReader(file: InputStream, receiver: FileDataHandler): Reader
 
@@ -65,5 +64,5 @@ trait Format {
    * May return null if writing is not supported by that format.
    * TODO (dmeister) Rewrite to use Option instead of of throwning exceptions if writing is not supported
    */
-  def createWriter(file: OutputStream, privacyMode: Boolean): FileDataHandler
+  def createWriter(file: OutputStream, privacyMode: PrivacyMode): FileDataHandler
 }

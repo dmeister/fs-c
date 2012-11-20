@@ -31,6 +31,7 @@ object Main extends Log {
       val optionSilent = parser.flag[Boolean](List("s", "silent"), "Reduced output")
       val optionListing = parser.flag[Boolean](List("l", "listing"), "File contains a listing of files")
       val optionPrivacy = parser.flag[Boolean](List("p", "privacy"), "Privacy Mode")
+      val optionPrivacyMode = parser.option[String](List("privacy-mode"), "privacy-mode", "Privacy mode (full-default (default), full-sha1, directory-sha1")
       val optionSalt = parser.option[String](List("salt"), "salt", "Salt the fingerprints")
       val optionDigestLength = parser.option[Int]("digest-length", "digestLength", "Length of Digest (Fingerprint)")
       val optionDigestType = parser.option[String]("digest-type", "digestType", "Type of Digest (Fingerprint)")
@@ -74,10 +75,7 @@ object Main extends Log {
         case Some(b) => b
         case None => false
       }
-      val privacyMode = optionPrivacy.value match {
-        case Some(b) => b
-        case None => false
-      }
+
       val distributedMode = optionDistributed.value match {
         case Some(b) => b
         case None => false
@@ -85,6 +83,25 @@ object Main extends Log {
       val followSymlinks = optionFollowSymlinks.value match {
         case Some(b) => b
         case None => false
+      }
+      val privacyMode = optionPrivacyMode.value match {
+        case None => 
+          if (optionPrivacy.value.getOrElse(false)) 
+            PrivacyMode.FlatDefault
+          else
+              PrivacyMode.NoPrivacy
+        case Some(s) =>
+            if (!optionPrivacy.value.getOrElse(false)) 
+            parser.usage("Cannot use --privacy-mode without --privacy")
+            else {
+              s match {
+                case "flat-default" => PrivacyMode.FlatDefault
+                case "flat-sha1" => PrivacyMode.FlatSHA1
+                case "directory-sha1" => PrivacyMode.DirectorySHA1
+                case _ =>
+                  parser.usage("Invalid privacy-mode")
+              }
+            }
       }
       val format = "protobuf"
       val useIgnoreList = optionNoDefaultIgnores.value match {

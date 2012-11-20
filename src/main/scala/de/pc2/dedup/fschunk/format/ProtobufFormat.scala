@@ -5,10 +5,8 @@ import java.io.BufferedOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-
 import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
-
 import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.Digest
 import de.pc2.dedup.chunker.File
@@ -16,6 +14,7 @@ import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
 import de.pc2.dedup.util.StorageUnit
+import de.pc2.dedup.fschunk.trace.PrivacyMode
 
 class ProtobufParseException extends Exception {
 }
@@ -114,7 +113,7 @@ class ProtobufFormatReader(file: InputStream, receiver: FileDataHandler) extends
  * is non-sense) in a file (named filename) using the protocol buffers format specified in the
  * file fs-c.proto
  */
-class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDataHandler with Log {
+class ProtobufFormatWriter(file: OutputStream, privacy: PrivacyMode) extends FileDataHandler with Log {
   val filestream: OutputStream = new BufferedOutputStream(file, 4 * 1024 * 1024)
   var fileCount = 0L
   var chunkCount = 0L
@@ -139,22 +138,12 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
     }
   }
 
-  def finalFilename(filename: String): String = {
-    if (privacy) {
-      "" + filename.hashCode
-    } else {
-      filename
-    }
-  }
+  def finalFilename(filename: String): String = privacy.encodeFilename(filename)
 
   override def quit() {
     // Sentinal value
     filestream.close()
     report()
-  }
-  
-  def writeHeader() {
-    
   }
 
   def handle(fp: FilePart) {
@@ -228,5 +217,5 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
 
 object ProtobufFormat extends Format {
   def createReader(file: InputStream, receiver: FileDataHandler) = new ProtobufFormatReader(file, receiver)
-  def createWriter(file: OutputStream, privacyMode: Boolean) = new ProtobufFormatWriter(file, privacyMode)
+  def createWriter(file: OutputStream, privacyMode: PrivacyMode) = new ProtobufFormatWriter(file, privacyMode)
 }
