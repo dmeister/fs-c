@@ -5,12 +5,18 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Arrays
+import java.nio.charset.Charset
 
 /**
  * Compation object to create fingerprints of a chunk or a file
  */
-class DigestFactory(val digestType: String, val digestLength: Int) {
-
+class DigestFactory(val digestType: String, val digestLength: Int, val salt: Option[String]) {
+	
+  lazy val saltArray = salt match {
+    case Some(s) => Some(s.getBytes(Charset.forName("UTF-8")))
+    case None => None
+  }
+  
   /**
    * Tests if the digest type is valid
    */
@@ -55,6 +61,10 @@ class DigestFactory(val digestType: String, val digestLength: Int) {
      * create a new digest from the current data. Rests the digest builder
      */
     def build(): Digest = {
+      saltArray match {
+        case Some(sa) => md.update(sa)
+        case None => // no salting
+      }
       val fullDigest = md.digest()
       val digest = if (digestLength == md.getDigestLength) {
         fullDigest

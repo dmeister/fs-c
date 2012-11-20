@@ -283,13 +283,23 @@ object Import {
     import ArgotConverters._
 
     val parser = new ArgotParser("fs-c import", preUsage = Some("Version 0.3.13"))
-    val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse")
+    val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse (deprecated)")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progress reports in seconds (Default: 1 minute, 0 = no report)")
     val optionOutput = parser.option[String](List("o", "output"), "output", "HDFS directory for output")
     val optionWithFileFingerprint = parser.flag[Boolean](List("with-file-fingerprint"), "Import with file fingerprint")
     val optionCompress = parser.flag[Boolean](List("c", "compress"), "Compress output")
     val optionThreads = parser.option[Int](List("t", "threads"), "threads", "number of concurrent threads")
-
+    val optionFormat = parser.option[String](List("format"), "trace file format", "Trace file format (expert)")
+    val parameterFilenames = parser.multiParameter[String]("input filenames",
+      "Input trace files files to parse",
+      true) {
+        (s, opt) =>
+          val file = new java.io.File(s)
+          if (!file.exists) {
+            parser.usage("Input file \"" + s + "\" does not exist.")
+          }
+          s
+      }
     parser.parse(args)
 
     val reportInterval = optionReport.value
@@ -297,7 +307,24 @@ object Import {
       case Some(t) => t
       case None => 0
     }
-    val format = "protobuf"
+    val filenames = if (optionFilenames.value.isEmpty && parameterFilenames.value.isEmpty) {
+      parser.usage("Provide at least one trace file")
+    } else if (!optionFilenames.value.isEmpty && !parameterFilenames.value.isEmpty) {
+      parser.usage("Provide files by -f (deprecated) or by positional parameter, but not both")
+    } else if (!optionFilenames.value.isEmpty) {
+      optionFilenames.value.toList
+    } else {
+      parameterFilenames.value.toList
+    }
+    val format = optionFormat.value match {
+      case Some(s) =>
+        if (!Format.isFormat(s)) {
+          parser.usage("Invalid fs-c file format")
+        }
+        s
+      case None => "protobuf"
+    }
+
     val output = optionOutput.value match {
       case Some(o) => o
       case None => throw new Exception("--output must be specified")
@@ -310,7 +337,7 @@ object Import {
       case Some(b) => b
       case None => false
     }
-    for (filename <- optionFilenames.value) {
+    for (filename <- filenames) {
       val importHandler = new ImportHandler(output, output, threadCount, compress, withFingerprint)
       val stream = if (filename.startsWith("hdfs://")) {
         val conf = new Configuration()

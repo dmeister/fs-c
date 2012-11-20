@@ -44,7 +44,7 @@ class Rabin(val polynom: Long) {
       val t = v | w
       T(i.toInt) = t
     }
-    return T
+    T
   }
 
   /**
@@ -57,6 +57,6 @@ class Rabin(val polynom: Long) {
    */
   def append(fingerprint: Long, data: Int): Long = {
     val shifted = (fingerprint >> 55).toInt
-    return ((fingerprint << 8) | data) ^ T(shifted)
+    ((fingerprint << 8) | data) ^ T(shifted)
   }
 }

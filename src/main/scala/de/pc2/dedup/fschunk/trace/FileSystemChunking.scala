@@ -24,11 +24,11 @@ class FileSystemChunking(listing: FileListingProvider,
   /**
    * Dispatching object
    */
-  val dispatcher = if (clustered) {
+  val dispatcher = if (clustered)
     new DistributedFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, useRelativePaths, useJavaDirectoryListing, progressHandler)
-  } else {
+  else
     new ThreadPoolFileDispatcher(maxThreads, chunker, useDefaultIgnores, followSymlinks, useRelativePaths, useJavaDirectoryListing, progressHandler)
-  }
+ 
 
   def report() {
     dispatcher.report()
@@ -53,7 +53,7 @@ class FileSystemChunking(listing: FileListingProvider,
 
   def start() {
     dispatcher.waitUntilFinished()
-    logger.info("Traching finished")
+    logger.info("Tracing finished")
 
     for ((_, handlers) <- chunker) {
       handlers.foreach(h => h.quit())
@@ -68,8 +68,6 @@ class FileSystemChunking(listing: FileListingProvider,
         case e: IOException =>
           new File(filename)
       }
-    } else {
-      new File(filename)
-    }
+    } else new File(filename)
   }
 }

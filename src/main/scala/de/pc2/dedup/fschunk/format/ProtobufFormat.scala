@@ -152,6 +152,10 @@ class ProtobufFormatWriter(file: OutputStream, privacy: Boolean) extends FileDat
     filestream.close()
     report()
   }
+  
+  def writeHeader() {
+    
+  }
 
   def handle(fp: FilePart) {
     try {

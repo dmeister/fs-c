@@ -53,10 +53,12 @@ trait Format {
   def createReader(filename: String, receiver: FileDataHandler): Reader = {
     return createReader(new FileInputStream(filename), receiver)
   }
-  def createWriter(filename: String, privacyMode: Boolean): FileDataHandler = {
-    return createWriter(new FileOutputStream(filename), privacyMode)
-  }
-
+  def createWriter(filename: String, privacyMode: Boolean) : FileDataHandler=
+    createWriter(new FileOutputStream(filename), privacyMode)
+  
+  def createWriter(file: OutputStream) : FileDataHandler= 
+    createWriter(file, true)
+    
   def createReader(file: InputStream, receiver: FileDataHandler): Reader
 
   /**

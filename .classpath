@@ -10,7 +10,7 @@
 	<classpathentry kind="lib" path="lib/commons-math3-3.0.jar"/>
 	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/guava-13.0.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hadoop 1.0.3"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Pig 0.10.0"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Pig 0.10"/>
 	<classpathentry kind="lib" path="lib/protobuf-java-2.4.1.jar"/>
 	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/commons-lang-2.6.jar"/>
 	<classpathentry kind="lib" path="lib_managed/scala_2.9.0/compile/argot_2.9.0-0.4.jar"/>

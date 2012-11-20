@@ -31,7 +31,7 @@ class ZeroChunkDeduplicationHandler() extends FileDataHandler with Log {
     }
     bb.rewind()
     var chunk: Chunk = null
-    val rc = new RabinChunker(2 * 1024, 8 * 1024, maxSize, false, new DigestFactory("SHA-1", digestSize), "c8")
+    val rc = new RabinChunker(2 * 1024, 8 * 1024, maxSize, false, new DigestFactory("SHA-1", digestSize, None), "c8")
     val rcs = rc.createSession()
     rcs.chunk(bb) { c: Chunk =>
       if (chunk == null) {
