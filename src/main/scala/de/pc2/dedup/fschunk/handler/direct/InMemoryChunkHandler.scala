@@ -35,7 +35,7 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: Option[S
       val msg = new StringBuffer()
       msg.append("\n")
       if (!chunkerName.isEmpty) {
-    	  msg.append("Chunker " + chunkerName + "\n")
+    	  msg.append("Chunker " + chunkerName.get + "\n")
       }
       msg.append("Total Size: " + StorageUnit(totalFileSize) + "\n")
       msg.append("Chunk Size: " + StorageUnit(totalChunkSize) + "\n")
@@ -99,7 +99,10 @@ class InMemoryChunkHandler(silent: Boolean, d: ChunkIndex, chunkerName: Option[S
     val patchSize = f.fileSize - redundancy
     val illegalFile = patchSize < 0 || redundancy < 0 || f.fileSize != chunkFileSize
 
-    val msg = new StringBuffer("%s - %s".format(f.filename, chunkerName))
+    val msg = new StringBuffer("%s".format(f.filename))
+     if (!chunkerName.isEmpty) {
+    	  msg.append(" - " + chunkerName.get)
+      }
     if (!silent || illegalFile) {
       msg.append("\nSize: %s (%d Byte)%n".format(
         StorageUnit(f.fileSize), f.fileSize))

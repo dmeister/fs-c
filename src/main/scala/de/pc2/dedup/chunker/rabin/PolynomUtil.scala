@@ -10,24 +10,28 @@ object PolynomUtil {
 
   private def mult(x: Long, y: Long): (Long, Long) = {
     var hi = 0L
-    var lo = 0L
-    if (testBit(x, 0)) {
-      lo = y
+
+    var lo = if (testBit(x, 0)) {
+      y
+    } else {
+      0L
     }
+    
     for (i <- 1 until 64) {
       if (testBit(x, i)) {
         lo ^= y << i
         hi ^= y >> (64 - i)
       }
     }
-    return (hi, lo)
+    (hi, lo)
   }
 
   def mod(hi: Long, lo: Long, p: Long): Long = {
-    var hi_ = hi
     var lo_ = lo
-    if (testBit(hi_, 63)) {
-      hi_ = hi_ ^ p;
+    var hi_ = if (testBit(hi, 63)) {
+      hi ^ p;
+    } else {
+      hi
     }
     for (i <- 62 to 0 by -1) {
       if (testBit(hi_, i)) {
@@ -39,12 +43,12 @@ object PolynomUtil {
     if (testBit(lo_, 63)) {
       lo_ ^= p;
     }
-    return lo_;
+    lo_
   }
 
   def modmult(x: Long, y: Long, p: Long): Long = {
     val (hi, lo) = mult(x, y)
-    return mod(hi, lo, p)
+    mod(hi, lo, p)
   }
 
   private def testBit(x: Long, b: Int): Boolean = (x & (1L << b)) != 0

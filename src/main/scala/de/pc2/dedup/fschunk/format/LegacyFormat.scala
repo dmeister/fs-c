@@ -6,15 +6,14 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.nio.charset.Charset
-
 import scala.collection.mutable.ListBuffer
-
 import de.pc2.dedup.chunker.Chunk
 import de.pc2.dedup.chunker.Digest
 import de.pc2.dedup.chunker.File
 import de.pc2.dedup.chunker.FilePart
 import de.pc2.dedup.fschunk.handler.FileDataHandler
 import de.pc2.dedup.util.Log
+import de.pc2.dedup.fschunk.trace.PrivacyMode
 
 /**
  * Helper object for int conversion
@@ -56,12 +55,11 @@ class LegacyFormatReader(file: InputStream, receiver: FileDataHandler) extends R
   var fileCount = 0L
   var chunkCount = 0L
 
-  private def getType(filetype: String): String = {
-    if (filetype.length() == 0) {
-      return "---";
-    }
-    filetype
-  }
+  private def getType(filetype: String): String =
+    if (filetype.length() == 0)
+      "---";
+    else
+      filetype
 
   private def parseChunks(reader: BufferedReader)(h: (Chunk => Unit)) {
     val recordSize = reader.read()
@@ -71,13 +69,13 @@ class LegacyFormatReader(file: InputStream, receiver: FileDataHandler) extends R
     if (recordSize != 24) {
       throw new ParseException("Illegal record size" + recordSize)
     }
-    val buffer = new Array[Char](24);
+    val buffer = new Array[Char](24)
     reader.read(buffer);
-    val chunkSize: Int = IntStreamConverstion(buffer, 0);
+    val chunkSize: Int = IntStreamConverstion(buffer, 0)
     if (chunkSize >= 64 * 1024 || chunkSize < 0) {
       throw new ParseException("Illegal chunk size " + chunkSize)
     } else {
-      val fp = new Array[Byte](20);
+      val fp = new Array[Byte](20)
       for (i <- 0 to 19) {
         fp(i) = buffer(4 + i).toByte
       }
@@ -150,5 +148,5 @@ class LegacyFormatWriter extends FileDataHandler with Log {
 
 object LegacyFormat extends Format {
   def createReader(file: InputStream, receiver: FileDataHandler) = new LegacyFormatReader(file, receiver)
-  def createWriter(file: OutputStream, privacyMode: Boolean) = new LegacyFormatWriter()
+  def createWriter(file: OutputStream, privacyMode: PrivacyMode) = new LegacyFormatWriter()
 }

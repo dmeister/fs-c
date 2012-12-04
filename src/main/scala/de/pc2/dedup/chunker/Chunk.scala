@@ -9,7 +9,6 @@ package de.pc2.dedup.chunker
  * contains the rabin fingerprint.
  */
 case class Chunk(val size: Int, val fp: Digest, val chunkHash: Option[Long]) {
-  if (size < 0) {
-    throw new IllegalArgumentException("Illegal size %s".format(size))
-  }
+  if (size < 0) throw new IllegalArgumentException("Illegal size %s".format(size))
+
 }
