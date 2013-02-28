@@ -1,6 +1,8 @@
 package de.pc2.dedup.fschunk.handler.direct
 
 import java.util.Arrays
+import java.io.BufferedWriter
+import java.io.FileWriter
 
 import scala.collection.mutable.Map
 
@@ -52,6 +54,21 @@ class FileDetail {
     l(i)
   }
 
+  def outputSingleLine(title: String) : String = {
+    fileSizeList = Arrays.copyOfRange(fileSizeList, 0, fileCount)
+    Arrays.sort(fileSizeList)
+    val cummulatedFileSizeList = getCummulatedFileSizeList(fileSizeList)
+
+    val msg = new StringBuffer(title)
+    msg.append(";")
+    msg.append(fileCount)
+    msg.append(";")
+    msg.append(totalFileCapacity)
+    msg.append("\n")
+    msg.toString()
+
+  }
+
   def output(title: String): String = {
     fileSizeList = Arrays.copyOfRange(fileSizeList, 0, fileCount)
     Arrays.sort(fileSizeList)
@@ -82,7 +99,7 @@ object FileDetail {
   }
 }
 
-class FileDetailsHandler() extends FileDataHandler with Log {
+class FileDetailsHandler(output: Option[String]) extends FileDataHandler with Log {
   var lock: AnyRef = new Object()
   val fileTypeDetailMap = Map.empty[String, FileDetail]
   val fileSizeDetailMap = Map.empty[String, FileDetail]
@@ -124,16 +141,33 @@ class FileDetailsHandler() extends FileDataHandler with Log {
   }
 
   override def quit() {
-    println("File Detail Results:\n")
+    output match {
+      case None =>
+        println("File Detail Results:\n")
 
-    val typeDetails = fileTypeDetailMap.toList sortBy (FileDetail.orderingForTypes)
-    for ((k, v) <- typeDetails) {
-      println(v.output(k))
-    }
-    println()
-    val sizeDetails = fileSizeDetailMap.toList sortBy (FileDetail.orderingForSizeCategories)
-    for ((k, v) <- sizeDetails) {
-      println(v.output(StorageUnit(k.toLong)))
+        val typeDetails = fileTypeDetailMap.toList sortBy (FileDetail.orderingForTypes)
+        for ((k, v) <- typeDetails) {
+          println(v.output(k))
+        }
+        println()
+        val sizeDetails = fileSizeDetailMap.toList sortBy (FileDetail.orderingForSizeCategories)
+        for ((k, v) <- sizeDetails) {
+          println(v.output(StorageUnit(k.toLong)))
+        }
+      case Some(filename) =>
+        val w = new BufferedWriter(new FileWriter(new java.io.File(filename)))
+        val typeDetails = fileTypeDetailMap.toList sortBy (FileDetail.orderingForTypes)
+        for ((k, v) <- typeDetails) {
+          w.write(v.outputSingleLine(k))
+        }
+        w.newLine()
+        println()
+        val sizeDetails = fileSizeDetailMap.toList sortBy (FileDetail.orderingForSizeCategories)
+        for ((k, v) <- sizeDetails) {
+          w.write(v.outputSingleLine(StorageUnit(k.toLong)))
+        }
+      w.flush()
+      w.close()
     }
   }
 }

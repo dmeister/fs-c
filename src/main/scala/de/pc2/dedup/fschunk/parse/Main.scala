@@ -227,7 +227,7 @@ object Main extends Log {
         case "file-stats" =>
           handlerList += new FileStatisticsHandler()
         case "file-details" =>
-          handlerList += new FileDetailsHandler()
+          handlerList += new FileDetailsHandler(output)
         case "chunk-size-stats" =>
           handlerList += new ChunkSizeDistributionHandler()
         case "zero-chunk" =>
