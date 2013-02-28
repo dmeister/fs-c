@@ -282,7 +282,7 @@ object Import {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c import", preUsage = Some("Version 0.3.13"))
+    val parser = new ArgotParser("fs-c import", preUsage = Some("Version 0.3.14"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse (deprecated)")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progress reports in seconds (Default: 1 minute, 0 = no report)")
     val optionOutput = parser.option[String](List("o", "output"), "output", "HDFS directory for output")

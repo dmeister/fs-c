@@ -61,7 +61,7 @@ object GPImport {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c gpimport", preUsage = Some("Version 0.3.13"))
+    val parser = new ArgotParser("fs-c gpimport", preUsage = Some("Version 0.3.14"))
     val optionFormat = parser.option[String](List("format"), "trace file format", "Trace file format (expert)")
     val optionOutput = parser.option[String](List("o", "output"), "output", "Output file prefix")
     val optionReport = parser.option[Int](List("r", "report"), "report", "Interval between progess reports in seconds (Default: 1 minute, 0 = no report)")

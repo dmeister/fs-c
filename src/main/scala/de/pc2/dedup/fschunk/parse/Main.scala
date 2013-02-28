@@ -46,7 +46,7 @@ object Main extends Log {
     try {
       import ArgotConverters._
 
-      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.13"))
+      val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.14"))
       val optionType = parser.multiOption[String](List("t", "type"), "type",
         "Handler Type (simple,\n\tir,\n\ttr,\n\tharnik,\n\tfile-stats,\n\tfile-details,\n\tchunk-size-stats,\n\tzero-chunk,\n\ta custom class")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")

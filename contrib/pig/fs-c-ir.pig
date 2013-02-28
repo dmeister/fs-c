@@ -2,7 +2,7 @@
  * Heuristical because it may shift data between file types/file length categories if data is shared between types.
  * It is much faster then the exact approach, but it should nevertheless not really be used.
  */
-REGISTER fs-c-0.3.13.jar
+REGISTER fs-c-0.3.14.jar
 CHUNKS = LOAD '$RUN/chunks' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
 FILES = LOAD '$RUN/files' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
 
