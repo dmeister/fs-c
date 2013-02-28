@@ -53,9 +53,12 @@ class FileStatisticsHandler() extends FileDataHandler with Log {
 
   def getPercentile(l: Array[Long], p: Int): Long = {
     Preconditions.checkArgument(p > 0 && p < 100)
-
-    val i = (p / 100.0 * l.length).toInt
-    l(i)
+    if (l.length == 0) {
+      0
+    } else {
+      val i = (p / 100.0 * l.length).toInt
+      l(i)
+    }
   }
 
   override def quit() {
