@@ -89,15 +89,15 @@ class TemporalRedundancyHandler(output: Option[String], d: ChunkIndex) extends F
 
   private def outputMapToConsole(m: Map[String, (Long, Long)], title: String) {
     val msg = new StringBuffer(title);
-    msg.append("\t\tReal Size\tTotal Size\tPatch Ratio\n")
+    msg.append("\tReal Size\tTotal Size\tPatch Ratio\n")
     for (k <- m.keySet) {
       val (realSize, totalSize) = m(k)
       val patchRatio = if (totalSize > 0) {
-        100.0 * (realSize / totalSize)
+        100.0 * (realSize.toDouble / totalSize.toDouble)
       } else {
         100.0
       }
-      msg.append("%s\t%s\t%s\t%.2f%n".format(
+      msg.append("%s\t\t\t%s\t\t%s\t\t%.2f%n".format(
         k,
         StorageUnit(realSize),
         StorageUnit(totalSize),
