@@ -168,33 +168,41 @@ object Main extends Log {
     filenames: Seq[String]) {
     val filenameList = (filenames, filenames.tail).zipped.toList
 
+    var sampleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+    var singleSampleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+
+    executeParsing(List(sampleHandler, singleSampleHandler, new StandardReportingHandler()), 
+        format, reportInterval, List(filenames(0)))
+
+    // we overlap the different sample/scan runs to decrease the number of total passes
+    // over the data
     for ( (filename1, filename2) <- filenameList) {
-      val handler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
-      val singleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+      // filename1 run has already been performed
+      executeParsing(List(sampleHandler, new StandardReportingHandler()), 
+        format, reportInterval, List(filename2))
+      sampleHandler.quit()
+      singleSampleHandler.quit()
 
-      executeParsing(List(handler, singleHandler, new StandardReportingHandler()), 
-        format, reportInterval, List(filenames(0)))
-      executeParsing(List(handler, new StandardReportingHandler()), 
-        format, reportInterval, List(filenames(1)))
-      handler.quit()
-      singleHandler.quit()
+      val sample = sampleHandler.estimationSample
+      val singleSample = singleSampleHandler.estimationSample
 
-      val sample = handler.estimationSample
-      val singleSample = singleHandler.estimationSample
+      val scanHandler = new HarnikEstimationScanHandler(sample, None)
+      val singleScanHandler = new HarnikEstimationScanHandler(singleSample, None)
 
-      val handler2 = new HarnikEstimationScanHandler(sample, None)
-      val singleHandler2 = new HarnikEstimationScanHandler(singleSample, None)
+      executeParsing(List(scanHandler, singleScanHandler, new StandardReportingHandler()), 
+        format, reportInterval, List(filename1))
 
-      executeParsing(List(handler2, singleHandler2, new StandardReportingHandler()), 
-        format, reportInterval, List(filenames(0)))
-      executeParsing(List(handler2, new StandardReportingHandler()), 
-        format, reportInterval, List(filenames(1)))
-      // no quit call to singleHandler2
+      // overlap with the next sample run
+      sampleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+      singleSampleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+
+      executeParsing(List(scanHandler, sampleHandler, singleSampleHandler, new StandardReportingHandler()), 
+        format, reportInterval, List(filename2))
       
       println("%s -> %s".format(filename1, filename2))
       HarnikEstimationScanHandler.outputTemporalScanResult(sample, 
-        handler2.estimator,
-        singleHandler2.estimator)
+        scanHandler.estimator,
+        singleScanHandler.estimator)
       println()
     }
     HarnikEstimationScanHandler.outputNaNWarning()
