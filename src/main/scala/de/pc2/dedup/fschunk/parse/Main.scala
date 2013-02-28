@@ -126,12 +126,12 @@ object Main extends Log {
         if (handlerTypeList.size > 1) {
           parser.usage("Illegal type configuration: tr cannot only be used alone")
         }
-        if (filenames.size != 2) {
-          parser.usage("tr types has to be started with two -f entries")
-        }
         val handlerType = handlerTypeList.head
         handlerType match {
           case "tr" =>
+            if (filenames.size != 2) {
+              parser.usage("tr type has to be started with two -f entries")
+            }
             val handler = new DeduplicationHandler(new ChunkIndex())
             executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
             handler.quit()
@@ -140,6 +140,10 @@ object Main extends Log {
             executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
             handler2.quit()
           case "harniks-tr" =>
+            if (filenames.size < 2) {
+              parser.usage("harniks-tr type has to be started with two -f entries")
+            }
+
             output match {
               case Some(s) => 
                 parser.usage("harniks-tr cannot be used with --output option")
@@ -162,32 +166,38 @@ object Main extends Log {
     reportInterval: Option[Int], 
     harnikSampleCount : Option[Int], 
     filenames: Seq[String]) {
-    // for now I can assume that there are two filenames
-    
-    val handler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
-    val singleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+    val filenameList = (filenames, filenames.tail).zipped.toList
 
-    executeParsing(List(handler, singleHandler, new StandardReportingHandler()), 
-      format, reportInterval, List(filenames(0)))
-    executeParsing(List(handler, new StandardReportingHandler()), 
-      format, reportInterval, List(filenames(1)))
-    handler.quit()
-    singleHandler.quit()
+    for ( (filename1, filename2) <- filenameList) {
+      val handler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+      val singleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
 
-    val sample = handler.estimationSample
-    val singleSample = singleHandler.estimationSample
+      executeParsing(List(handler, singleHandler, new StandardReportingHandler()), 
+        format, reportInterval, List(filenames(0)))
+      executeParsing(List(handler, new StandardReportingHandler()), 
+        format, reportInterval, List(filenames(1)))
+      handler.quit()
+      singleHandler.quit()
 
-    val handler2 = new HarnikEstimationScanHandler(sample, None)
-    val singleHandler2 = new HarnikEstimationScanHandler(singleSample, None)
+      val sample = handler.estimationSample
+      val singleSample = singleHandler.estimationSample
 
-    executeParsing(List(handler2, singleHandler2, new StandardReportingHandler()), 
-      format, reportInterval, List(filenames(0)))
-    executeParsing(List(handler2, new StandardReportingHandler()), 
-      format, reportInterval, List(filenames(1)))
-    // no quit call to singleHandler2
-    HarnikEstimationScanHandler.outputTemporalScanResult(sample, 
-      handler2.estimator,
-      singleHandler2.estimator)
+      val handler2 = new HarnikEstimationScanHandler(sample, None)
+      val singleHandler2 = new HarnikEstimationScanHandler(singleSample, None)
+
+      executeParsing(List(handler2, singleHandler2, new StandardReportingHandler()), 
+        format, reportInterval, List(filenames(0)))
+      executeParsing(List(handler2, new StandardReportingHandler()), 
+        format, reportInterval, List(filenames(1)))
+      // no quit call to singleHandler2
+      
+      println("%s -> %s".format(filename1, filename2))
+      HarnikEstimationScanHandler.outputTemporalScanResult(sample, 
+        handler2.estimator,
+        singleHandler2.estimator)
+      println()
+    }
+    HarnikEstimationScanHandler.outputNaNWarning()
   }
 
   private def getHarnikEstimationHandler(handlerList: Seq[FileDataHandler]): HarnikEstimationSample = {

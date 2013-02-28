@@ -47,10 +47,15 @@ object HarnikEstimationScanHandler {
     	  msg.append("Redundancy: " + StorageUnit(totalRedundancy))
     	  msg.append(" (%.2f%%)".format(100.0 * deduplicationRatio))
       }
+      println(msg)
+    }
+
+  def outputNaNWarning() {
+      val msg = new StringBuffer()
       msg.append("\n\nNote: A NaN entry usually indicates that it was not possible to provide an estimate with a\n")
       msg.append("confidence higher than 99%. Consider increasing the sample size by using --harnik-sample-size\n")
       println(msg)
-    }
+  }
 }
 
 class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Option[String]) extends FileDataHandler with Log {
@@ -78,6 +83,7 @@ class HarnikEstimationScanHandler(val sample: HarnikEstimationSample, output: Op
       val deduplicationRatio = estimator.deduplicationRatio
       
       HarnikEstimationScanHandler.outputScanResult(sample, totalSize, deduplicationRatio)
+      HarnikEstimationScanHandler.outputNaNWarning()
     }
 
     typeMap += ("ALL" -> estimator)
