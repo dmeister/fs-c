@@ -106,7 +106,7 @@ object Main extends Log {
         None
       }
       
-      if (!handlerTypeList.contains("tr")) {
+      if (!handlerTypeList.contains("tr") && !handlerTypeList.contains("harniks-tr")) {
         val handlerList = gatherHandlerList(handlerTypeList, optionHarnikSampleCount.value, output)
         executeParsing(handlerList, format, reportInterval, filenames)
 
@@ -127,17 +127,27 @@ object Main extends Log {
           parser.usage("Illegal type configuration: tr cannot only be used alone")
         }
         if (filenames.size != 2) {
-          parser.usage("tr type has to be started with two -f entries")
+          parser.usage("tr types has to be started with two -f entries")
         }
-        val handler = new DeduplicationHandler(new ChunkIndex())
-        executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
-        handler.quit()
+        val handlerType = handlerTypeList.head
+        handlerType match {
+          case "tr" =>
+            val handler = new DeduplicationHandler(new ChunkIndex())
+            executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
+            handler.quit()
 
-        val handler2 = new TemporalRedundancyHandler(output, handler.d)
-        executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
-        handler2.quit()
+            val handler2 = new TemporalRedundancyHandler(output, handler.d)
+            executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
+            handler2.quit()
+          case "harniks-tr" =>
+            output match {
+              case Some(s) => 
+                parser.usage("harniks-tr cannot be used with --output option")
+              case None => 
+                runTemporalHarnikHandlers(format, reportInterval, optionHarnikSampleCount.value, filenames)
+            }
+        }
       }
-      
       memoryUsageReporter match {
         case Some(r) => r.quit()
         case None => //pass
@@ -146,6 +156,38 @@ object Main extends Log {
       case e: ArgotUsageException => logger.error(e.message)
       case e: SystemExitException => System.exit(1)
     }
+  }
+
+  private def runTemporalHarnikHandlers(format: String, 
+    reportInterval: Option[Int], 
+    harnikSampleCount : Option[Int], 
+    filenames: Seq[String]) {
+    // for now I can assume that there are two filenames
+    
+    val handler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+    val singleHandler = new HarnikEstimationSamplingHandler(harnikSampleCount, None)
+
+    executeParsing(List(handler, singleHandler, new StandardReportingHandler()), 
+      format, reportInterval, List(filenames(0)))
+    executeParsing(List(handler, new StandardReportingHandler()), 
+      format, reportInterval, List(filenames(1)))
+    handler.quit()
+    singleHandler.quit()
+
+    val sample = handler.estimationSample
+    val singleSample = singleHandler.estimationSample
+
+    val handler2 = new HarnikEstimationScanHandler(sample, None)
+    val singleHandler2 = new HarnikEstimationScanHandler(singleSample, None)
+
+    executeParsing(List(handler2, singleHandler2, new StandardReportingHandler()), 
+      format, reportInterval, List(filenames(0)))
+    executeParsing(List(handler2, new StandardReportingHandler()), 
+      format, reportInterval, List(filenames(1)))
+    // no quit call to singleHandler2
+    HarnikEstimationScanHandler.outputTemporalScanResult(sample, 
+      handler2.estimator,
+      singleHandler2.estimator)
   }
 
   private def getHarnikEstimationHandler(handlerList: Seq[FileDataHandler]): HarnikEstimationSample = {
