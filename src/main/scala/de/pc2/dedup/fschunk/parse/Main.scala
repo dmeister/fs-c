@@ -4,6 +4,7 @@ import scala.collection.mutable.ListBuffer
 import org.clapper.argot.ArgotParser
 import org.clapper.argot.ArgotConverters
 import de.pc2.dedup.fschunk.handler.direct.ChunkIndex
+import de.pc2.dedup.fschunk.handler.direct.FullFileRedundancyHandler
 import de.pc2.dedup.fschunk.handler.direct.ChunkSizeDistributionHandler
 import de.pc2.dedup.fschunk.handler.direct.DeduplicationHandler
 import de.pc2.dedup.fschunk.handler.direct.FileDetailsHandler
@@ -48,7 +49,7 @@ object Main extends Log {
 
       val parser = new ArgotParser("fs-c parse", preUsage = Some("Version 0.3.14"))
       val optionType = parser.multiOption[String](List("t", "type"), "type",
-        "Handler Type (simple,\n\tir,\n\ttr,\n\tharnik,\n\tfile-stats,\n\tfile-details,\n\tchunk-size-stats,\n\tzero-chunk,\n\ta custom class")
+        "Handler Type (simple,\n\tir,\n\ttr,\n\tharniks-tr,\n\tharnik,\n\tfull-file,\n\tfile-stats,\n\tfile-details,\n\tchunk-size-stats,\n\tzero-chunk,\n\ta custom class")
       val optionOutput = parser.option[String](List("o", "output"), "output", "Run name")
       val optionFormat = parser.option[String](List("format"), "trace file format", "Trace file format (expert)")
       val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse (deprecated)")
@@ -129,19 +130,13 @@ object Main extends Log {
         val handlerType = handlerTypeList.head
         handlerType match {
           case "tr" =>
-            if (filenames.size != 2) {
-              parser.usage("tr type has to be started with two -f entries")
+            if (filenames.size < 2) {
+              parser.usage("tr type has to be started with two at least two files")
             }
-            val handler = new DeduplicationHandler(new ChunkIndex())
-            executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
-            handler.quit()
-
-            val handler2 = new TemporalRedundancyHandler(output, handler.d)
-            executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
-            handler2.quit()
+            runTemporalHandlers(format, reportInterval, filenames)
           case "harniks-tr" =>
             if (filenames.size < 2) {
-              parser.usage("harniks-tr type has to be started with two -f entries")
+              parser.usage("harniks-tr type has to be started with at least two files")
             }
 
             output match {
@@ -160,6 +155,29 @@ object Main extends Log {
       case e: ArgotUsageException => logger.error(e.message)
       case e: SystemExitException => System.exit(1)
     }
+  }
+
+  private def runTemporalHandlers(format: String,
+    reportInterval: Option[Int],
+    filenames: Seq[String]) {
+      val filenameList = (filenames, filenames.tail).zipped.toList
+
+      var handler = new DeduplicationHandler(new ChunkIndex())
+      executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
+      handler.quit()
+
+      for ((filename1, filename2) <- filenameList) {
+
+        val temporalHandler = new TemporalRedundancyHandler(None, handler.d)
+
+        // handler for the next file
+        handler = new DeduplicationHandler(new ChunkIndex())
+        executeParsing(List(temporalHandler, handler, new StandardReportingHandler()), format, reportInterval, List(filename2))
+
+        println("%s -> %s".format(filename1, filename2))
+        temporalHandler.quit()
+
+      }
   }
 
   private def runTemporalHarnikHandlers(format: String, 
@@ -238,6 +256,8 @@ object Main extends Log {
           handlerList += new FileDetailsHandler(output)
         case "chunk-size-stats" =>
           handlerList += new ChunkSizeDistributionHandler()
+        case "full-file" =>
+          handlerList += new FullFileRedundancyHandler()
         case "zero-chunk" =>
           handlerList += new ZeroChunkDeduplicationHandler()
         case "harniks" =>
