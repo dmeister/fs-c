@@ -106,7 +106,7 @@ object Main extends Log {
         None
       }
       
-      if (!handlerTypeList.contains("tr")) {
+      if (!handlerTypeList.contains("tr") && !handlerTypeList.contains("harniks-tr")) {
         val handlerList = gatherHandlerList(handlerTypeList, optionHarnikSampleCount.value, output)
         executeParsing(handlerList, format, reportInterval, filenames)
 
@@ -127,17 +127,29 @@ object Main extends Log {
           parser.usage("Illegal type configuration: tr cannot only be used alone")
         }
         if (filenames.size != 2) {
-          parser.usage("tr type has to be started with two -f entries")
+          parser.usage("tr types has to be started with two -f entries")
         }
-        val handler = new DeduplicationHandler(new ChunkIndex())
-        executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
-        handler.quit()
+        val handlerType = handlerTypeList.head
+        handlerType match {
+          case "tr" =>
+            val handler = new DeduplicationHandler(new ChunkIndex())
+            executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0)))
+            handler.quit()
 
-        val handler2 = new TemporalRedundancyHandler(output, handler.d)
-        executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
-        handler2.quit()
+            val handler2 = new TemporalRedundancyHandler(output, handler.d)
+            executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(1)))
+            handler2.quit()
+          case "harniks-tr" =>
+            val handler = new HarnikEstimationSamplingHandler(optionHarnikSampleCount.value, output)
+            executeParsing(List(handler, new StandardReportingHandler()), format, reportInterval, List(filenames(0), filenames(1)))
+            handler.quit()
+
+            val sample = handler.estimationSample
+            val handler2 = new HarnikEstimationScanHandler(sample, output)
+            executeParsing(List(handler2, new StandardReportingHandler()), format, reportInterval, List(filenames(0), filenames(1)))
+            handler2.quit()
+        }
       }
-      
       memoryUsageReporter match {
         case Some(r) => r.quit()
         case None => //pass
@@ -166,7 +178,7 @@ object Main extends Log {
         case "simple" =>
           output match {
             case None =>
-            case _ => throw new Exception("Output paramter is not supported by simple handler type")
+            case _ => throw new Exception("Output parameter is not supported by simple handler type")
           }
           handlerList += new InMemoryChunkHandler(false, new ChunkIndex(), None)
 
@@ -185,6 +197,8 @@ object Main extends Log {
           handlerList += new HarnikEstimationSamplingHandler(optionHarnikSampleCount, output)
         case "tr" =>
           throw new Exception("tr needs special treatment")
+        case "tr-harniks" =>
+          throw new Exception("harniks-tr need special treatment")
         case customName =>
           handlerList += getCustomHandler(customName)
       }
