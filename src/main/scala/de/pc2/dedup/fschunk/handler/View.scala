@@ -79,7 +79,7 @@ object View {
   def main(args: Array[String]): Unit = {
     import ArgotConverters._
 
-    val parser = new ArgotParser("fs-c view", preUsage = Some("Version 0.3.13"))
+    val parser = new ArgotParser("fs-c view", preUsage = Some("Version 0.3.14"))
     val optionFilenames = parser.multiOption[String](List("f", "filename"), "filenames", "Filename to parse (deprecated)")
     val optionFormat = parser.option[String](List("format"), "trace file format", "Trace file format (expert)")
     val optionOnlyFingerprint = parser.flag[Boolean]("only-fingerprint", false, "Outputs only chunk fingerprints (expert)")

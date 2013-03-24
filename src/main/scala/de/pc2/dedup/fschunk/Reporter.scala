@@ -53,11 +53,15 @@ class Reporter(r: Reporting, reportInterval: Option[Int]) extends Log {
   
   def start() : Reporter = {
     val interval = reportInterval match {
-      case None => 60
-      case Some (i) => i
+      case None => 
+        60
+      case Some (i) => 
+        i
     }
+    if (interval > 0) {
       tp.scheduleAtFixedRate(new ReporterRunnable(r), 1, interval, TimeUnit.SECONDS)
-      this
+    }
+    this
   }
   
   def quit() {

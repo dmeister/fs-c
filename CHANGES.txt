@@ -1,3 +1,21 @@
+Version 0.3.13
+
+    - fs-c parse allows now to specify multiple handler types in a single run.
+    - New command fs-c gpimport to import FS-C trace data into the Greenplum database.
+    - fs-c trace has new option --salt to add a salt to the chunk fingerprint calculation
+    - fs-c trace has new option --privacy-mode to allow a directory-and privacy preserving filename handling.
+      If --privacy-mode=flat-sha1 is used, the full filepath is fingerprinted using sha-1. If
+      --privacy-mode=directory-sha1 is used, each filename of the full filepath is fingerprinted individually.
+      This preserves the general directory structure, while still providing sufficient privacy in most situations.
+    - Input files are now provided as parameters instead of -f options. 
+      The -f options are still supported, but are deprecated. 
+	- Add standard parse handler to extract file metadata details and statistics from a trace file
+	- Multiple bug fixes
+	  - Fix a Java 7 resource leak
+      - Fix handling of named pipes (no only directories and regular files are processed at all)
+      - Fix an output error if sample size is not large enough for Harnik's method
+      - Single threaded mode is now really single threaded
+       
 Version 0.3.12
 
 	- Implement Harnik's estimation method (-t harniks). 

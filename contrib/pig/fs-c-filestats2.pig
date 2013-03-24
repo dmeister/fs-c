@@ -4,7 +4,7 @@
  /*
  * a bit heuristical because it provides outdated file sizes if data is written to the file concurrently
  */
-REGISTER fs-c-0.3.13.jar
+REGISTER fs-c-0.3.14.jar
 FILES = LOAD '$RUN/files*' USING PigStorage() AS (filename: chararray, filelength: long, filetype: chararray);
 CHUNKS = LOAD '$RUN//chunks*' using PigStorage() AS (filename: chararray, fp: chararray, chunksize: int);
 
