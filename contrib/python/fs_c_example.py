@@ -5,6 +5,7 @@
 import fs_c
 import sys
 import logging
+import optparse
 
 def handle_file(file_data):
   print file_data.filename
@@ -15,8 +16,13 @@ def handle_file(file_data):
 if __name__ == "__main__":
   logging.basicConfig()
 
-  for filename in sys.argv[1:]:
-    parser = fs_c.create_parser(filename, handle_file)
+  parser = optparse.OptionParser()
+  parser.add_option("-f", "--format", dest="format",
+                  help="format type of the file to parse")
+  (options, args) = parser.parse_args()
+
+  for filename in args:
+    parser = fs_c.create_parser(filename, handle_file, options.format)
     parser.parse_file()
 
 
